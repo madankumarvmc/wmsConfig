@@ -1,0 +1,239 @@
+Build a Guided SBX WMS Outbound Module Setup Portal
+
+I want you to generate a full-featured, guided setup portal for the SBX WMS Outbound Module.
+The portal should use a step-by-step "wizard" interface, with each step corresponding to a logical phase of the Outbound Module setup.
+The UI must be modern, responsive, and support both desktop and mobile use.
+
+Here are the requirements and detailed field specifications:
+
+1. Step 1: Define Task (Process) Sequences
+Display a matrix/table where the user can create combinations of:
+
+Storage Identifiers (SI):
+
+Category (dropdown)
+
+SKU Class Type (dropdown)
+
+SKU Class (dropdown)
+
+UOM (dropdown)
+
+Bucket (dropdown)
+
+Special Storage Indicator (checkbox)
+
+Line Identifiers (LI):
+
+Channel (dropdown)
+
+Customer (searchable dropdown)
+
+For each SI/LI combination, allow the user to:
+
+Assign one or more task sequences (e.g., OUTBOUND_REPLEN, OUTBOUND_PICK, OUTBOUND_LOAD)
+
+Set shipment acknowledgment triggers (dropdown: On Pick, On Load, etc.)
+
+Allow Add/Edit/Delete of SI/LI combinations.
+
+2. Step 2: Pick Strategy Definition
+For each taskKind in the task sequence, allow the user to define one or more Pick Strategies:
+
+TaskKind (auto-filled)
+
+TaskSubKind (dropdown)
+
+TaskAttrs (multi-select)
+
+Strategy (dropdown: Cluster, Zone, Batch, etc.)
+
+SortingStrategy (dropdown)
+
+LoadingStrategy (dropdown)
+
+GroupBy (multi-select: SKU, Order, Destination)
+
+TaskLabel (text)
+
+Show only relevant fields based on previous selections.
+
+Allow multiple strategies per taskKind.
+
+3. Step 3: HU Formation & Path Determination
+For every Pick Strategy, allow the user to configure:
+
+TripType (dropdown)
+
+HU Kinds (multi-select: Pallet, Carton, Tote, etc.)
+
+ScanSourceHUKind (dropdown)
+
+PickSourceHUKind (dropdown)
+
+CarrierHUKind (dropdown)
+
+HU Mapping Mode (dropdown: Auto, Manual)
+
+DropHUQuantThreshold (number)
+
+DropUOM (dropdown)
+
+AllowComplete (checkbox)
+
+SwapHUThreshold (number)
+
+DropInnerHU (checkbox)
+
+AllowInnerHUBreak (checkbox)
+
+DisplayDropUOM (checkbox)
+
+AutoUOMConversion (checkbox)
+
+MobileSorting (checkbox)
+
+SortingParam (text or dropdown)
+
+HUWeightThreshold (number)
+
+QCMismatchMonthThreshold (number)
+
+QuantSlottingForHUsInDrop (checkbox)
+
+AllowPickingMultiBatchfromHU (checkbox)
+
+DisplayEditPickQuantity (checkbox)
+
+PickBundles (checkbox)
+
+EnableEditQtyInPickOp (checkbox)
+
+DropSlottingMode (dropdown)
+
+EnableManualDestBinSelection (checkbox)
+
+Provide real-time validation and show a visual flowchart of HU movement paths (optional).
+
+4. Step 4: Work Order Management Strategy
+For every Pick Strategy, allow the user to configure:
+
+MapSegregationGroupsToBins (checkbox)
+
+DropHUInBin (checkbox)
+
+ScanDestHUInDrop (checkbox)
+
+AllowHUBreakInDrop (checkbox)
+
+StrictBatchAdherence (checkbox)
+
+AllowWorkOrderSplit (checkbox)
+
+UndoOp (checkbox)
+
+DisableWorkOrder (checkbox)
+
+AllowUnpick (checkbox)
+
+SupportPalletScan (checkbox)
+
+LoadingUnits (number)
+
+PickMandatoryScan (checkbox)
+
+DropMandatoryScan (checkbox)
+
+Provide contextual help and warnings for conflicting options.
+
+5. Step 5: Stock & Bin Allocation Strategy
+For each relevant SI, allow the user to define allocation strategies for PICK and PUT modes:
+
+Mode (dropdown: PICK, PUT)
+
+Priority (number)
+
+SkipZoneFace (checkbox)
+
+OrderByQuantUpdatedAt (checkbox)
+
+SearchScope (dropdown: Zone, Area, Warehouse)
+
+StatePreferenceOrder (multi-select)
+
+PreferFixed (checkbox)
+
+PreferNonFixed (checkbox)
+
+StatePreferenceSeq (number)
+
+BatchPreferenceMode (dropdown: FIFO, FEFO, LIFO, etc.)
+
+AreaTypes (multi-select)
+
+Areas (multi-select)
+
+OrderByPickingPosition (checkbox)
+
+UseInventorySnapshotForPickSlotting (checkbox)
+
+OptimizationMode (dropdown: Speed, Capacity, Custom)
+
+Allow Add/Edit/Delete for allocation strategies.
+
+Show real-time conflict detection.
+
+6. Step 6: Review & Confirm
+Show a summary of all configurations from previous steps.
+
+Allow users to expand/collapse sections and edit any step.
+
+Highlight validation errors or warnings.
+
+Provide Confirm & Save action.
+
+Additional Features
+Contextual help (tooltips, inline help, and video guides for complex fields)
+
+Role-based access (only authorized users can configure or approve setup)
+
+Audit trail (log all changes for compliance and rollback)
+
+Mobile support (responsive design, offline support for warehouse floor use)
+
+Integration hooks (API endpoints for ERP, TMS, e-commerce, and device integration)
+
+User Journey Example:
+
+Start Setup Wizard
+
+Define SI/LI Task Sequences
+
+Configure Pick Strategies (for each sequence)
+
+Set HU Formation & Path (for each strategy)
+
+Define Work Order Management (for each strategy)
+
+Configure Stock/Bin Allocation (for each SI)
+
+Review & Confirm
+
+Setup Complete
+
+Instructions:
+
+Use React (preferred), TypeScript, and Material UI (or similar modern component library).
+
+Each step should be a separate component/page.
+
+Use state management (e.g., React Context or Redux) to persist data between steps.
+
+Ensure field validation, user-friendly navigation, and accessibility.
+
+Include mock data and stubs for dropdowns and search fields.
+
+Provide clear code comments and modular structure.
+
+Goal:
+Generate a production-ready, maintainable codebase for a guided SBX WMS Outbound Module setup portal, fully matching the above requirements and field details.

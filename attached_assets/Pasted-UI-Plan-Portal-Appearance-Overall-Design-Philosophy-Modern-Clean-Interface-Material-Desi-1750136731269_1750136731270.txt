@@ -1,0 +1,76 @@
+UI Plan & Portal Appearance
+
+Overall Design Philosophy
+
+- **Modern, Clean Interface**: Material Design principles with a professional enterprise look
+- **Wizard-Style Navigation**: Clear step progression with breadcrumbs and step indicators
+- **Responsive Layout**: Optimized for both desktop and mobile warehouse environments
+- **Data-Heavy Forms**: Tables, matrices, and complex form controls with smart validation
+
+Visual Layout Structure
+
+**Header Section:**
+
+- Portal title "SBX WMS Outbound Module Setup"
+- Progress indicator showing current step (1/6)
+- User context and save/exit options
+
+**Navigation Panel:**
+
+- Vertical step navigation on the left
+- Each step shows completion status (pending, in-progress, completed, error)
+- Collapsible for mobile views
+
+**Main Content Area:**
+
+- Dynamic content based on current step
+- Form sections with clear headings and grouping
+- Contextual help icons and tooltips throughout
+- Real-time validation feedback
+
+**Footer Controls:**
+
+- Previous/Next navigation buttons
+- Save Draft functionality
+- Context-sensitive action buttons
+
+Step-by-Step UI Breakdown
+
+**Step 1 - Task Sequences:**
+
+- Interactive matrix/table with SI columns and LI rows
+- Dropdown controls for each field type
+- Add/Edit/Delete row operations
+- Drag-and-drop task sequence assignment
+
+**Step 2 - Pick Strategies:**
+
+- Tabbed interface for different TaskKinds
+- Dynamic form fields that show/hide based on selections
+- Multi-strategy support with expandable cards
+
+**Step 3 - HU Formation:**
+
+- Visual flowchart showing HU movement paths
+- Grouped form sections with clear labeling
+- Threshold and numeric inputs with validation
+- Toggle switches for boolean options
+
+**Step 4 - Work Order Management:**
+
+- Checklist-style interface for boolean options
+- Warning indicators for conflicting selections
+- Contextual help panels
+
+**Step 5 - Stock & Bin Allocation:**
+
+- Separate PICK/PUT mode tabs
+- Priority-ordered list with drag-and-drop reordering
+- Multi-select components for areas and preferences
+
+**Step 6 - Review:**
+
+- Accordion-style summary of all configurations
+- Edit links to jump back to specific steps
+- Validation status indicators
+- Export/print options

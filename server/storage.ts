@@ -2,12 +2,15 @@ import {
   users, 
   wizardConfigurations,
   taskSequenceConfigurations,
+  pickStrategyConfigurations,
   type User, 
   type InsertUser,
   type WizardConfiguration,
   type InsertWizardConfiguration,
   type TaskSequenceConfiguration,
-  type InsertTaskSequenceConfiguration
+  type InsertTaskSequenceConfiguration,
+  type PickStrategyConfiguration,
+  type InsertPickStrategyConfiguration
 } from "@shared/schema";
 
 export interface IStorage {
@@ -23,23 +26,32 @@ export interface IStorage {
   saveTaskSequenceConfiguration(config: InsertTaskSequenceConfiguration): Promise<TaskSequenceConfiguration>;
   deleteTaskSequenceConfiguration(id: number): Promise<boolean>;
   updateTaskSequenceConfiguration(id: number, config: Partial<InsertTaskSequenceConfiguration>): Promise<TaskSequenceConfiguration | undefined>;
+  
+  getPickStrategyConfigurations(userId: number): Promise<PickStrategyConfiguration[]>;
+  savePickStrategyConfiguration(config: InsertPickStrategyConfiguration): Promise<PickStrategyConfiguration>;
+  deletePickStrategyConfiguration(id: number): Promise<boolean>;
+  updatePickStrategyConfiguration(id: number, config: Partial<InsertPickStrategyConfiguration>): Promise<PickStrategyConfiguration | undefined>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private wizardConfigurations: Map<string, WizardConfiguration>;
   private taskSequenceConfigurations: Map<number, TaskSequenceConfiguration>;
+  private pickStrategyConfigurations: Map<number, PickStrategyConfiguration>;
   private currentUserId: number;
   private currentWizardConfigId: number;
   private currentTaskSeqConfigId: number;
+  private currentPickStrategyConfigId: number;
 
   constructor() {
     this.users = new Map();
     this.wizardConfigurations = new Map();
     this.taskSequenceConfigurations = new Map();
+    this.pickStrategyConfigurations = new Map();
     this.currentUserId = 1;
     this.currentWizardConfigId = 1;
     this.currentTaskSeqConfigId = 1;
+    this.currentPickStrategyConfigId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -108,6 +120,33 @@ export class MemStorage implements IStorage {
     if (existing) {
       const updated = { ...existing, ...config };
       this.taskSequenceConfigurations.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  async getPickStrategyConfigurations(userId: number): Promise<PickStrategyConfiguration[]> {
+    return Array.from(this.pickStrategyConfigurations.values()).filter(
+      config => config.userId === userId
+    );
+  }
+
+  async savePickStrategyConfiguration(config: InsertPickStrategyConfiguration): Promise<PickStrategyConfiguration> {
+    const id = this.currentPickStrategyConfigId++;
+    const newConfig: PickStrategyConfiguration = { id, ...config };
+    this.pickStrategyConfigurations.set(id, newConfig);
+    return newConfig;
+  }
+
+  async deletePickStrategyConfiguration(id: number): Promise<boolean> {
+    return this.pickStrategyConfigurations.delete(id);
+  }
+
+  async updatePickStrategyConfiguration(id: number, config: Partial<InsertPickStrategyConfiguration>): Promise<PickStrategyConfiguration | undefined> {
+    const existing = this.pickStrategyConfigurations.get(id);
+    if (existing) {
+      const updated = { ...existing, ...config };
+      this.pickStrategyConfigurations.set(id, updated);
       return updated;
     }
     return undefined;

@@ -25,6 +25,21 @@ export const taskSequenceConfigurations = pgTable("task_sequence_configurations"
   shipmentAcknowledgment: text("shipment_acknowledgment"),
 });
 
+export const pickStrategyConfigurations = pgTable("pick_strategy_configurations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  taskKind: text("task_kind").notNull(),
+  taskSubKind: text("task_sub_kind").notNull(),
+  storageIdentifiers: jsonb("storage_identifiers").notNull(),
+  lineIdentifiers: jsonb("line_identifiers").notNull(),
+  taskAttrs: jsonb("task_attrs").notNull().default('{}'),
+  strat: text("strat").notNull(),
+  sortingStrategy: text("sorting_strategy").notNull(),
+  loadingStrategy: text("loading_strategy").notNull(),
+  groupBy: text("group_by").array(),
+  taskLabel: text("task_label").notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -38,9 +53,15 @@ export const insertTaskSequenceConfigurationSchema = createInsertSchema(taskSequ
   id: true,
 });
 
+export const insertPickStrategyConfigurationSchema = createInsertSchema(pickStrategyConfigurations).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type WizardConfiguration = typeof wizardConfigurations.$inferSelect;
 export type InsertWizardConfiguration = z.infer<typeof insertWizardConfigurationSchema>;
 export type TaskSequenceConfiguration = typeof taskSequenceConfigurations.$inferSelect;
 export type InsertTaskSequenceConfiguration = z.infer<typeof insertTaskSequenceConfigurationSchema>;
+export type PickStrategyConfiguration = typeof pickStrategyConfigurations.$inferSelect;
+export type InsertPickStrategyConfiguration = z.infer<typeof insertPickStrategyConfigurationSchema>;

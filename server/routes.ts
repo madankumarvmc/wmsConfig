@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema } from "@shared/schema";
+import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user for development (in production this would come from authentication)

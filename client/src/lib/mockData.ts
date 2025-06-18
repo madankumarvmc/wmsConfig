@@ -113,4 +113,37 @@ export const groupByOptions = [
   { value: 'customer', label: 'Customer' },
   { value: 'priority', label: 'Priority' },
   { value: 'batch', label: 'Batch' },
+  { value: 'category', label: 'Category' },
+];
+
+export const taskSubKinds = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'express', label: 'Express' },
+  { value: 'bulk', label: 'Bulk' },
+  { value: 'fragile', label: 'Fragile' },
+  { value: 'hazmat', label: 'Hazmat' },
+];
+
+export const pickStrategies = [
+  { value: 'PICK_ALL_TRIPS', label: 'PICK_ALL_TRIPS' },
+  { value: 'PICK_BY_ZONE', label: 'PICK_BY_ZONE' },
+  { value: 'PICK_BY_BATCH', label: 'PICK_BY_BATCH' },
+  { value: 'PICK_SEQUENTIAL', label: 'PICK_SEQUENTIAL' },
+  { value: 'PICK_PRIORITY', label: 'PICK_PRIORITY' },
+];
+
+export const specificSortingStrategies = [
+  { value: 'SORT_BY_INVOICE', label: 'SORT_BY_INVOICE' },
+  { value: 'SORT_BY_LOCATION', label: 'SORT_BY_LOCATION' },
+  { value: 'SORT_BY_PRIORITY', label: 'SORT_BY_PRIORITY' },
+  { value: 'SORT_BY_SKU', label: 'SORT_BY_SKU' },
+  { value: 'SORT_BY_CUSTOMER', label: 'SORT_BY_CUSTOMER' },
+];
+
+export const specificLoadingStrategies = [
+  { value: 'LOAD_BY_CUSTOMER', label: 'LOAD_BY_CUSTOMER' },
+  { value: 'LOAD_BY_ROUTE', label: 'LOAD_BY_ROUTE' },
+  { value: 'LOAD_BY_PRIORITY', label: 'LOAD_BY_PRIORITY' },
+  { value: 'LOAD_SEQUENTIAL', label: 'LOAD_SEQUENTIAL' },
+  { value: 'LOAD_BY_WEIGHT', label: 'LOAD_BY_WEIGHT' },
 ];

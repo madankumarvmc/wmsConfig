@@ -32,7 +32,7 @@ export const pickStrategyConfigurations = pgTable("pick_strategy_configurations"
   taskSubKind: text("task_sub_kind").notNull(),
   storageIdentifiers: jsonb("storage_identifiers").notNull(),
   lineIdentifiers: jsonb("line_identifiers").notNull(),
-  taskAttrs: jsonb("task_attrs").notNull().default('{}'),
+  taskAttrs: jsonb("task_attrs").default('{}'),
   strat: text("strat").notNull(),
   sortingStrategy: text("sorting_strategy").notNull(),
   loadingStrategy: text("loading_strategy").notNull(),

@@ -91,6 +91,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pick strategy configuration routes
+  app.get("/api/pick-strategies", async (req, res) => {
+    try {
+      const configurations = await storage.getPickStrategyConfigurations(MOCK_USER_ID);
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch pick strategy configurations" });
+    }
+  });
+
+  app.post("/api/pick-strategies", async (req, res) => {
+    try {
+      const validatedData = insertPickStrategyConfigurationSchema.parse({
+        ...req.body,
+        userId: MOCK_USER_ID
+      });
+      const configuration = await storage.savePickStrategyConfiguration(validatedData);
+      res.json(configuration);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid pick strategy configuration data" });
+    }
+  });
+
+  app.put("/api/pick-strategies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const configuration = await storage.updatePickStrategyConfiguration(id, req.body);
+      if (configuration) {
+        res.json(configuration);
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Invalid configuration data" });
+    }
+  });
+
+  app.delete("/api/pick-strategies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deletePickStrategyConfiguration(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete configuration" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

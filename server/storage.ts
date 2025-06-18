@@ -133,7 +133,12 @@ export class MemStorage implements IStorage {
 
   async savePickStrategyConfiguration(config: InsertPickStrategyConfiguration): Promise<PickStrategyConfiguration> {
     const id = this.currentPickStrategyConfigId++;
-    const newConfig: PickStrategyConfiguration = { id, ...config };
+    const newConfig: PickStrategyConfiguration = { 
+      id, 
+      ...config,
+      taskAttrs: config.taskAttrs || {},
+      groupBy: config.groupBy || []
+    };
     this.pickStrategyConfigurations.set(id, newConfig);
     return newConfig;
   }

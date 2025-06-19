@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema } from "@shared/schema";
+import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema, insertHUFormationConfigurationSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user for development (in production this would come from authentication)
@@ -132,6 +132,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deletePickStrategyConfiguration(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete configuration" });
+    }
+  });
+
+  // HU Formation configuration routes
+  app.get("/api/hu-formations", async (req, res) => {
+    try {
+      const configurations = await storage.getHUFormationConfigurations(MOCK_USER_ID);
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch HU formation configurations" });
+    }
+  });
+
+  app.get("/api/hu-formations/by-strategy/:pickStrategyId", async (req, res) => {
+    try {
+      const pickStrategyId = parseInt(req.params.pickStrategyId);
+      const configuration = await storage.getHUFormationByPickStrategy(pickStrategyId);
+      res.json(configuration || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch HU formation configuration" });
+    }
+  });
+
+  app.post("/api/hu-formations", async (req, res) => {
+    try {
+      const validatedData = insertHUFormationConfigurationSchema.parse({
+        ...req.body,
+        userId: MOCK_USER_ID
+      });
+      const configuration = await storage.saveHUFormationConfiguration(validatedData);
+      res.json(configuration);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid HU formation configuration data" });
+    }
+  });
+
+  app.put("/api/hu-formations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const configuration = await storage.updateHUFormationConfiguration(id, req.body);
+      if (configuration) {
+        res.json(configuration);
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Invalid configuration data" });
+    }
+  });
+
+  app.delete("/api/hu-formations/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteHUFormationConfiguration(id);
       if (deleted) {
         res.json({ success: true });
       } else {

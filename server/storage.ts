@@ -3,6 +3,7 @@ import {
   wizardConfigurations,
   taskSequenceConfigurations,
   pickStrategyConfigurations,
+  huFormationConfigurations,
   type User, 
   type InsertUser,
   type WizardConfiguration,
@@ -10,7 +11,9 @@ import {
   type TaskSequenceConfiguration,
   type InsertTaskSequenceConfiguration,
   type PickStrategyConfiguration,
-  type InsertPickStrategyConfiguration
+  type InsertPickStrategyConfiguration,
+  type HUFormationConfiguration,
+  type InsertHUFormationConfiguration
 } from "@shared/schema";
 
 export interface IStorage {
@@ -31,6 +34,12 @@ export interface IStorage {
   savePickStrategyConfiguration(config: InsertPickStrategyConfiguration): Promise<PickStrategyConfiguration>;
   deletePickStrategyConfiguration(id: number): Promise<boolean>;
   updatePickStrategyConfiguration(id: number, config: Partial<InsertPickStrategyConfiguration>): Promise<PickStrategyConfiguration | undefined>;
+  
+  getHUFormationConfigurations(userId: number): Promise<HUFormationConfiguration[]>;
+  getHUFormationByPickStrategy(pickStrategyId: number): Promise<HUFormationConfiguration | undefined>;
+  saveHUFormationConfiguration(config: InsertHUFormationConfiguration): Promise<HUFormationConfiguration>;
+  deleteHUFormationConfiguration(id: number): Promise<boolean>;
+  updateHUFormationConfiguration(id: number, config: Partial<InsertHUFormationConfiguration>): Promise<HUFormationConfiguration | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -38,20 +47,24 @@ export class MemStorage implements IStorage {
   private wizardConfigurations: Map<string, WizardConfiguration>;
   private taskSequenceConfigurations: Map<number, TaskSequenceConfiguration>;
   private pickStrategyConfigurations: Map<number, PickStrategyConfiguration>;
+  private huFormationConfigurations: Map<number, HUFormationConfiguration>;
   private currentUserId: number;
   private currentWizardConfigId: number;
   private currentTaskSeqConfigId: number;
   private currentPickStrategyConfigId: number;
+  private currentHUFormationConfigId: number;
 
   constructor() {
     this.users = new Map();
     this.wizardConfigurations = new Map();
     this.taskSequenceConfigurations = new Map();
     this.pickStrategyConfigurations = new Map();
+    this.huFormationConfigurations = new Map();
     this.currentUserId = 1;
     this.currentWizardConfigId = 1;
     this.currentTaskSeqConfigId = 1;
     this.currentPickStrategyConfigId = 1;
+    this.currentHUFormationConfigId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -152,6 +165,59 @@ export class MemStorage implements IStorage {
     if (existing) {
       const updated = { ...existing, ...config };
       this.pickStrategyConfigurations.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  async getHUFormationConfigurations(userId: number): Promise<HUFormationConfiguration[]> {
+    return Array.from(this.huFormationConfigurations.values()).filter(
+      config => config.userId === userId
+    );
+  }
+
+  async getHUFormationByPickStrategy(pickStrategyId: number): Promise<HUFormationConfiguration | undefined> {
+    return Array.from(this.huFormationConfigurations.values()).find(
+      config => config.pickStrategyId === pickStrategyId
+    );
+  }
+
+  async saveHUFormationConfiguration(config: InsertHUFormationConfiguration): Promise<HUFormationConfiguration> {
+    const id = this.currentHUFormationConfigId++;
+    const newConfig: HUFormationConfiguration = { 
+      id, 
+      ...config,
+      huKinds: config.huKinds || [],
+      dropHUQuantThreshold: config.dropHUQuantThreshold ?? 0,
+      swapHUThreshold: config.swapHUThreshold ?? 0,
+      huWeightThreshold: config.huWeightThreshold ?? 0,
+      qcMismatchMonthThreshold: config.qcMismatchMonthThreshold ?? 0,
+      allowComplete: config.allowComplete ?? true,
+      dropInnerHU: config.dropInnerHU ?? true,
+      allowInnerHUBreak: config.allowInnerHUBreak ?? true,
+      displayDropUOM: config.displayDropUOM ?? true,
+      autoUOMConversion: config.autoUOMConversion ?? true,
+      mobileSorting: config.mobileSorting ?? true,
+      quantSlottingForHUsInDrop: config.quantSlottingForHUsInDrop ?? true,
+      allowPickingMultiBatchfromHU: config.allowPickingMultiBatchfromHU ?? true,
+      displayEditPickQuantity: config.displayEditPickQuantity ?? true,
+      pickBundles: config.pickBundles ?? true,
+      enableEditQtyInPickOp: config.enableEditQtyInPickOp ?? true,
+      enableManualDestBinSelection: config.enableManualDestBinSelection ?? true
+    };
+    this.huFormationConfigurations.set(id, newConfig);
+    return newConfig;
+  }
+
+  async deleteHUFormationConfiguration(id: number): Promise<boolean> {
+    return this.huFormationConfigurations.delete(id);
+  }
+
+  async updateHUFormationConfiguration(id: number, config: Partial<InsertHUFormationConfiguration>): Promise<HUFormationConfiguration | undefined> {
+    const existing = this.huFormationConfigurations.get(id);
+    if (existing) {
+      const updated = { ...existing, ...config };
+      this.huFormationConfigurations.set(id, updated);
       return updated;
     }
     return undefined;

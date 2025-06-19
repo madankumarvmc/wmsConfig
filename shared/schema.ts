@@ -40,6 +40,37 @@ export const pickStrategyConfigurations = pgTable("pick_strategy_configurations"
   taskLabel: text("task_label").notNull(),
 });
 
+export const huFormationConfigurations = pgTable("hu_formation_configurations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  pickStrategyId: integer("pick_strategy_id").notNull(),
+  tripType: text("trip_type").notNull(),
+  huKinds: text("hu_kinds").array(),
+  scanSourceHUKind: text("scan_source_hu_kind").notNull(),
+  pickSourceHUKind: text("pick_source_hu_kind").notNull(),
+  carrierHUKind: text("carrier_hu_kind").notNull(),
+  huMappingMode: text("hu_mapping_mode").notNull(),
+  dropHUQuantThreshold: integer("drop_hu_quant_threshold").notNull().default(0),
+  dropUOM: text("drop_uom").notNull(),
+  allowComplete: boolean("allow_complete").notNull().default(true),
+  swapHUThreshold: integer("swap_hu_threshold").notNull().default(0),
+  dropInnerHU: boolean("drop_inner_hu").notNull().default(true),
+  allowInnerHUBreak: boolean("allow_inner_hu_break").notNull().default(true),
+  displayDropUOM: boolean("display_drop_uom").notNull().default(true),
+  autoUOMConversion: boolean("auto_uom_conversion").notNull().default(true),
+  mobileSorting: boolean("mobile_sorting").notNull().default(true),
+  sortingParam: text("sorting_param").notNull(),
+  huWeightThreshold: integer("hu_weight_threshold").notNull().default(0),
+  qcMismatchMonthThreshold: integer("qc_mismatch_month_threshold").notNull().default(0),
+  quantSlottingForHUsInDrop: boolean("quant_slotting_for_hus_in_drop").notNull().default(true),
+  allowPickingMultiBatchfromHU: boolean("allow_picking_multi_batch_from_hu").notNull().default(true),
+  displayEditPickQuantity: boolean("display_edit_pick_quantity").notNull().default(true),
+  pickBundles: boolean("pick_bundles").notNull().default(true),
+  enableEditQtyInPickOp: boolean("enable_edit_qty_in_pick_op").notNull().default(true),
+  dropSlottingMode: text("drop_slotting_mode").notNull(),
+  enableManualDestBinSelection: boolean("enable_manual_dest_bin_selection").notNull().default(true),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -57,6 +88,10 @@ export const insertPickStrategyConfigurationSchema = createInsertSchema(pickStra
   id: true,
 });
 
+export const insertHUFormationConfigurationSchema = createInsertSchema(huFormationConfigurations).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type WizardConfiguration = typeof wizardConfigurations.$inferSelect;
@@ -65,3 +100,5 @@ export type TaskSequenceConfiguration = typeof taskSequenceConfigurations.$infer
 export type InsertTaskSequenceConfiguration = z.infer<typeof insertTaskSequenceConfigurationSchema>;
 export type PickStrategyConfiguration = typeof pickStrategyConfigurations.$inferSelect;
 export type InsertPickStrategyConfiguration = z.infer<typeof insertPickStrategyConfigurationSchema>;
+export type HUFormationConfiguration = typeof huFormationConfigurations.$inferSelect;
+export type InsertHUFormationConfiguration = z.infer<typeof insertHUFormationConfigurationSchema>;

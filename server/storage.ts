@@ -16,7 +16,11 @@ import {
   type HUFormationConfiguration,
   type InsertHUFormationConfiguration,
   type WorkOrderManagementConfiguration,
-  type InsertWorkOrderManagementConfiguration
+  type InsertWorkOrderManagementConfiguration,
+  type InventoryGroup,
+  type InsertInventoryGroup,
+  type StockAllocationStrategy,
+  type InsertStockAllocationStrategy
 } from "@shared/schema";
 
 export interface IStorage {
@@ -49,6 +53,17 @@ export interface IStorage {
   saveWorkOrderManagementConfiguration(config: InsertWorkOrderManagementConfiguration): Promise<WorkOrderManagementConfiguration>;
   deleteWorkOrderManagementConfiguration(id: number): Promise<boolean>;
   updateWorkOrderManagementConfiguration(id: number, config: Partial<InsertWorkOrderManagementConfiguration>): Promise<WorkOrderManagementConfiguration | undefined>;
+  
+  getInventoryGroups(userId: number): Promise<InventoryGroup[]>;
+  saveInventoryGroup(group: InsertInventoryGroup): Promise<InventoryGroup>;
+  deleteInventoryGroup(id: number): Promise<boolean>;
+  updateInventoryGroup(id: number, group: Partial<InsertInventoryGroup>): Promise<InventoryGroup | undefined>;
+  
+  getStockAllocationStrategies(userId: number): Promise<StockAllocationStrategy[]>;
+  getStockAllocationStrategiesByGroup(inventoryGroupId: number): Promise<StockAllocationStrategy[]>;
+  saveStockAllocationStrategy(strategy: InsertStockAllocationStrategy): Promise<StockAllocationStrategy>;
+  deleteStockAllocationStrategy(id: number): Promise<boolean>;
+  updateStockAllocationStrategy(id: number, strategy: Partial<InsertStockAllocationStrategy>): Promise<StockAllocationStrategy | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -58,12 +73,16 @@ export class MemStorage implements IStorage {
   private pickStrategyConfigurations: Map<number, PickStrategyConfiguration>;
   private huFormationConfigurations: Map<number, HUFormationConfiguration>;
   private workOrderManagementConfigurations: Map<number, WorkOrderManagementConfiguration>;
+  private inventoryGroups: Map<number, InventoryGroup>;
+  private stockAllocationStrategies: Map<number, StockAllocationStrategy>;
   private currentUserId: number;
   private currentWizardConfigId: number;
   private currentTaskSeqConfigId: number;
   private currentPickStrategyConfigId: number;
   private currentHUFormationConfigId: number;
   private currentWorkOrderManagementConfigId: number;
+  private currentInventoryGroupId: number;
+  private currentStockAllocationStrategyId: number;
 
   constructor() {
     this.users = new Map();
@@ -72,12 +91,16 @@ export class MemStorage implements IStorage {
     this.pickStrategyConfigurations = new Map();
     this.huFormationConfigurations = new Map();
     this.workOrderManagementConfigurations = new Map();
+    this.inventoryGroups = new Map();
+    this.stockAllocationStrategies = new Map();
     this.currentUserId = 1;
     this.currentWizardConfigId = 1;
     this.currentTaskSeqConfigId = 1;
     this.currentPickStrategyConfigId = 1;
     this.currentHUFormationConfigId = 1;
     this.currentWorkOrderManagementConfigId = 1;
+    this.currentInventoryGroupId = 1;
+    this.currentStockAllocationStrategyId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {

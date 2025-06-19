@@ -90,6 +90,36 @@ export const workOrderManagementConfigurations = pgTable("work_order_management_
   dropMandatoryScan: boolean("drop_mandatory_scan").notNull().default(true),
 });
 
+export const inventoryGroups = pgTable("inventory_groups", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  name: text("name").notNull(),
+  storageIdentifiers: jsonb("storage_identifiers").notNull(),
+  taskType: text("task_type").notNull().default("OUTBOUND_REPLEN"),
+  taskSubKind: text("task_sub_kind").notNull().default(""),
+  taskAttrs: jsonb("task_attrs").notNull(),
+  areaTypes: text("area_types").array().notNull(),
+  areas: text("areas").array().notNull(),
+});
+
+export const stockAllocationStrategies = pgTable("stock_allocation_strategies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  inventoryGroupId: integer("inventory_group_id").notNull(),
+  mode: text("mode").notNull(), // "PICK" or "PUT"
+  priority: integer("priority").notNull().default(100),
+  skipZoneFace: boolean("skip_zone_face"),
+  orderByQuantUpdatedAt: boolean("order_by_quant_updated_at").notNull().default(false),
+  searchScope: text("search_scope").notNull().default("AREA"),
+  preferFixed: boolean("prefer_fixed").notNull().default(true),
+  preferNonFixed: boolean("prefer_non_fixed").notNull().default(false),
+  statePreferenceSeq: text("state_preference_seq").array().notNull(),
+  batchPreferenceMode: text("batch_preference_mode").notNull().default("NONE"),
+  orderByPickingPosition: boolean("order_by_picking_position").notNull().default(false),
+  useInventorySnapshotForPickSlotting: boolean("use_inventory_snapshot_for_pick_slotting").notNull().default(false),
+  optimizationMode: text("optimization_mode").notNull().default("TOUCH"),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -115,6 +145,14 @@ export const insertWorkOrderManagementConfigurationSchema = createInsertSchema(w
   id: true,
 });
 
+export const insertInventoryGroupSchema = createInsertSchema(inventoryGroups).omit({
+  id: true,
+});
+
+export const insertStockAllocationStrategySchema = createInsertSchema(stockAllocationStrategies).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type WizardConfiguration = typeof wizardConfigurations.$inferSelect;
@@ -127,3 +165,7 @@ export type HUFormationConfiguration = typeof huFormationConfigurations.$inferSe
 export type InsertHUFormationConfiguration = z.infer<typeof insertHUFormationConfigurationSchema>;
 export type WorkOrderManagementConfiguration = typeof workOrderManagementConfigurations.$inferSelect;
 export type InsertWorkOrderManagementConfiguration = z.infer<typeof insertWorkOrderManagementConfigurationSchema>;
+export type InventoryGroup = typeof inventoryGroups.$inferSelect;
+export type InsertInventoryGroup = z.infer<typeof insertInventoryGroupSchema>;
+export type StockAllocationStrategy = typeof stockAllocationStrategies.$inferSelect;
+export type InsertStockAllocationStrategy = z.infer<typeof insertStockAllocationStrategySchema>;

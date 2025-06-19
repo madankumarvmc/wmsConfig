@@ -376,6 +376,274 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Quick Setup - Apply Default Configuration
+  app.post("/api/quick-setup", async (req, res) => {
+    try {
+      const results = {
+        taskSequences: 0,
+        pickStrategies: 0,
+        huFormations: 0,
+        workOrderManagement: 0,
+        inventoryGroups: 0,
+        stockAllocationStrategies: 0
+      };
+
+      // Default Task Sequence Configuration
+      const taskSeqConfig = await storage.saveTaskSequenceConfiguration({
+        userId: MOCK_USER_ID,
+        storageIdentifiers: {},
+        lineIdentifiers: {},
+        taskSequences: ["OUTBOUND_REPLEN", "OUTBOUND_PICK", "OUTBOUND_LOAD"],
+        shipmentAcknowledgment: "SHIPMENT"
+      });
+      results.taskSequences = 1;
+
+      // Default Pick Strategy Configurations
+      const pickStrategy1 = await storage.savePickStrategyConfiguration({
+        userId: MOCK_USER_ID,
+        storageIdentifiers: { uom: "L0" },
+        lineIdentifiers: {},
+        taskKind: "OUTBOUND_PICK",
+        taskSubKind: "",
+        strat: "OPTIMIZE_PICK_PATH",
+        sortingStrategy: "BY_LOCATION",
+        loadingStrategy: "LOAD_BY_LM_TRIP",
+        taskLabel: "L0 Pick Strategy",
+        taskAttrs: {},
+        groupBy: ["uom"]
+      });
+
+      const pickStrategy2 = await storage.savePickStrategyConfiguration({
+        userId: MOCK_USER_ID,
+        storageIdentifiers: { uom: "L2" },
+        lineIdentifiers: {},
+        taskKind: "OUTBOUND_PICK", 
+        taskSubKind: "",
+        strat: "OPTIMIZE_PICK_PATH",
+        sortingStrategy: "BY_LOCATION",
+        loadingStrategy: "LOAD_BY_LM_TRIP",
+        taskLabel: "L2 Pick Strategy",
+        taskAttrs: {},
+        groupBy: ["uom"]
+      });
+      results.pickStrategies = 2;
+
+      // Default HU Formation Configurations
+      const huFormation1 = await storage.saveHUFormationConfiguration({
+        userId: MOCK_USER_ID,
+        pickStrategyId: pickStrategy1.id,
+        tripType: "LM",
+        huKinds: ["PALLET"],
+        scanSourceHUKind: "PALLET",
+        pickSourceHUKind: "NONE",
+        carrierHUKind: "PALLET",
+        huMappingMode: "BIN",
+        dropHUQuantThreshold: 0,
+        dropUOM: "L0",
+        allowComplete: false,
+        swapHUThreshold: 0,
+        dropInnerHU: false,
+        allowInnerHUBreak: false,
+        displayDropUOM: false,
+        autoUOMConversion: false,
+        mobileSorting: false,
+        sortingParam: "",
+        huWeightThreshold: 0,
+        qcMismatchMonthThreshold: 0,
+        quantSlottingForHUsInDrop: false,
+        allowPickingMultiBatchfromHU: false,
+        displayEditPickQuantity: false,
+        pickBundles: false,
+        enableEditQtyInPickOp: true,
+        dropSlottingMode: "BIN",
+        enableManualDestBinSelection: false
+      });
+
+      const huFormation2 = await storage.saveHUFormationConfiguration({
+        userId: MOCK_USER_ID,
+        pickStrategyId: pickStrategy2.id,
+        tripType: "LM",
+        huKinds: ["PALLET"],
+        scanSourceHUKind: "PALLET",
+        pickSourceHUKind: "NONE",
+        carrierHUKind: "PALLET",
+        huMappingMode: "BIN",
+        dropHUQuantThreshold: 0,
+        dropUOM: "L2",
+        allowComplete: false,
+        swapHUThreshold: 0,
+        dropInnerHU: false,
+        allowInnerHUBreak: false,
+        displayDropUOM: false,
+        autoUOMConversion: false,
+        mobileSorting: false,
+        sortingParam: "",
+        huWeightThreshold: 0,
+        qcMismatchMonthThreshold: 0,
+        quantSlottingForHUsInDrop: false,
+        allowPickingMultiBatchfromHU: false,
+        displayEditPickQuantity: false,
+        pickBundles: false,
+        enableEditQtyInPickOp: true,
+        dropSlottingMode: "BIN",
+        enableManualDestBinSelection: false
+      });
+      results.huFormations = 2;
+
+      // Default Work Order Management Configurations
+      const workOrder1 = await storage.saveWorkOrderManagementConfiguration({
+        userId: MOCK_USER_ID,
+        pickStrategyId: pickStrategy1.id,
+        mapSegregationGroupsToBins: false,
+        dropHUInBin: true,
+        scanDestHUInDrop: false,
+        allowHUBreakInDrop: false,
+        strictBatchAdherence: true,
+        allowWorkOrderSplit: true,
+        undoOp: true,
+        disableWorkOrder: false,
+        allowUnpick: false,
+        supportPalletScan: false,
+        loadingUnits: ["PALLET"],
+        pickMandatoryScan: false,
+        dropMandatoryScan: true
+      });
+
+      const workOrder2 = await storage.saveWorkOrderManagementConfiguration({
+        userId: MOCK_USER_ID,
+        pickStrategyId: pickStrategy2.id,
+        mapSegregationGroupsToBins: false,
+        dropHUInBin: true,
+        scanDestHUInDrop: false,
+        allowHUBreakInDrop: false,
+        strictBatchAdherence: true,
+        allowWorkOrderSplit: true,
+        undoOp: true,
+        disableWorkOrder: false,
+        allowUnpick: false,
+        supportPalletScan: false,
+        loadingUnits: ["PALLET"],
+        pickMandatoryScan: false,
+        dropMandatoryScan: true
+      });
+      results.workOrderManagement = 2;
+
+      // Default Inventory Groups and Stock Allocation Strategies
+      const group1 = await storage.saveInventoryGroup({
+        userId: MOCK_USER_ID,
+        name: "L0 Inventory Group",
+        storageIdentifiers: { uom: "L0" },
+        taskType: "OUTBOUND_PICK",
+        taskSubKind: "",
+        taskAttrs: { destUOM: "L0" },
+        areaTypes: ["INVENTORY"],
+        areas: []
+      });
+
+      const group2 = await storage.saveInventoryGroup({
+        userId: MOCK_USER_ID,
+        name: "L2 Inventory Group",
+        storageIdentifiers: { uom: "L2" },
+        taskType: "OUTBOUND_PICK",
+        taskSubKind: "",
+        taskAttrs: { destUOM: "L2" },
+        areaTypes: ["INVENTORY"],
+        areas: []
+      });
+
+      const group3 = await storage.saveInventoryGroup({
+        userId: MOCK_USER_ID,
+        name: "Replenishment Group",
+        storageIdentifiers: {},
+        taskType: "OUTBOUND_REPLEN",
+        taskSubKind: "",
+        taskAttrs: { destUOM: "L0" },
+        areaTypes: ["INVENTORY"],
+        areas: []
+      });
+      results.inventoryGroups = 3;
+
+      // Note: Stock allocation strategies are automatically created when inventory groups are created
+      // We need to update them with specific configurations
+      const allStrategies = await storage.getStockAllocationStrategies(MOCK_USER_ID);
+      
+      // Update L0 group strategies
+      const l0Strategies = allStrategies.filter(s => s.inventoryGroupId === group1.id);
+      if (l0Strategies.length === 2) {
+        const pickStrategy = l0Strategies.find(s => s.mode === "PICK");
+        const putStrategy = l0Strategies.find(s => s.mode === "PUT");
+        
+        if (pickStrategy) {
+          await storage.updateStockAllocationStrategy(pickStrategy.id, {
+            searchScope: "AREA",
+            skipZoneFace: null
+          });
+        }
+        
+        if (putStrategy) {
+          await storage.updateStockAllocationStrategy(putStrategy.id, {
+            searchScope: "WH",
+            skipZoneFace: null
+          });
+        }
+      }
+
+      // Update L2 group strategies
+      const l2Strategies = allStrategies.filter(s => s.inventoryGroupId === group2.id);
+      if (l2Strategies.length === 2) {
+        const pickStrategy = l2Strategies.find(s => s.mode === "PICK");
+        const putStrategy = l2Strategies.find(s => s.mode === "PUT");
+        
+        if (pickStrategy) {
+          await storage.updateStockAllocationStrategy(pickStrategy.id, {
+            searchScope: "AREA",
+            skipZoneFace: null
+          });
+        }
+        
+        if (putStrategy) {
+          await storage.updateStockAllocationStrategy(putStrategy.id, {
+            searchScope: "AREA",
+            skipZoneFace: null
+          });
+        }
+      }
+
+      // Update Replenishment group strategies
+      const replenStrategies = allStrategies.filter(s => s.inventoryGroupId === group3.id);
+      if (replenStrategies.length === 2) {
+        const pickStrategy = replenStrategies.find(s => s.mode === "PICK");
+        const putStrategy = replenStrategies.find(s => s.mode === "PUT");
+        
+        if (pickStrategy) {
+          await storage.updateStockAllocationStrategy(pickStrategy.id, {
+            searchScope: "AREA",
+            skipZoneFace: null
+          });
+        }
+        
+        if (putStrategy) {
+          await storage.updateStockAllocationStrategy(putStrategy.id, {
+            searchScope: "AREA",
+            skipZoneFace: null,
+            statePreferenceSeq: ["EMPTY", "SKU_EMPTY", "PURE", "IMPURE"]
+          });
+        }
+      }
+
+      results.stockAllocationStrategies = 6;
+
+      res.json({
+        success: true,
+        message: "Default warehouse configuration applied successfully",
+        summary: results
+      });
+    } catch (error) {
+      console.error('Quick setup error:', error);
+      res.status(500).json({ error: "Failed to apply default configuration" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

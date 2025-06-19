@@ -1,0 +1,130 @@
+[
+  {
+    "whId": 294786085853183,
+    "id": "0195a8b0-45bb-7397-8e95-a3796213261e",
+    "storageIdentifiers": {},
+    "taskType": "OUTBOUND_REPLEN",
+    "taskSubKind": "",
+    "taskAttrs": {
+      "destUOM": "L0"
+    },
+    "mode": "PICK",
+    "priority": 100,
+    "skipZoneFace": null,
+    "orderByQuantUpdatedAt": false,
+    "searchScope": "AREA",
+    "preferFixed": true,
+    "preferNonFixed": false,
+    "statePreferenceSeq": [
+      "PURE",
+      "IMPURE",
+      "EMPTY",
+      "SKU_EMPTY"
+    ],
+    "batchPreferenceMode": "NONE",
+    "areaTypes": [
+      "INVENTORY"
+    ],
+    "areas": [],
+    "updatedAt": "2025-06-03T04:42:20.388Z",
+    "orderByPickingPosition": false,
+    "useInventorySnapshotForPickSlotting": false,
+    "optimizationMode": "TOUCH"
+  },
+  {
+    "whId": 294786085853183,
+    "id": "0195a8b0-bb96-740e-8b81-6b420dd74a6c",
+    "storageIdentifiers": {},
+    "taskType": "OUTBOUND_REPLEN",
+    "taskSubKind": "",
+    "taskAttrs": {
+      "destUOM": "L0"
+    },
+    "mode": "PUT",
+    "priority": 100,
+    "skipZoneFace": "RESERVE",
+    "orderByQuantUpdatedAt": false,
+    "searchScope": "AREA",
+    "preferFixed": true,
+    "preferNonFixed": false,
+    "statePreferenceSeq": [
+      "EMPTY",
+      "SKU_EMPTY",
+      "PURE",
+      "IMPURE"
+    ],
+    "batchPreferenceMode": "NONE",
+    "areaTypes": [
+      "INVENTORY"
+    ],
+    "areas": [],
+    "updatedAt": "2025-06-03T04:41:22.410Z",
+    "orderByPickingPosition": false,
+    "useInventorySnapshotForPickSlotting": false,
+    "optimizationMode": "TOUCH"
+  },
+  {
+    "whId": 294786085853183,
+    "id": "0195a8b1-5b4a-7398-b6d0-8782340ab787",
+    "storageIdentifiers": {},
+    "taskType": "OUTBOUND_REPLEN",
+    "taskSubKind": "",
+    "taskAttrs": {
+      "destUOM": "L2"
+    },
+    "mode": "PICK",
+    "priority": 100,
+    "skipZoneFace": "PICK",
+    "orderByQuantUpdatedAt": false,
+    "searchScope": "AREA",
+    "preferFixed": true,
+    "preferNonFixed": false,
+    "statePreferenceSeq": [
+      "PURE",
+      "IMPURE",
+      "EMPTY",
+      "SKU_EMPTY"
+    ],
+    "batchPreferenceMode": "NONE",
+    "areaTypes": [
+      "INVENTORY"
+    ],
+    "areas": [],
+    "updatedAt": "2025-06-03T04:41:54.725Z",
+    "orderByPickingPosition": false,
+    "useInventorySnapshotForPickSlotting": false,
+    "optimizationMode": "TOUCH"
+  },
+  {
+    "whId": 294786085853183,
+    "id": "0195a8b1-a396-740f-a42f-e8fc33ad557f",
+    "storageIdentifiers": {},
+    "taskType": "OUTBOUND_REPLEN",
+    "taskSubKind": "",
+    "taskAttrs": {
+      "destUOM": "L2"
+    },
+    "mode": "PUT",
+    "priority": 100,
+    "skipZoneFace": "RESERVE",
+    "orderByQuantUpdatedAt": false,
+    "searchScope": "AREA",
+    "preferFixed": true,
+    "preferNonFixed": false,
+    "statePreferenceSeq": [
+      "EMPTY",
+      "SKU_EMPTY",
+      "PURE",
+      "IMPURE"
+    ],
+    "batchPreferenceMode": "NONE",
+    "areaTypes": [
+      "INVENTORY"
+    ],
+    "areas": [],
+    "updatedAt": "2025-06-03T04:44:26.155Z",
+    "orderByPickingPosition": false,
+    "useInventorySnapshotForPickSlotting": false,
+    "optimizationMode": "TOUCH"
+  }
+]

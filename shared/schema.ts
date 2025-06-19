@@ -71,6 +71,25 @@ export const huFormationConfigurations = pgTable("hu_formation_configurations", 
   enableManualDestBinSelection: boolean("enable_manual_dest_bin_selection").notNull().default(true),
 });
 
+export const workOrderManagementConfigurations = pgTable("work_order_management_configurations", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  pickStrategyId: integer("pick_strategy_id").notNull(),
+  mapSegregationGroupsToBins: boolean("map_segregation_groups_to_bins").notNull().default(true),
+  dropHUInBin: boolean("drop_hu_in_bin").notNull().default(true),
+  scanDestHUInDrop: boolean("scan_dest_hu_in_drop").notNull().default(true),
+  allowHUBreakInDrop: boolean("allow_hu_break_in_drop").notNull().default(true),
+  strictBatchAdherence: boolean("strict_batch_adherence").notNull().default(true),
+  allowWorkOrderSplit: boolean("allow_work_order_split").notNull().default(true),
+  undoOp: boolean("undo_op").notNull().default(true),
+  disableWorkOrder: boolean("disable_work_order").notNull().default(false),
+  allowUnpick: boolean("allow_unpick").notNull().default(true),
+  supportPalletScan: boolean("support_pallet_scan").notNull().default(true),
+  loadingUnits: text("loading_units").array(),
+  pickMandatoryScan: boolean("pick_mandatory_scan").notNull().default(true),
+  dropMandatoryScan: boolean("drop_mandatory_scan").notNull().default(true),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -92,6 +111,10 @@ export const insertHUFormationConfigurationSchema = createInsertSchema(huFormati
   id: true,
 });
 
+export const insertWorkOrderManagementConfigurationSchema = createInsertSchema(workOrderManagementConfigurations).omit({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type WizardConfiguration = typeof wizardConfigurations.$inferSelect;
@@ -102,3 +125,5 @@ export type PickStrategyConfiguration = typeof pickStrategyConfigurations.$infer
 export type InsertPickStrategyConfiguration = z.infer<typeof insertPickStrategyConfigurationSchema>;
 export type HUFormationConfiguration = typeof huFormationConfigurations.$inferSelect;
 export type InsertHUFormationConfiguration = z.infer<typeof insertHUFormationConfigurationSchema>;
+export type WorkOrderManagementConfiguration = typeof workOrderManagementConfigurations.$inferSelect;
+export type InsertWorkOrderManagementConfiguration = z.infer<typeof insertWorkOrderManagementConfigurationSchema>;

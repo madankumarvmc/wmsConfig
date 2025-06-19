@@ -13,7 +13,9 @@ import {
   type PickStrategyConfiguration,
   type InsertPickStrategyConfiguration,
   type HUFormationConfiguration,
-  type InsertHUFormationConfiguration
+  type InsertHUFormationConfiguration,
+  type WorkOrderManagementConfiguration,
+  type InsertWorkOrderManagementConfiguration
 } from "@shared/schema";
 
 export interface IStorage {
@@ -40,6 +42,12 @@ export interface IStorage {
   saveHUFormationConfiguration(config: InsertHUFormationConfiguration): Promise<HUFormationConfiguration>;
   deleteHUFormationConfiguration(id: number): Promise<boolean>;
   updateHUFormationConfiguration(id: number, config: Partial<InsertHUFormationConfiguration>): Promise<HUFormationConfiguration | undefined>;
+  
+  getWorkOrderManagementConfigurations(userId: number): Promise<WorkOrderManagementConfiguration[]>;
+  getWorkOrderManagementByPickStrategy(pickStrategyId: number): Promise<WorkOrderManagementConfiguration | undefined>;
+  saveWorkOrderManagementConfiguration(config: InsertWorkOrderManagementConfiguration): Promise<WorkOrderManagementConfiguration>;
+  deleteWorkOrderManagementConfiguration(id: number): Promise<boolean>;
+  updateWorkOrderManagementConfiguration(id: number, config: Partial<InsertWorkOrderManagementConfiguration>): Promise<WorkOrderManagementConfiguration | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -48,11 +56,13 @@ export class MemStorage implements IStorage {
   private taskSequenceConfigurations: Map<number, TaskSequenceConfiguration>;
   private pickStrategyConfigurations: Map<number, PickStrategyConfiguration>;
   private huFormationConfigurations: Map<number, HUFormationConfiguration>;
+  private workOrderManagementConfigurations: Map<number, WorkOrderManagementConfiguration>;
   private currentUserId: number;
   private currentWizardConfigId: number;
   private currentTaskSeqConfigId: number;
   private currentPickStrategyConfigId: number;
   private currentHUFormationConfigId: number;
+  private currentWorkOrderManagementConfigId: number;
 
   constructor() {
     this.users = new Map();
@@ -60,11 +70,13 @@ export class MemStorage implements IStorage {
     this.taskSequenceConfigurations = new Map();
     this.pickStrategyConfigurations = new Map();
     this.huFormationConfigurations = new Map();
+    this.workOrderManagementConfigurations = new Map();
     this.currentUserId = 1;
     this.currentWizardConfigId = 1;
     this.currentTaskSeqConfigId = 1;
     this.currentPickStrategyConfigId = 1;
     this.currentHUFormationConfigId = 1;
+    this.currentWorkOrderManagementConfigId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {

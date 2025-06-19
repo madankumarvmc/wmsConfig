@@ -186,3 +186,12 @@ export const dropSlottingModes = [
   { value: 'LOCATION', label: 'Location' },
   { value: 'MANUAL', label: 'Manual' },
 ];
+
+export const loadingUnitOptions = [
+  { value: 'CRATE', label: 'Crate' },
+  { value: 'PALLET', label: 'Pallet' },
+  { value: 'BOX', label: 'Box' },
+  { value: 'TOTE', label: 'Tote' },
+  { value: 'CONTAINER', label: 'Container' },
+  { value: 'CART', label: 'Cart' },
+];

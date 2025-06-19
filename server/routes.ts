@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema, insertHUFormationConfigurationSchema } from "@shared/schema";
+import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema, insertHUFormationConfigurationSchema, insertWorkOrderManagementConfigurationSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user for development (in production this would come from authentication)
@@ -193,6 +193,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteHUFormationConfiguration(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete configuration" });
+    }
+  });
+
+  // Work Order Management configuration routes
+  app.get("/api/work-order-management", async (req, res) => {
+    try {
+      const configurations = await storage.getWorkOrderManagementConfigurations(MOCK_USER_ID);
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch work order management configurations" });
+    }
+  });
+
+  app.get("/api/work-order-management/by-strategy/:pickStrategyId", async (req, res) => {
+    try {
+      const pickStrategyId = parseInt(req.params.pickStrategyId);
+      const configuration = await storage.getWorkOrderManagementByPickStrategy(pickStrategyId);
+      res.json(configuration || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch work order management configuration" });
+    }
+  });
+
+  app.post("/api/work-order-management", async (req, res) => {
+    try {
+      const validatedData = insertWorkOrderManagementConfigurationSchema.parse({
+        ...req.body,
+        userId: MOCK_USER_ID
+      });
+      const configuration = await storage.saveWorkOrderManagementConfiguration(validatedData);
+      res.json(configuration);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid work order management configuration data" });
+    }
+  });
+
+  app.put("/api/work-order-management/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const configuration = await storage.updateWorkOrderManagementConfiguration(id, req.body);
+      if (configuration) {
+        res.json(configuration);
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Invalid configuration data" });
+    }
+  });
+
+  app.delete("/api/work-order-management/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteWorkOrderManagementConfiguration(id);
       if (deleted) {
         res.json({ success: true });
       } else {

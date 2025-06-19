@@ -4,6 +4,7 @@ import {
   taskSequenceConfigurations,
   pickStrategyConfigurations,
   huFormationConfigurations,
+  workOrderManagementConfigurations,
   type User, 
   type InsertUser,
   type WizardConfiguration,
@@ -230,6 +231,55 @@ export class MemStorage implements IStorage {
     if (existing) {
       const updated = { ...existing, ...config };
       this.huFormationConfigurations.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  async getWorkOrderManagementConfigurations(userId: number): Promise<WorkOrderManagementConfiguration[]> {
+    return Array.from(this.workOrderManagementConfigurations.values()).filter(
+      config => config.userId === userId
+    );
+  }
+
+  async getWorkOrderManagementByPickStrategy(pickStrategyId: number): Promise<WorkOrderManagementConfiguration | undefined> {
+    return Array.from(this.workOrderManagementConfigurations.values()).find(
+      config => config.pickStrategyId === pickStrategyId
+    );
+  }
+
+  async saveWorkOrderManagementConfiguration(config: InsertWorkOrderManagementConfiguration): Promise<WorkOrderManagementConfiguration> {
+    const id = this.currentWorkOrderManagementConfigId++;
+    const newConfig: WorkOrderManagementConfiguration = { 
+      id, 
+      ...config,
+      loadingUnits: config.loadingUnits || [],
+      mapSegregationGroupsToBins: config.mapSegregationGroupsToBins ?? true,
+      dropHUInBin: config.dropHUInBin ?? true,
+      scanDestHUInDrop: config.scanDestHUInDrop ?? true,
+      allowHUBreakInDrop: config.allowHUBreakInDrop ?? true,
+      strictBatchAdherence: config.strictBatchAdherence ?? true,
+      allowWorkOrderSplit: config.allowWorkOrderSplit ?? true,
+      undoOp: config.undoOp ?? true,
+      disableWorkOrder: config.disableWorkOrder ?? false,
+      allowUnpick: config.allowUnpick ?? true,
+      supportPalletScan: config.supportPalletScan ?? true,
+      pickMandatoryScan: config.pickMandatoryScan ?? true,
+      dropMandatoryScan: config.dropMandatoryScan ?? true
+    };
+    this.workOrderManagementConfigurations.set(id, newConfig);
+    return newConfig;
+  }
+
+  async deleteWorkOrderManagementConfiguration(id: number): Promise<boolean> {
+    return this.workOrderManagementConfigurations.delete(id);
+  }
+
+  async updateWorkOrderManagementConfiguration(id: number, config: Partial<InsertWorkOrderManagementConfiguration>): Promise<WorkOrderManagementConfiguration | undefined> {
+    const existing = this.workOrderManagementConfigurations.get(id);
+    if (existing) {
+      const updated = { ...existing, ...config };
+      this.workOrderManagementConfigurations.set(id, updated);
       return updated;
     }
     return undefined;

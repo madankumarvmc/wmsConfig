@@ -147,3 +147,42 @@ export const specificLoadingStrategies = [
   { value: 'LOAD_SEQUENTIAL', label: 'LOAD_SEQUENTIAL' },
   { value: 'LOAD_BY_WEIGHT', label: 'LOAD_BY_WEIGHT' },
 ];
+
+export const tripTypes = [
+  { value: 'LM', label: 'LM (Last Mile)' },
+  { value: 'DIRECT', label: 'Direct' },
+  { value: 'CROSS_DOCK', label: 'Cross Dock' },
+  { value: 'BULK', label: 'Bulk' },
+  { value: 'EXPRESS', label: 'Express' },
+];
+
+export const huKindOptions = [
+  { value: 'PALLET', label: 'Pallet' },
+  { value: 'CARTON', label: 'Carton' },
+  { value: 'TOTE', label: 'Tote' },
+  { value: 'BAG', label: 'Bag' },
+  { value: 'ROLL', label: 'Roll' },
+  { value: 'CONTAINER', label: 'Container' },
+];
+
+export const scanSourceHUKindOptions = [
+  { value: 'NONE', label: 'None' },
+  { value: 'PALLET', label: 'Pallet' },
+  { value: 'CARTON', label: 'Carton' },
+  { value: 'TOTE', label: 'Tote' },
+  { value: 'AUTO', label: 'Auto Detect' },
+];
+
+export const huMappingModes = [
+  { value: 'BIN', label: 'Bin' },
+  { value: 'MANUAL', label: 'Manual' },
+  { value: 'AUTO', label: 'Auto' },
+  { value: 'FIXED', label: 'Fixed' },
+];
+
+export const dropSlottingModes = [
+  { value: 'BIN', label: 'Bin' },
+  { value: 'ZONE', label: 'Zone' },
+  { value: 'LOCATION', label: 'Location' },
+  { value: 'MANUAL', label: 'Manual' },
+];

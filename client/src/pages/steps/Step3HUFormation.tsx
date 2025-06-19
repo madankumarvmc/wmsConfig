@@ -32,9 +32,9 @@ const huFormationSchema = z.object({
   pickStrategyId: z.number(),
   tripType: z.string().min(1, "Trip type is required"),
   huKinds: z.array(z.string()),
-  scanSourceHUKind: z.string().min(1, "Scan source HU kind is required"),
-  pickSourceHUKind: z.string().min(1, "Pick source HU kind is required"),
-  carrierHUKind: z.string().min(1, "Carrier HU kind is required"),
+  scanSourceHUKind: z.string(),
+  pickSourceHUKind: z.string(),
+  carrierHUKind: z.string(),
   huMappingMode: z.string().min(1, "HU mapping mode is required"),
   dropHUQuantThreshold: z.number().min(0),
   dropUOM: z.string().min(1, "Drop UOM is required"),
@@ -45,7 +45,7 @@ const huFormationSchema = z.object({
   displayDropUOM: z.boolean(),
   autoUOMConversion: z.boolean(),
   mobileSorting: z.boolean(),
-  sortingParam: z.string().min(1, "Sorting parameter is required"),
+  sortingParam: z.string(),
   huWeightThreshold: z.number().min(0),
   qcMismatchMonthThreshold: z.number().min(0),
   quantSlottingForHUsInDrop: z.boolean(),
@@ -129,10 +129,13 @@ export default function Step3HUFormation() {
 
   const onSubmit = (data: HUFormation) => {
     if (selectedStrategyId) {
+      console.log('Submitting HU Formation:', data);
       saveHUFormationMutation.mutate({
         ...data,
         pickStrategyId: selectedStrategyId
       });
+    } else {
+      toast({ title: "Please select a pick strategy first", variant: "destructive" });
     }
   };
 

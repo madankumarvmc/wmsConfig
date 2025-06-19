@@ -97,10 +97,13 @@ export default function Step4WorkOrderManagement() {
 
   const onSubmit = (data: WorkOrderManagement) => {
     if (selectedStrategyId) {
+      console.log('Submitting Work Order Management:', data);
       saveWorkOrderMutation.mutate({
         ...data,
         pickStrategyId: selectedStrategyId
       });
+    } else {
+      toast({ title: "Please select a pick strategy first", variant: "destructive" });
     }
   };
 

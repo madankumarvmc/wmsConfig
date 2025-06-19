@@ -307,6 +307,140 @@ export class MemStorage implements IStorage {
     }
     return undefined;
   }
+
+  async getInventoryGroups(userId: number): Promise<InventoryGroup[]> {
+    return Array.from(this.inventoryGroups.values()).filter(
+      group => group.userId === userId
+    );
+  }
+
+  async saveInventoryGroup(group: InsertInventoryGroup): Promise<InventoryGroup> {
+    const id = this.currentInventoryGroupId++;
+    const newGroup: InventoryGroup = { 
+      id, 
+      ...group,
+      storageIdentifiers: group.storageIdentifiers || {},
+      taskType: group.taskType || "OUTBOUND_REPLEN",
+      taskSubKind: group.taskSubKind || "",
+      taskAttrs: group.taskAttrs || { destUOM: "L0" },
+      areaTypes: group.areaTypes || ["INVENTORY"],
+      areas: group.areas || []
+    };
+    this.inventoryGroups.set(id, newGroup);
+
+    // Automatically create PICK and PUT strategies for this group
+    await this.createDefaultStrategiesForGroup(newGroup);
+    
+    return newGroup;
+  }
+
+  private async createDefaultStrategiesForGroup(group: InventoryGroup): Promise<void> {
+    const pickStrategy: InsertStockAllocationStrategy = {
+      userId: group.userId,
+      inventoryGroupId: group.id,
+      mode: "PICK",
+      priority: 100,
+      skipZoneFace: null,
+      orderByQuantUpdatedAt: false,
+      searchScope: "AREA",
+      preferFixed: true,
+      preferNonFixed: false,
+      statePreferenceSeq: ["PURE", "IMPURE", "EMPTY", "SKU_EMPTY"],
+      batchPreferenceMode: "NONE",
+      orderByPickingPosition: false,
+      useInventorySnapshotForPickSlotting: false,
+      optimizationMode: "TOUCH"
+    };
+
+    const putStrategy: InsertStockAllocationStrategy = {
+      userId: group.userId,
+      inventoryGroupId: group.id,
+      mode: "PUT",
+      priority: 100,
+      skipZoneFace: null,
+      orderByQuantUpdatedAt: false,
+      searchScope: "AREA",
+      preferFixed: true,
+      preferNonFixed: false,
+      statePreferenceSeq: ["PURE", "IMPURE", "EMPTY", "SKU_EMPTY"],
+      batchPreferenceMode: "NONE",
+      orderByPickingPosition: false,
+      useInventorySnapshotForPickSlotting: false,
+      optimizationMode: "TOUCH"
+    };
+
+    await this.saveStockAllocationStrategy(pickStrategy);
+    await this.saveStockAllocationStrategy(putStrategy);
+  }
+
+  async deleteInventoryGroup(id: number): Promise<boolean> {
+    // Delete associated stock allocation strategies first
+    const strategies = Array.from(this.stockAllocationStrategies.values()).filter(
+      strategy => strategy.inventoryGroupId === id
+    );
+    for (const strategy of strategies) {
+      this.stockAllocationStrategies.delete(strategy.id);
+    }
+    
+    return this.inventoryGroups.delete(id);
+  }
+
+  async updateInventoryGroup(id: number, group: Partial<InsertInventoryGroup>): Promise<InventoryGroup | undefined> {
+    const existing = this.inventoryGroups.get(id);
+    if (existing) {
+      const updated = { ...existing, ...group };
+      this.inventoryGroups.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
+
+  async getStockAllocationStrategies(userId: number): Promise<StockAllocationStrategy[]> {
+    return Array.from(this.stockAllocationStrategies.values()).filter(
+      strategy => strategy.userId === userId
+    );
+  }
+
+  async getStockAllocationStrategiesByGroup(inventoryGroupId: number): Promise<StockAllocationStrategy[]> {
+    return Array.from(this.stockAllocationStrategies.values()).filter(
+      strategy => strategy.inventoryGroupId === inventoryGroupId
+    );
+  }
+
+  async saveStockAllocationStrategy(strategy: InsertStockAllocationStrategy): Promise<StockAllocationStrategy> {
+    const id = this.currentStockAllocationStrategyId++;
+    const newStrategy: StockAllocationStrategy = { 
+      id, 
+      ...strategy,
+      statePreferenceSeq: strategy.statePreferenceSeq || ["PURE", "IMPURE", "EMPTY", "SKU_EMPTY"],
+      skipZoneFace: strategy.skipZoneFace ?? null,
+      orderByQuantUpdatedAt: strategy.orderByQuantUpdatedAt ?? false,
+      searchScope: strategy.searchScope || "AREA",
+      preferFixed: strategy.preferFixed ?? true,
+      preferNonFixed: strategy.preferNonFixed ?? false,
+      batchPreferenceMode: strategy.batchPreferenceMode || "NONE",
+      orderByPickingPosition: strategy.orderByPickingPosition ?? false,
+      useInventorySnapshotForPickSlotting: strategy.useInventorySnapshotForPickSlotting ?? false,
+      optimizationMode: strategy.optimizationMode || "TOUCH",
+      priority: strategy.priority ?? 100
+    };
+    this.stockAllocationStrategies.set(id, newStrategy);
+    return newStrategy;
+  }
+
+  async deleteStockAllocationStrategy(id: number): Promise<boolean> {
+    return this.stockAllocationStrategies.delete(id);
+  }
+
+  async updateStockAllocationStrategy(id: number, strategy: Partial<InsertStockAllocationStrategy>): Promise<StockAllocationStrategy | undefined> {
+    const existing = this.stockAllocationStrategies.get(id);
+    if (existing) {
+      const updated = { ...existing, ...strategy };
+      this.stockAllocationStrategies.set(id, updated);
+      return updated;
+    }
+    return undefined;
+  }
 }
 
 export const storage = new MemStorage();

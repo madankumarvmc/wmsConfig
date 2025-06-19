@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema, insertHUFormationConfigurationSchema, insertWorkOrderManagementConfigurationSchema } from "@shared/schema";
+import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema, insertHUFormationConfigurationSchema, insertWorkOrderManagementConfigurationSchema, insertInventoryGroupSchema, insertStockAllocationStrategySchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user for development (in production this would come from authentication)
@@ -261,6 +261,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       res.status(500).json({ error: "Failed to delete configuration" });
+    }
+  });
+
+  // Inventory Groups routes
+  app.get("/api/inventory-groups", async (req, res) => {
+    try {
+      const groups = await storage.getInventoryGroups(MOCK_USER_ID);
+      res.json(groups);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch inventory groups" });
+    }
+  });
+
+  app.post("/api/inventory-groups", async (req, res) => {
+    try {
+      const validatedData = insertInventoryGroupSchema.parse({
+        ...req.body,
+        userId: MOCK_USER_ID
+      });
+      const group = await storage.saveInventoryGroup(validatedData);
+      res.json(group);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid inventory group data" });
+    }
+  });
+
+  app.put("/api/inventory-groups/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const group = await storage.updateInventoryGroup(id, req.body);
+      if (group) {
+        res.json(group);
+      } else {
+        res.status(404).json({ error: "Group not found" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Invalid group data" });
+    }
+  });
+
+  app.delete("/api/inventory-groups/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteInventoryGroup(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Group not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete group" });
+    }
+  });
+
+  // Stock Allocation Strategies routes
+  app.get("/api/stock-allocation-strategies", async (req, res) => {
+    try {
+      const strategies = await storage.getStockAllocationStrategies(MOCK_USER_ID);
+      res.json(strategies);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch stock allocation strategies" });
+    }
+  });
+
+  app.get("/api/stock-allocation-strategies/by-group/:inventoryGroupId", async (req, res) => {
+    try {
+      const inventoryGroupId = parseInt(req.params.inventoryGroupId);
+      const strategies = await storage.getStockAllocationStrategiesByGroup(inventoryGroupId);
+      res.json(strategies);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch strategies for group" });
+    }
+  });
+
+  app.post("/api/stock-allocation-strategies", async (req, res) => {
+    try {
+      const validatedData = insertStockAllocationStrategySchema.parse({
+        ...req.body,
+        userId: MOCK_USER_ID
+      });
+      const strategy = await storage.saveStockAllocationStrategy(validatedData);
+      res.json(strategy);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid stock allocation strategy data" });
+    }
+  });
+
+  app.put("/api/stock-allocation-strategies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const strategy = await storage.updateStockAllocationStrategy(id, req.body);
+      if (strategy) {
+        res.json(strategy);
+      } else {
+        res.status(404).json({ error: "Strategy not found" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Invalid strategy data" });
+    }
+  });
+
+  app.delete("/api/stock-allocation-strategies/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteStockAllocationStrategy(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Strategy not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete strategy" });
     }
   });
 

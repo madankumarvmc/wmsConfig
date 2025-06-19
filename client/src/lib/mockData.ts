@@ -195,3 +195,50 @@ export const loadingUnitOptions = [
   { value: 'CONTAINER', label: 'Container' },
   { value: 'CART', label: 'Cart' },
 ];
+
+export const taskTypes = [
+  { value: 'OUTBOUND_REPLEN', label: 'Outbound Replenishment' },
+  { value: 'INBOUND_PUT', label: 'Inbound Put' },
+  { value: 'CYCLE_COUNT', label: 'Cycle Count' },
+  { value: 'TRANSFER', label: 'Transfer' },
+];
+
+export const areaTypes = [
+  { value: 'INVENTORY', label: 'Inventory' },
+  { value: 'STAGING', label: 'Staging' },
+  { value: 'RECEIVING', label: 'Receiving' },
+  { value: 'SHIPPING', label: 'Shipping' },
+  { value: 'RETURNS', label: 'Returns' },
+];
+
+export const searchScopes = [
+  { value: 'AREA', label: 'Area' },
+  { value: 'ZONE', label: 'Zone' },
+  { value: 'BIN', label: 'Bin' },
+  { value: 'LOCATION', label: 'Location' },
+];
+
+export const statePreferenceOptions = [
+  { value: 'PURE', label: 'Pure' },
+  { value: 'IMPURE', label: 'Impure' },
+  { value: 'EMPTY', label: 'Empty' },
+  { value: 'SKU_EMPTY', label: 'SKU Empty' },
+  { value: 'RESERVED', label: 'Reserved' },
+  { value: 'BLOCKED', label: 'Blocked' },
+];
+
+export const batchPreferenceModes = [
+  { value: 'NONE', label: 'None' },
+  { value: 'FIFO', label: 'FIFO (First In, First Out)' },
+  { value: 'LIFO', label: 'LIFO (Last In, First Out)' },
+  { value: 'EXPIRY', label: 'By Expiry Date' },
+  { value: 'BATCH_NUMBER', label: 'By Batch Number' },
+];
+
+export const optimizationModes = [
+  { value: 'TOUCH', label: 'Touch' },
+  { value: 'DISTANCE', label: 'Distance' },
+  { value: 'TIME', label: 'Time' },
+  { value: 'COST', label: 'Cost' },
+  { value: 'EFFICIENCY', label: 'Efficiency' },
+];

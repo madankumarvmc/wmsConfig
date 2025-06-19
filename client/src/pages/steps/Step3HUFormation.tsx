@@ -102,7 +102,7 @@ export default function Step3HUFormation() {
   });
 
   const { data: huFormations = [] } = useQuery<any[]>({
-    queryKey: ['/api/hu-formations'],
+    queryKey: ['/api/hu-formation'],
   });
 
   const saveHUFormationMutation = useMutation({
@@ -111,15 +111,15 @@ export default function Step3HUFormation() {
       const existing = huFormations.find(hf => hf.pickStrategyId === data.pickStrategyId);
       
       if (existing) {
-        const response = await apiRequest('PUT', `/api/hu-formations/${existing.id}`, data);
+        const response = await apiRequest('PUT', `/api/hu-formation/${existing.id}`, data);
         return response.json();
       } else {
-        const response = await apiRequest('POST', '/api/hu-formations', data);
+        const response = await apiRequest('POST', '/api/hu-formation', data);
         return response.json();
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/hu-formations'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/hu-formation'] });
       toast({ title: "HU Formation saved successfully" });
     },
     onError: () => {

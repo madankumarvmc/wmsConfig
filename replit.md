@@ -98,6 +98,9 @@ The application uses three main database tables:
 ## Changelog
 
 Changelog:
+- June 29, 2025. Added "Inventory Groups" as new Step 1 to define SI/LI combinations that are referenced throughout wizard
+- June 29, 2025. Major architectural change: Removed SI/LI forms from individual steps, now use inventory group selections
+- June 29, 2025. Updated wizard structure from 5 to 6 steps with proper step numbering and navigation
 - June 19, 2025. Completed one-click Quick Setup feature based on real warehouse JSON structure
 - June 19, 2025. Fixed HU Formation and Work Order Management save button issues
 - June 19, 2025. Implemented Step 5 Stock Allocation with three-panel interface and automatic PICK/PUT strategy creation

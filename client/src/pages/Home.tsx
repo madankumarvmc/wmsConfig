@@ -79,38 +79,45 @@ export default function Home() {
   const wizardSteps = [
     {
       number: 1,
-      title: "Task Sequences",
-      description: "Define storage and line identifiers with task sequences",
+      title: "Inventory Groups",
+      description: "Define Storage Instruction (SI) and Location Instruction (LI) combinations",
       icon: <Package className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(1)
     },
     {
       number: 2,
-      title: "Pick Strategies",
-      description: "Configure pick strategies with sorting and loading preferences",
+      title: "Task Sequences",
+      description: "Configure task sequences for your inventory groups",
       icon: <Zap className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(2)
     },
     {
       number: 3,
-      title: "HU Formation",
-      description: "Set up handling unit formation rules and scanning requirements",
+      title: "Pick Strategies",
+      description: "Configure pick strategies with sorting and loading preferences",
       icon: <Database className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(3)
     },
     {
       number: 4,
-      title: "Work Order Management",
-      description: "Configure work order management settings and loading units",
+      title: "HU Formation",
+      description: "Set up handling unit formation rules and scanning requirements",
       icon: <Settings className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(4)
     },
     {
       number: 5,
-      title: "Stock Allocation",
-      description: "Define inventory groups with PICK and PUT allocation strategies",
+      title: "Work Order Management",
+      description: "Configure work order management settings and loading units",
       icon: <Users className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(5)
+    },
+    {
+      number: 6,
+      title: "Stock Allocation",
+      description: "Define PICK and PUT allocation strategies for inventory groups",
+      icon: <Users className="w-5 h-5" />,
+      isComplete: state.completedSteps.includes(6)
     }
   ];
 
@@ -141,13 +148,13 @@ export default function Home() {
             <CardContent>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <span className="text-2xl font-bold text-blue-600">{completedStepsCount}/5</span>
+                  <span className="text-2xl font-bold text-blue-600">{completedStepsCount}/6</span>
                   <span className="text-gray-600 ml-2">steps completed</span>
                 </div>
                 <div className="w-64 bg-gray-200 rounded-full h-2">
                   <div 
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(completedStepsCount / 5) * 100}%` }}
+                    style={{ width: `${(completedStepsCount / 6) * 100}%` }}
                   />
                 </div>
               </div>
@@ -270,7 +277,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Configuration Steps</CardTitle>
             <p className="text-gray-600">
-              Overview of the 5-step configuration process for setting up your WMS outbound module.
+              Overview of the 6-step configuration process for setting up your WMS outbound module.
             </p>
           </CardHeader>
           <CardContent>

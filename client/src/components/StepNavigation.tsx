@@ -15,43 +15,43 @@ import {
 const steps = [
   {
     number: 1,
-    title: 'Task Sequences',
+    title: 'Inventory Groups',
     description: 'Storage & Line Identifiers',
     icon: Package,
     path: '/step1'
   },
   {
     number: 2,
-    title: 'Pick Strategies',
+    title: 'Task Sequences',
     description: 'Task configuration',
     icon: Target,
     path: '/step2'
   },
   {
     number: 3,
-    title: 'HU Formation',
-    description: 'Path determination',
+    title: 'Pick Strategies',
+    description: 'Pick strategy setup',
     icon: Truck,
     path: '/step3'
   },
   {
     number: 4,
-    title: 'Work Orders',
-    description: 'Management strategy',
+    title: 'HU Formation',
+    description: 'Handling unit setup',
     icon: ClipboardList,
     path: '/step4'
   },
   {
     number: 5,
-    title: 'Stock Allocation',
-    description: 'Bin strategies',
+    title: 'Work Orders',
+    description: 'Work order management',
     icon: Database,
     path: '/step5'
   },
   {
     number: 6,
-    title: 'Review & Confirm',
-    description: 'Final validation',
+    title: 'Stock Allocation',
+    description: 'Stock allocation strategies',
     icon: CheckCircle,
     path: '/step6'
   }

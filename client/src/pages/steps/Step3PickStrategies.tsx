@@ -10,48 +10,19 @@ import WizardLayout from '@/components/WizardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { 
-  categories, 
-  skuClassTypes, 
-  skuClasses, 
-  uoms, 
-  buckets, 
-  channels, 
-  customers, 
-  taskKinds,
-  taskSubKinds,
-  pickStrategies,
-  specificSortingStrategies,
-  specificLoadingStrategies,
-  groupByOptions
-} from '@/lib/mockData';
+import type { InventoryGroup, PickStrategyConfiguration, InsertPickStrategyConfiguration } from '../../../../shared/schema';
 
 const pickStrategySchema = z.object({
-  id: z.number().optional(),
+  inventoryGroupId: z.number().min(1, "Inventory group is required"),
   taskKind: z.string().min(1, "Task kind is required"),
   taskSubKind: z.string().min(1, "Task sub kind is required"),
-  storageIdentifiers: z.object({
-    category: z.string().min(1, "Category is required"),
-    skuClassType: z.string().min(1, "SKU class type is required"),
-    skuClass: z.string().min(1, "SKU class is required"),
-    uom: z.string().min(1, "UOM is required"),
-    bucket: z.string().min(1, "Bucket is required"),
-    specialStorage: z.boolean()
-  }),
-  lineIdentifiers: z.object({
-    channel: z.string().min(1, "Channel is required"),
-    customer: z.string().min(1, "Customer is required")
-  }),
-  taskAttrs: z.object({}).optional(),
   strat: z.string().min(1, "Strategy is required"),
   sortingStrategy: z.string().min(1, "Sorting strategy is required"),
   loadingStrategy: z.string().min(1, "Loading strategy is required"),
@@ -59,34 +30,30 @@ const pickStrategySchema = z.object({
   taskLabel: z.string().min(1, "Task label is required")
 });
 
-type PickStrategy = z.infer<typeof pickStrategySchema>;
+type PickStrategyForm = z.infer<typeof pickStrategySchema>;
 
-export default function Step2PickStrategies() {
+export default function Step3PickStrategies() {
   const [, setLocation] = useLocation();
   const { dispatch } = useWizard();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [editingStrategy, setEditingStrategy] = useState<PickStrategy | null>(null);
-  const [isAddingStrategy, setIsAddingStrategy] = useState(false);
+  const [editingStrategy, setEditingStrategy] = useState<PickStrategyConfiguration | null>(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
-  const form = useForm<PickStrategy>({
+  const { data: inventoryGroups = [] } = useQuery<InventoryGroup[]>({
+    queryKey: ['/api/inventory-groups'],
+  });
+
+  const { data: strategies = [] } = useQuery<PickStrategyConfiguration[]>({
+    queryKey: ['/api/pick-strategies'],
+  });
+
+  const form = useForm<PickStrategyForm>({
     resolver: zodResolver(pickStrategySchema),
     defaultValues: {
+      inventoryGroupId: 0,
       taskKind: '',
       taskSubKind: '',
-      storageIdentifiers: {
-        category: '',
-        skuClassType: '',
-        skuClass: '',
-        uom: '',
-        bucket: '',
-        specialStorage: false
-      },
-      lineIdentifiers: {
-        channel: '',
-        customer: ''
-      },
-      taskAttrs: {},
       strat: '',
       sortingStrategy: '',
       loadingStrategy: '',
@@ -95,574 +62,426 @@ export default function Step2PickStrategies() {
     }
   });
 
-  const { data: strategies = [] } = useQuery<PickStrategy[]>({
-    queryKey: ['/api/pick-strategies'],
-  });
-
-  const saveStrategyMutation = useMutation({
-    mutationFn: async (data: PickStrategy) => {
-      if (data.id) {
-        const response = await apiRequest('PUT', `/api/pick-strategies/${data.id}`, data);
-        return response.json();
-      } else {
-        const response = await apiRequest('POST', '/api/pick-strategies', data);
-        return response.json();
-      }
+  const saveMutation = useMutation({
+    mutationFn: async (data: InsertPickStrategyConfiguration) => {
+      const response = await apiRequest('POST', '/api/pick-strategies', data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/pick-strategies'] });
-      toast({ title: "Pick strategy saved successfully" });
-      setIsAddingStrategy(false);
-      setEditingStrategy(null);
+      toast({ title: "Success", description: "Pick strategy saved successfully" });
       form.reset();
+      setIsFormVisible(false);
+      setEditingStrategy(null);
     },
-    onError: () => {
-      toast({ title: "Failed to save pick strategy", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to save pick strategy",
+        variant: "destructive" 
+      });
     }
   });
 
-  const deleteStrategyMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/pick-strategies/${id}`);
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: InsertPickStrategyConfiguration }) => {
+      const response = await apiRequest('PUT', `/api/pick-strategies/${id}`, data);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/pick-strategies'] });
-      toast({ title: "Pick strategy deleted successfully" });
+      toast({ title: "Success", description: "Pick strategy updated successfully" });
+      form.reset();
+      setIsFormVisible(false);
+      setEditingStrategy(null);
     },
-    onError: () => {
-      toast({ title: "Failed to delete pick strategy", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to update pick strategy",
+        variant: "destructive" 
+      });
     }
   });
 
-  const onSubmit = (data: PickStrategy) => {
-    saveStrategyMutation.mutate(data);
-  };
-
-  const handleEdit = (strategy: PickStrategy) => {
-    setEditingStrategy(strategy);
-    form.reset(strategy);
-    setIsAddingStrategy(true);
-  };
-
-  const handleDelete = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this pick strategy?')) {
-      deleteStrategyMutation.mutate(id);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/pick-strategies/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/pick-strategies'] });
+      toast({ title: "Success", description: "Pick strategy deleted successfully" });
+    },
+    onError: () => {
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete pick strategy",
+        variant: "destructive" 
+      });
     }
-  };
+  });
 
-  const addGroupBy = (option: string) => {
-    const currentGroupBy = form.getValues('groupBy');
-    if (!currentGroupBy.includes(option)) {
-      form.setValue('groupBy', [...currentGroupBy, option]);
+  const onSubmit = (data: PickStrategyForm) => {
+    const payload: InsertPickStrategyConfiguration = {
+      userId: 1,
+      inventoryGroupId: data.inventoryGroupId,
+      taskKind: data.taskKind,
+      taskSubKind: data.taskSubKind,
+      strat: data.strat,
+      sortingStrategy: data.sortingStrategy,
+      loadingStrategy: data.loadingStrategy,
+      groupBy: data.groupBy,
+      taskLabel: data.taskLabel
+    };
+
+    if (editingStrategy) {
+      updateMutation.mutate({ id: editingStrategy.id, data: payload });
+    } else {
+      saveMutation.mutate(payload);
     }
-  };
-
-  const removeGroupBy = (option: string) => {
-    const currentGroupBy = form.getValues('groupBy');
-    form.setValue('groupBy', currentGroupBy.filter(g => g !== option));
   };
 
   const handleNext = () => {
-    dispatch({ type: 'COMPLETE_STEP', payload: 2 });
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 3 });
-    setLocation('/step3');
+    dispatch({ type: 'COMPLETE_STEP', payload: 3 });
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 4 });
+    setLocation('/step4');
   };
 
   const handlePrevious = () => {
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 1 });
-    setLocation('/step1');
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 2 });
+    setLocation('/step2');
   };
 
-  const watchedGroupBy = form.watch('groupBy');
+  const getInventoryGroupName = (id: number) => {
+    const group = inventoryGroups.find(g => g.id === id);
+    return group?.name || 'Unknown';
+  };
+
+  const getInventoryGroupDisplay = (id: number) => {
+    const group = inventoryGroups.find(g => g.id === id);
+    if (!group) return 'Unknown';
+    
+    const storageIds = group.storageIdentifiers as any;
+    const lineIds = group.lineIdentifiers as any;
+    
+    return {
+      storage: `${storageIds?.category || 'N/A'} | ${storageIds?.uom || 'N/A'}`,
+      line: `${lineIds?.channel || 'N/A'} | ${lineIds?.customer || 'N/A'}`
+    };
+  };
+
+  const handleEdit = (strategy: PickStrategyConfiguration) => {
+    setEditingStrategy(strategy);
+    form.reset({
+      inventoryGroupId: strategy.inventoryGroupId,
+      taskKind: strategy.taskKind,
+      taskSubKind: strategy.taskSubKind,
+      strat: strategy.strat,
+      sortingStrategy: strategy.sortingStrategy,
+      loadingStrategy: strategy.loadingStrategy,
+      groupBy: strategy.groupBy || [],
+      taskLabel: strategy.taskLabel
+    });
+    setIsFormVisible(true);
+  };
+
+  const handleAddNew = () => {
+    if (inventoryGroups.length === 0) {
+      toast({
+        title: "No Inventory Groups",
+        description: "Please create inventory groups first before adding pick strategies.",
+        variant: "destructive"
+      });
+      setLocation('/step1');
+      return;
+    }
+    
+    setEditingStrategy(null);
+    form.reset();
+    setIsFormVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsFormVisible(false);
+    setEditingStrategy(null);
+    form.reset();
+  };
 
   return (
     <WizardLayout
-      title="Pick Strategy Definition"
-      description="Configure pick strategies for task kinds with Storage and Line Identifiers. Each strategy defines how items are picked, sorted, and loaded."
-      currentStep={2}
+      title="Pick Strategies"
+      description="Configure pick strategies for each inventory group to optimize warehouse picking operations."
+      currentStep={3}
       totalSteps={6}
       onNext={handleNext}
       onPrevious={handlePrevious}
-      nextLabel="Next: HU Formation"
-      previousLabel="Previous: Task Sequences"
+      nextLabel="Continue to HU Formation"
+      previousLabel="Back to Task Sequences"
     >
-      {/* Step Description */}
-      <Alert className="mb-6 border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700">
-          <strong>Step 2: Pick Strategy Definition</strong> - Configure pick strategies for each task kind with independent Storage and Line Identifier combinations. Define how items are picked, sorted, and loaded for different scenarios.
-        </AlertDescription>
-      </Alert>
-
-      {/* Pick Strategy Configuration */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Pick Strategy Configuration</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">Define strategies for task kinds with SI/LI combinations</p>
-            </div>
-            <Button
-              onClick={() => setIsAddingStrategy(true)}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Pick Strategy
-            </Button>
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-medium">Pick Strategies ({strategies.length})</h3>
           </div>
-        </CardHeader>
-        <CardContent>
-          {isAddingStrategy && (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mb-6 p-4 border rounded-lg bg-gray-50">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Task Configuration */}
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-gray-900">Task Configuration</h3>
-                    <div className="space-y-3">
-                      <FormField
-                        control={form.control}
-                        name="taskKind"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Task Kind</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select task kind" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {taskKinds.map(kind => (
-                                  <SelectItem key={kind.value} value={kind.value}>{kind.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="taskSubKind"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Task Sub Kind</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select sub kind" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {taskSubKinds.map(subKind => (
-                                  <SelectItem key={subKind.value} value={subKind.value}>{subKind.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="taskLabel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Task Label</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Enter task label" {...field} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
+          <Button 
+            onClick={handleAddNew}
+            disabled={isFormVisible || inventoryGroups.length === 0}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Pick Strategy
+          </Button>
+        </div>
 
-                  {/* Storage & Line Identifiers */}
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-gray-900">Storage & Line Identifiers</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Category</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {categories.map(cat => (
-                                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.skuClassType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">SKU Class Type</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {skuClassTypes.map(type => (
-                                  <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.skuClass"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">SKU Class</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Class" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {skuClasses.map(cls => (
-                                  <SelectItem key={cls.value} value={cls.value}>{cls.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.uom"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">UOM</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="UOM" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {uoms.map(uom => (
-                                  <SelectItem key={uom.value} value={uom.value}>{uom.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.bucket"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Bucket</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Bucket" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {buckets.map(bucket => (
-                                  <SelectItem key={bucket.value} value={bucket.value}>{bucket.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.specialStorage"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2 pt-6">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                              />
-                            </FormControl>
-                            <FormLabel className="text-xs">Special Storage</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <div className="space-y-3">
-                      <FormField
-                        control={form.control}
-                        name="lineIdentifiers.channel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Channel</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select channel" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {channels.map(channel => (
-                                  <SelectItem key={channel.value} value={channel.value}>{channel.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="lineIdentifiers.customer"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Customer</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select customer" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {customers.map(customer => (
-                                  <SelectItem key={customer.value} value={customer.value}>{customer.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
+        {/* Information Alert */}
+        {inventoryGroups.length === 0 && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>No Inventory Groups Found.</strong> Please create inventory groups first before configuring pick strategies.
+            </AlertDescription>
+          </Alert>
+        )}
 
-                  {/* Strategy Configuration */}
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-gray-900">Strategy Configuration</h3>
-                    <div className="space-y-3">
-                      <FormField
-                        control={form.control}
-                        name="strat"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Pick Strategy</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select strategy" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {pickStrategies.map(strategy => (
-                                  <SelectItem key={strategy.value} value={strategy.value}>{strategy.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="sortingStrategy"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Sorting Strategy</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select sorting" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {specificSortingStrategies.map(strategy => (
-                                  <SelectItem key={strategy.value} value={strategy.value}>{strategy.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="loadingStrategy"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Loading Strategy</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select loading" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {specificLoadingStrategies.map(strategy => (
-                                  <SelectItem key={strategy.value} value={strategy.value}>{strategy.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      
-                      {/* Group By Options */}
-                      <div className="space-y-3">
-                        <h4 className="text-sm font-medium text-gray-900">Group By</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {watchedGroupBy?.map((option) => (
-                            <Badge key={option} variant="secondary" className="flex items-center">
-                              {groupByOptions.find(g => g.value === option)?.label}
-                              <button
-                                type="button"
-                                onClick={() => removeGroupBy(option)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
-                            </Badge>
-                          ))}
-                        </div>
-                        <Select onValueChange={addGroupBy}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Add group by option" />
-                          </SelectTrigger>
+        {/* Create/Edit Form */}
+        {isFormVisible && inventoryGroups.length > 0 && (
+          <Card className="border-2 border-blue-200">
+            <CardHeader>
+              <CardTitle>{editingStrategy ? 'Edit' : 'Create'} Pick Strategy</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Inventory Group Selection */}
+                  <FormField
+                    control={form.control}
+                    name="inventoryGroupId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Inventory Group *</FormLabel>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))} 
+                          value={field.value?.toString() || ''}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an inventory group" />
+                            </SelectTrigger>
+                          </FormControl>
                           <SelectContent>
-                            {groupByOptions
-                              .filter(option => !watchedGroupBy?.includes(option.value))
-                              .map(option => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
+                            {inventoryGroups.map((group) => {
+                              const display = getInventoryGroupDisplay(group.id);
+                              return (
+                                <SelectItem key={group.id} value={group.id.toString()}>
+                                  <div className="flex items-center space-x-2">
+                                    <span>{group.name}</span>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {display.storage}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {display.line}
+                                    </Badge>
+                                  </div>
                                 </SelectItem>
-                              ))}
+                              );
+                            })}
                           </SelectContent>
                         </Select>
-                      </div>
-                    </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Strategy Configuration */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="taskKind"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Task Kind *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select task kind" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="OUTBOUND">OUTBOUND</SelectItem>
+                              <SelectItem value="INBOUND">INBOUND</SelectItem>
+                              <SelectItem value="TRANSFER">TRANSFER</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="taskSubKind"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Task Sub Kind *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select sub kind" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="PICK">PICK</SelectItem>
+                              <SelectItem value="REPLEN">REPLEN</SelectItem>
+                              <SelectItem value="LOAD">LOAD</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="strat"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Strategy *</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select strategy" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="FIFO">FIFO</SelectItem>
+                              <SelectItem value="LIFO">LIFO</SelectItem>
+                              <SelectItem value="FEFO">FEFO</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="taskLabel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Task Label *</FormLabel>
+                          <FormControl>
+                            <input 
+                              {...field} 
+                              placeholder="Enter task label"
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                </div>
 
-                <div className="flex justify-end space-x-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsAddingStrategy(false);
-                      setEditingStrategy(null);
-                      form.reset();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={saveStrategyMutation.isPending}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    {saveStrategyMutation.isPending ? 'Saving...' : (editingStrategy ? 'Update Strategy' : 'Save Strategy')}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          )}
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleCancel}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={saveMutation.isPending || updateMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saveMutation.isPending || updateMutation.isPending 
+                        ? 'Saving...' 
+                        : editingStrategy ? 'Update Strategy' : 'Create Strategy'
+                      }
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        )}
 
-          {/* Strategies List */}
-          {strategies.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-medium mb-4">Configured Pick Strategies</h3>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Task</TableHead>
-                      <TableHead>Storage ID</TableHead>
-                      <TableHead>Line ID</TableHead>
-                      <TableHead>Strategy</TableHead>
-                      <TableHead>Sorting</TableHead>
-                      <TableHead>Loading</TableHead>
-                      <TableHead>Group By</TableHead>
-                      <TableHead>Actions</TableHead>
+        {/* Existing Strategies List */}
+        {strategies.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Configured Pick Strategies</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Inventory Group</TableHead>
+                    <TableHead>Task Kind</TableHead>
+                    <TableHead>Strategy</TableHead>
+                    <TableHead>Task Label</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {strategies.map((strategy) => (
+                    <TableRow key={strategy.id}>
+                      <TableCell className="font-medium">
+                        {getInventoryGroupName(strategy.inventoryGroupId)}
+                      </TableCell>
+                      <TableCell>{strategy.taskKind}</TableCell>
+                      <TableCell>{strategy.strat}</TableCell>
+                      <TableCell>{strategy.taskLabel}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(strategy)}
+                            disabled={isFormVisible}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteMutation.mutate(strategy.id)}
+                            disabled={deleteMutation.isPending}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {strategies.map((strategy) => (
-                      <TableRow key={strategy.id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{strategy.taskKind}</div>
-                            <div className="text-sm text-gray-500">{strategy.taskSubKind}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{strategy.storageIdentifiers.category}</div>
-                            <div className="text-gray-500">{strategy.storageIdentifiers.skuClass}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div>{strategy.lineIdentifiers.channel}</div>
-                            <div className="text-gray-500">{strategy.lineIdentifiers.customer}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{strategy.strat}</TableCell>
-                        <TableCell>{strategy.sortingStrategy}</TableCell>
-                        <TableCell>{strategy.loadingStrategy}</TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {strategy.groupBy?.map((group) => (
-                              <Badge key={group} variant="outline" className="text-xs">
-                                {group}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEdit(strategy)}
-                            >
-                              <Edit className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => strategy.id && handleDelete(strategy.id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
-
-          {strategies.length === 0 && !isAddingStrategy && (
-            <div className="text-center py-8 text-gray-500">
-              <CheckCircle className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>No pick strategies configured yet.</p>
-              <p className="text-sm">Click "Add Pick Strategy" to get started.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : inventoryGroups.length > 0 ? (
+          <Card className="border-dashed border-2 border-gray-300">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <CheckCircle className="w-12 h-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Pick Strategies</h3>
+              <p className="text-gray-600 mb-6 max-w-md">
+                Create your first pick strategy by selecting an inventory group and configuring the strategy parameters.
+              </p>
+              <Button 
+                onClick={handleAddNew}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Pick Strategy
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
     </WizardLayout>
   );
 }

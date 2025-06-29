@@ -239,14 +239,14 @@ export default function Step6StockAllocation() {
       });
       return;
     }
-    dispatch({ type: 'COMPLETE_STEP', payload: 5 });
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 6 });
-    setLocation('/step6');
+    dispatch({ type: 'COMPLETE_STEP', payload: 6 });
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 7 });
+    setLocation('/step7');
   };
 
   const handlePrevious = () => {
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 4 });
-    setLocation('/step4');
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 5 });
+    setLocation('/step5');
   };
 
   const watchedStatePreferences = strategyForm.watch('statePreferenceSeq');
@@ -256,7 +256,7 @@ export default function Step6StockAllocation() {
     <WizardLayout
       title="Stock Allocation Strategy"
       description="Define inventory groups and configure PICK and PUT stock allocation strategies for each group."
-      currentStep={5}
+      currentStep={6}
       totalSteps={7}
       onNext={handleNext}
       onPrevious={handlePrevious}

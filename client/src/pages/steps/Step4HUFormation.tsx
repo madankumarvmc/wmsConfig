@@ -222,7 +222,7 @@ export default function Step4HUFormation() {
     <WizardLayout
       title="HU Formation & Path Determination"
       description="Configure handling unit formation and path determination for each pick strategy from Step 2."
-      currentStep={3}
+      currentStep={4}
       totalSteps={7}
       onNext={handleNext}
       onPrevious={handlePrevious}

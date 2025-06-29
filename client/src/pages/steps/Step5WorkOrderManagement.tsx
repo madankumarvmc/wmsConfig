@@ -178,7 +178,7 @@ export default function Step5WorkOrderManagement() {
     <WizardLayout
       title="Work Order Management Strategy"
       description="Configure work order management settings for each pick strategy from Step 2."
-      currentStep={4}
+      currentStep={5}
       totalSteps={7}
       onNext={handleNext}
       onPrevious={handlePrevious}

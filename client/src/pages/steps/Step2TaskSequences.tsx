@@ -4,32 +4,22 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, X, Edit, Trash2, Info, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Plus, X, Edit, Trash2, Info, CheckCircle, AlertTriangle, Package, ExternalLink } from 'lucide-react';
 
 import WizardLayout from '@/components/WizardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { 
-  categories, 
-  skuClassTypes, 
-  skuClasses, 
-  uoms, 
-  buckets, 
-  channels, 
-  customers, 
-  taskSequenceOptions,
-  shipmentAcknowledgmentOptions 
-} from '@/lib/mockData';
+import { taskSequenceOptions, shipmentAcknowledgmentOptions } from '@/lib/mockData';
+import type { InventoryGroup, TaskSequenceConfiguration, InsertTaskSequenceConfiguration } from '../../../../shared/schema';
 
 const configurationSchema = z.object({
   id: z.number().optional(),
@@ -42,7 +32,7 @@ type Configuration = z.infer<typeof configurationSchema>;
 
 export default function Step2TaskSequences() {
   const [, setLocation] = useLocation();
-  const { dispatch } = useWizard();
+  const { state, dispatch } = useWizard();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editingConfig, setEditingConfig] = useState<Configuration | null>(null);
@@ -51,34 +41,34 @@ export default function Step2TaskSequences() {
   const form = useForm<Configuration>({
     resolver: zodResolver(configurationSchema),
     defaultValues: {
-      storageIdentifiers: {
-        category: '',
-        skuClassType: '',
-        skuClass: '',
-        uom: '',
-        bucket: '',
-        specialStorage: false
-      },
-      lineIdentifiers: {
-        channel: '',
-        customer: ''
-      },
+      inventoryGroupId: 0,
       taskSequences: [],
       shipmentAcknowledgment: ''
     }
   });
 
-  const { data: configurations = [] } = useQuery({
+  const { data: configurations = [], isLoading } = useQuery<TaskSequenceConfiguration[]>({
     queryKey: ['/api/task-sequences'],
+  });
+
+  const { data: inventoryGroups = [] } = useQuery<InventoryGroup[]>({
+    queryKey: ['/api/inventory-groups'],
   });
 
   const saveConfigurationMutation = useMutation({
     mutationFn: async (data: Configuration) => {
+      const payload: InsertTaskSequenceConfiguration = {
+        userId: 1, // Mock user ID
+        inventoryGroupId: data.inventoryGroupId,
+        taskSequences: data.taskSequences,
+        shipmentAcknowledgment: data.shipmentAcknowledgment
+      };
+
       if (data.id) {
-        const response = await apiRequest('PUT', `/api/task-sequences/${data.id}`, data);
+        const response = await apiRequest('PUT', `/api/task-sequences/${data.id}`, payload);
         return response.json();
       } else {
-        const response = await apiRequest('POST', '/api/task-sequences', data);
+        const response = await apiRequest('POST', '/api/task-sequences', payload);
         return response.json();
       }
     },
@@ -90,20 +80,29 @@ export default function Step2TaskSequences() {
       form.reset();
     },
     onError: () => {
-      toast({ title: "Failed to save configuration", variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: "Failed to save configuration",
+        variant: "destructive" 
+      });
     }
   });
 
   const deleteConfigurationMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/task-sequences/${id}`);
+      const response = await apiRequest('DELETE', `/api/task-sequences/${id}`);
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/task-sequences'] });
       toast({ title: "Configuration deleted successfully" });
     },
     onError: () => {
-      toast({ title: "Failed to delete configuration", variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: "Failed to delete configuration",
+        variant: "destructive" 
+      });
     }
   });
 
@@ -111,448 +110,341 @@ export default function Step2TaskSequences() {
     saveConfigurationMutation.mutate(data);
   };
 
-  const handleEdit = (config: Configuration) => {
-    setEditingConfig(config);
-    form.reset(config);
+  const handleEdit = (config: TaskSequenceConfiguration) => {
+    const editData: Configuration = {
+      id: config.id,
+      inventoryGroupId: config.inventoryGroupId,
+      taskSequences: config.taskSequences || [],
+      shipmentAcknowledgment: config.shipmentAcknowledgment || ''
+    };
+    setEditingConfig(editData);
+    form.reset(editData);
     setIsAddingConfig(true);
   };
 
   const handleDelete = (id: number) => {
-    if (window.confirm('Are you sure you want to delete this configuration?')) {
-      deleteConfigurationMutation.mutate(id);
-    }
-  };
-
-  const addTaskSequence = (sequence: string) => {
-    const currentSequences = form.getValues('taskSequences');
-    if (!currentSequences.includes(sequence)) {
-      form.setValue('taskSequences', [...currentSequences, sequence]);
-    }
-  };
-
-  const removeTaskSequence = (sequence: string) => {
-    const currentSequences = form.getValues('taskSequences');
-    form.setValue('taskSequences', currentSequences.filter(s => s !== sequence));
+    deleteConfigurationMutation.mutate(id);
   };
 
   const handleNext = () => {
-    dispatch({ type: 'COMPLETE_STEP', payload: 1 });
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 2 });
-    setLocation('/step2');
+    if (configurations.length === 0) {
+      toast({
+        title: "No configurations",
+        description: "Please create at least one task sequence configuration before proceeding.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    dispatch({ type: 'COMPLETE_STEP', payload: 2 });
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 3 });
   };
 
-  const watchedTaskSequences = form.watch('taskSequences');
+  const handlePrevious = () => {
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 1 });
+  };
+
+  const getInventoryGroupName = (inventoryGroupId: number) => {
+    const group = inventoryGroups.find(g => g.id === inventoryGroupId);
+    return group ? group.name : `Group ${inventoryGroupId}`;
+  };
+
+  const getInventoryGroupDetails = (inventoryGroupId: number) => {
+    const group = inventoryGroups.find(g => g.id === inventoryGroupId);
+    return group;
+  };
+
+  const handleCreateInventoryGroup = () => {
+    setLocation('/step1');
+  };
 
   return (
     <WizardLayout
-      title="Define Task Sequences"
-      description="Configure Storage Identifiers (SI) and Line Identifiers (LI) combinations to define task sequences for your outbound operations."
-      currentStep={1}
-      totalSteps={6}
+      title="Task Sequences"
+      description="Configure task sequences for your inventory groups. Task sequences define the order of operations (REPLEN → PICK → LOAD) for warehouse tasks."
+      currentStep={2}
+      totalSteps={7}
       onNext={handleNext}
-      nextLabel="Next: Pick Strategies"
-      isPreviousDisabled={true}
+      onPrevious={handlePrevious}
+      nextLabel="Continue to Pick Strategies"
+      previousLabel="Back to Inventory Groups"
+      isNextDisabled={configurations.length === 0}
     >
-      {/* Step Description */}
-      <Alert className="mb-6 border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700">
-          <strong>Step 1: Define Task Sequences</strong> - Configure Storage Identifiers (SI) and Line Identifiers (LI) combinations to define task sequences for your outbound operations. Each combination will determine the workflow for specific inventory and order types.
-        </AlertDescription>
-      </Alert>
-
-      {/* Configuration Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Storage & Line Identifier Matrix</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">Create SI/LI combinations and assign task sequences</p>
-            </div>
-            <Button
-              onClick={() => setIsAddingConfig(true)}
-              className="bg-blue-500 hover:bg-blue-600"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Configuration
-            </Button>
+      <div className="space-y-6">
+        {/* Header Section */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Package className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-medium">Task Sequence Configurations ({configurations.length})</h3>
           </div>
-        </CardHeader>
-        <CardContent>
-          {isAddingConfig && (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 mb-6 p-4 border rounded-lg bg-gray-50">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Storage Identifiers */}
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-gray-900">Storage Identifiers (SI)</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.category"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Category</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select category" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {categories.map(cat => (
-                                  <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.skuClassType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">SKU Class Type</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {skuClassTypes.map(type => (
-                                  <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.skuClass"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">SKU Class</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select class" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {skuClasses.map(cls => (
-                                  <SelectItem key={cls.value} value={cls.value}>{cls.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.uom"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">UOM</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select UOM" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {uoms.map(uom => (
-                                  <SelectItem key={uom.value} value={uom.value}>{uom.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.bucket"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Bucket</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select bucket" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {buckets.map(bucket => (
-                                  <SelectItem key={bucket.value} value={bucket.value}>{bucket.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="storageIdentifiers.specialStorage"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2 pt-6">
-                            <FormControl>
+          <Button 
+            onClick={() => setIsAddingConfig(true)}
+            disabled={isAddingConfig || inventoryGroups.length === 0}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Configuration
+          </Button>
+        </div>
+
+        {/* No Inventory Groups Warning */}
+        {inventoryGroups.length === 0 && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>No Inventory Groups Found:</strong> You need to create inventory groups first before configuring task sequences.
+              <Button 
+                variant="link" 
+                className="ml-2 p-0 h-auto text-orange-800 underline"
+                onClick={handleCreateInventoryGroup}
+              >
+                <ExternalLink className="w-3 h-3 mr-1" />
+                Create Inventory Groups
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Information Alert */}
+        <Alert className="border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>Task Sequences:</strong> Define the workflow for each inventory group. Common sequences include OUTBOUND_REPLEN (move stock to pick locations), OUTBOUND_PICK (pick items), and OUTBOUND_LOAD (prepare for shipping).
+          </AlertDescription>
+        </Alert>
+
+        {/* Create/Edit Form */}
+        {isAddingConfig && inventoryGroups.length > 0 && (
+          <Card className="border-2 border-blue-200">
+            <CardHeader>
+              <CardTitle>{editingConfig ? 'Edit' : 'Create'} Task Sequence Configuration</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Inventory Group Selection */}
+                  <FormField
+                    control={form.control}
+                    name="inventoryGroupId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Inventory Group *</FormLabel>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))} 
+                          value={field.value ? field.value.toString() : ''}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select an inventory group" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {inventoryGroups.map((group) => (
+                              <SelectItem key={group.id} value={group.id.toString()}>
+                                <div className="flex items-center space-x-2">
+                                  <span>{group.name}</span>
+                                  <Badge variant="secondary" className="text-xs">
+                                    SI: {group.storageInstruction}
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-xs">
+                                    LI: {group.locationInstruction}
+                                  </Badge>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Task Sequences Selection */}
+                  <FormField
+                    control={form.control}
+                    name="taskSequences"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Task Sequences *</FormLabel>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {taskSequenceOptions.map((option) => (
+                            <div key={option} className="flex items-center space-x-2">
                               <Checkbox
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
+                                id={option}
+                                checked={field.value.includes(option)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    field.onChange([...field.value, option]);
+                                  } else {
+                                    field.onChange(field.value.filter((val) => val !== option));
+                                  }
+                                }}
                               />
-                            </FormControl>
-                            <FormLabel className="text-xs">Special Storage</FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Line Identifiers */}
-                  <div className="space-y-4">
-                    <h3 className="font-medium text-gray-900">Line Identifiers (LI)</h3>
-                    <div className="space-y-3">
-                      <FormField
-                        control={form.control}
-                        name="lineIdentifiers.channel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Channel</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select channel" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {channels.map(channel => (
-                                  <SelectItem key={channel.value} value={channel.value}>{channel.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="lineIdentifiers.customer"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-xs">Customer</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Search customers..." />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {customers.map(customer => (
-                                  <SelectItem key={customer.value} value={customer.value}>{customer.label}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    {/* Task Sequences */}
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-gray-900">Task Sequences</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {watchedTaskSequences?.map((sequence) => (
-                          <Badge key={sequence} variant="secondary" className="bg-blue-100 text-blue-800">
-                            {sequence}
-                            <button
-                              type="button"
-                              onClick={() => removeTaskSequence(sequence)}
-                              className="ml-1 text-blue-600 hover:text-blue-800"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                      <Select onValueChange={addTaskSequence}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Add task sequence" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {taskSequenceOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                              <label
+                                htmlFor={option}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {option}
+                              </label>
+                            </div>
                           ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                    {/* Shipment Acknowledgment */}
-                    <FormField
-                      control={form.control}
-                      name="shipmentAcknowledgment"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-xs">Shipment Acknowledgment</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select acknowledgment" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {shipmentAcknowledgmentOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
+                  {/* Shipment Acknowledgment */}
+                  <FormField
+                    control={form.control}
+                    name="shipmentAcknowledgment"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Shipment Acknowledgment *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select acknowledgment type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {shipmentAcknowledgmentOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddingConfig(false);
+                        setEditingConfig(null);
+                        form.reset();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={saveConfigurationMutation.isPending}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saveConfigurationMutation.isPending ? 'Saving...' : 'Save Configuration'}
+                    </Button>
                   </div>
-                </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        )}
 
-                <div className="flex justify-end space-x-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsAddingConfig(false);
-                      setEditingConfig(null);
-                      form.reset();
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={saveConfigurationMutation.isPending}>
-                    {editingConfig ? 'Update' : 'Save'} Configuration
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          )}
-
-          {/* Configuration Table */}
-          {configurations.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Storage Identifiers (SI)</TableHead>
-                  <TableHead>Line Identifiers (LI)</TableHead>
-                  <TableHead>Task Sequences</TableHead>
-                  <TableHead>Shipment Acknowledgment</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {configurations.map((config: any) => (
-                  <TableRow key={config.id}>
-                    <TableCell>
-                      <div className="space-y-1 text-xs">
-                        <div><strong>Category:</strong> {config.storageIdentifiers.category}</div>
-                        <div><strong>SKU Class:</strong> {config.storageIdentifiers.skuClass}</div>
-                        <div><strong>UOM:</strong> {config.storageIdentifiers.uom}</div>
-                        {config.storageIdentifiers.specialStorage && (
-                          <Badge variant="secondary" className="text-xs">Special Storage</Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1 text-xs">
-                        <div><strong>Channel:</strong> {config.lineIdentifiers.channel}</div>
-                        <div><strong>Customer:</strong> {config.lineIdentifiers.customer}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {config.taskSequences?.map((sequence: string) => (
-                          <Badge key={sequence} variant="outline" className="text-xs">
-                            {sequence}
-                          </Badge>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      {config.shipmentAcknowledgment}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(config)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(config.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+        {/* Existing Configurations */}
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        ) : configurations.length > 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Existing Configurations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Inventory Group</TableHead>
+                    <TableHead>SI / LI</TableHead>
+                    <TableHead>Task Sequences</TableHead>
+                    <TableHead>Shipment Acknowledgment</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              No configurations created yet. Click "Add Configuration" to get started.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Configuration Summary */}
-      {configurations.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Configuration Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">{configurations.length}</div>
-                <div className="text-sm text-gray-600 mt-1">Total Configurations</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">
-                  {configurations.reduce((total: number, config: any) => total + (config.taskSequences?.length || 0), 0)}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">Task Sequences Defined</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">
-                  {new Set(configurations.map((config: any) => config.lineIdentifiers.channel)).size}
-                </div>
-                <div className="text-sm text-gray-600 mt-1">Unique Channels</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Validation Messages */}
-      <div className="space-y-3">
-        {configurations.length > 0 && (
-          <Alert className="border-green-200 bg-green-50">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-700">
-              <strong>Configuration Valid</strong> - All SI/LI combinations have been properly configured with task sequences and acknowledgment triggers.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {configurations.length > 2 && (
-          <Alert className="border-yellow-200 bg-yellow-50">
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-700">
-              <strong>Optimization Suggestion</strong> - Consider consolidating similar configurations to reduce complexity in later steps.
-            </AlertDescription>
-          </Alert>
-        )}
+                </TableHeader>
+                <TableBody>
+                  {configurations.map((config) => {
+                    const inventoryGroup = getInventoryGroupDetails(config.inventoryGroupId);
+                    return (
+                      <TableRow key={config.id}>
+                        <TableCell className="font-medium">
+                          {getInventoryGroupName(config.inventoryGroupId)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1">
+                            <Badge variant="secondary" className="text-xs">
+                              SI: {inventoryGroup?.storageInstruction || 'N/A'}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              LI: {inventoryGroup?.locationInstruction || 'N/A'}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {config.taskSequences?.map((task, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {task}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {config.shipmentAcknowledgment}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(config)}
+                              disabled={isAddingConfig}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(config.id)}
+                              disabled={deleteConfigurationMutation.isPending}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        ) : inventoryGroups.length > 0 ? (
+          <Card className="border-dashed border-2 border-gray-300">
+            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+              <Package className="w-12 h-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Task Sequence Configurations</h3>
+              <p className="text-gray-600 mb-6 max-w-md">
+                Create your first task sequence configuration by selecting an inventory group and defining the workflow steps.
+              </p>
+              <Button 
+                onClick={() => setIsAddingConfig(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Configuration
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </WizardLayout>
   );

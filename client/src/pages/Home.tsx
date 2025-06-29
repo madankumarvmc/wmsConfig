@@ -48,7 +48,7 @@ export default function Home() {
       queryClient.invalidateQueries({ queryKey: ['/api/stock-allocation-strategies'] });
       
       // Mark all steps as complete in wizard state
-      [1, 2, 3, 4, 5].forEach(step => {
+      [1, 2, 3, 4, 5, 6].forEach(step => {
         dispatch({ type: 'COMPLETE_STEP', payload: step });
       });
       

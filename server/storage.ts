@@ -318,13 +318,7 @@ export class MemStorage implements IStorage {
     const id = this.currentInventoryGroupId++;
     const newGroup: InventoryGroup = { 
       id, 
-      ...group,
-      storageIdentifiers: group.storageIdentifiers || {},
-      taskType: group.taskType || "OUTBOUND_REPLEN",
-      taskSubKind: group.taskSubKind || "",
-      taskAttrs: group.taskAttrs || { destUOM: "L0" },
-      areaTypes: group.areaTypes || ["INVENTORY"],
-      areas: group.areas || []
+      ...group
     };
     this.inventoryGroups.set(id, newGroup);
 

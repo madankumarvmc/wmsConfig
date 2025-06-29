@@ -19,8 +19,7 @@ export const wizardConfigurations = pgTable("wizard_configurations", {
 export const taskSequenceConfigurations = pgTable("task_sequence_configurations", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
-  storageIdentifiers: jsonb("storage_identifiers").notNull(),
-  lineIdentifiers: jsonb("line_identifiers").notNull(),
+  inventoryGroupId: integer("inventory_group_id").notNull(),
   taskSequences: text("task_sequences").array(),
   shipmentAcknowledgment: text("shipment_acknowledgment"),
 });
@@ -94,12 +93,9 @@ export const inventoryGroups = pgTable("inventory_groups", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   name: text("name").notNull(),
-  storageIdentifiers: jsonb("storage_identifiers").notNull(),
-  taskType: text("task_type").notNull().default("OUTBOUND_REPLEN"),
-  taskSubKind: text("task_sub_kind").notNull().default(""),
-  taskAttrs: jsonb("task_attrs").notNull(),
-  areaTypes: text("area_types").array().notNull(),
-  areas: text("areas").array().notNull(),
+  storageInstruction: text("storage_instruction").notNull(),
+  locationInstruction: text("location_instruction").notNull(),
+  description: text("description"),
 });
 
 export const stockAllocationStrategies = pgTable("stock_allocation_strategies", {

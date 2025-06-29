@@ -93,8 +93,8 @@ export const inventoryGroups = pgTable("inventory_groups", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   name: text("name").notNull(),
-  storageInstruction: text("storage_instruction").notNull(),
-  locationInstruction: text("location_instruction").notNull(),
+  storageIdentifiers: jsonb("storage_identifiers").notNull(),
+  lineIdentifiers: jsonb("line_identifiers").notNull(),
   description: text("description"),
 });
 

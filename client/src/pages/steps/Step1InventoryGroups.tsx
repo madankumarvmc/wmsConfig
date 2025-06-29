@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Trash2, AlertCircle, Package } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, Package, Edit } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,17 +13,37 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import WizardLayout from '@/components/WizardLayout';
 
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import type { InventoryGroup, InsertInventoryGroup } from '../../../../shared/schema';
+import { 
+  categories, 
+  skuClassTypes, 
+  skuClasses, 
+  uoms, 
+  buckets, 
+  channels, 
+  customers 
+} from '@/lib/mockData';
 
 const inventoryGroupSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  storageInstruction: z.string().min(1, 'Storage Instruction is required'),
-  locationInstruction: z.string().min(1, 'Location Instruction is required'),
+  storageIdentifiers: z.object({
+    category: z.string().min(1, 'Category is required'),
+    skuClassType: z.string().min(1, 'SKU Class Type is required'),
+    skuClass: z.string().min(1, 'SKU Class is required'),
+    uom: z.string().min(1, 'UOM is required'),
+    bucket: z.string().min(1, 'Bucket is required'),
+    specialStorageIndicator: z.string().optional()
+  }),
+  lineIdentifiers: z.object({
+    channel: z.string().min(1, 'Channel is required'),
+    customer: z.string().min(1, 'Customer is required')
+  }),
   description: z.string().optional()
 });
 
@@ -34,6 +54,7 @@ export default function Step1InventoryGroups() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<InventoryGroup | null>(null);
 
   const { data: inventoryGroups = [], isLoading } = useQuery<InventoryGroup[]>({
     queryKey: ['/api/inventory-groups'],
@@ -43,8 +64,18 @@ export default function Step1InventoryGroups() {
     resolver: zodResolver(inventoryGroupSchema),
     defaultValues: {
       name: '',
-      storageInstruction: '',
-      locationInstruction: '',
+      storageIdentifiers: {
+        category: '',
+        skuClassType: '',
+        skuClass: '',
+        uom: '',
+        bucket: '',
+        specialStorageIndicator: ''
+      },
+      lineIdentifiers: {
+        channel: '',
+        customer: ''
+      },
       description: ''
     }
   });
@@ -59,11 +90,33 @@ export default function Step1InventoryGroups() {
       toast({ title: "Success", description: "Inventory group created successfully" });
       form.reset();
       setIsFormVisible(false);
+      setEditingGroup(null);
     },
     onError: (error: any) => {
       toast({ 
         title: "Error", 
         description: error.message || "Failed to create inventory group",
+        variant: "destructive" 
+      });
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: InsertInventoryGroup }) => {
+      const response = await apiRequest('PUT', `/api/inventory-groups/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory-groups'] });
+      toast({ title: "Success", description: "Inventory group updated successfully" });
+      form.reset();
+      setIsFormVisible(false);
+      setEditingGroup(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to update inventory group",
         variant: "destructive" 
       });
     }
@@ -88,28 +141,46 @@ export default function Step1InventoryGroups() {
   });
 
   const onSubmit = (data: InventoryGroupForm) => {
-    // Check for duplicate SI+LI combinations
-    const isDuplicate = inventoryGroups.some(group => 
-      group.storageInstruction === data.storageInstruction && 
-      group.locationInstruction === data.locationInstruction
-    );
+    // Check for duplicate combinations
+    const isDuplicate = inventoryGroups.some(group => {
+      const groupStorageIds = group.storageIdentifiers as any;
+      const groupLineIds = group.lineIdentifiers as any;
+      
+      if (editingGroup && group.id === editingGroup.id) return false; // Skip self when editing
+      
+      return (
+        groupStorageIds?.category === data.storageIdentifiers.category &&
+        groupStorageIds?.skuClassType === data.storageIdentifiers.skuClassType &&
+        groupStorageIds?.skuClass === data.storageIdentifiers.skuClass &&
+        groupStorageIds?.uom === data.storageIdentifiers.uom &&
+        groupStorageIds?.bucket === data.storageIdentifiers.bucket &&
+        groupLineIds?.channel === data.lineIdentifiers.channel &&
+        groupLineIds?.customer === data.lineIdentifiers.customer
+      );
+    });
 
     if (isDuplicate) {
       toast({
         title: "Duplicate Combination",
-        description: "An inventory group with this Storage Instruction and Location Instruction combination already exists.",
+        description: "An inventory group with this exact combination of storage and line identifiers already exists.",
         variant: "destructive"
       });
       return;
     }
 
-    createMutation.mutate({
+    const payload: InsertInventoryGroup = {
       userId: 1, // Mock user ID
       name: data.name,
-      storageInstruction: data.storageInstruction,
-      locationInstruction: data.locationInstruction,
+      storageIdentifiers: data.storageIdentifiers,
+      lineIdentifiers: data.lineIdentifiers,
       description: data.description || null
-    });
+    };
+
+    if (editingGroup) {
+      updateMutation.mutate({ id: editingGroup.id, data: payload });
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   const handleNext = () => {
@@ -126,19 +197,55 @@ export default function Step1InventoryGroups() {
     dispatch({ type: 'SET_CURRENT_STEP', payload: 2 });
   };
 
+  const handleEdit = (group: InventoryGroup) => {
+    const storageIds = group.storageIdentifiers as any;
+    const lineIds = group.lineIdentifiers as any;
+    
+    setEditingGroup(group);
+    form.reset({
+      name: group.name,
+      storageIdentifiers: {
+        category: storageIds?.category || '',
+        skuClassType: storageIds?.skuClassType || '',
+        skuClass: storageIds?.skuClass || '',
+        uom: storageIds?.uom || '',
+        bucket: storageIds?.bucket || '',
+        specialStorageIndicator: storageIds?.specialStorageIndicator || ''
+      },
+      lineIdentifiers: {
+        channel: lineIds?.channel || '',
+        customer: lineIds?.customer || ''
+      },
+      description: group.description || ''
+    });
+    setIsFormVisible(true);
+  };
+
   const handleDelete = (id: number) => {
     deleteMutation.mutate(id);
   };
 
-  const storageInstructionOptions = [
-    "L0", "L1", "L2", "L3", "L4", "L5",
-    "REPLEN", "RESERVE", "FORWARD", "BULK"
-  ];
+  const handleAddNew = () => {
+    setEditingGroup(null);
+    form.reset();
+    setIsFormVisible(true);
+  };
 
-  const locationInstructionOptions = [
-    "AREA", "ZONE", "BIN", "POSITION", 
-    "WAREHOUSE", "SECTION", "AISLE", "LEVEL"
-  ];
+  const handleCancel = () => {
+    setIsFormVisible(false);
+    setEditingGroup(null);
+    form.reset();
+  };
+
+  const getIdentifiersDisplay = (group: InventoryGroup) => {
+    const storageIds = group.storageIdentifiers as any;
+    const lineIds = group.lineIdentifiers as any;
+    
+    return {
+      storage: `${storageIds?.category || 'N/A'} | ${storageIds?.uom || 'N/A'} | ${storageIds?.bucket || 'N/A'}`,
+      line: `${lineIds?.channel || 'N/A'} | ${lineIds?.customer || 'N/A'}`
+    };
+  };
 
   return (
     <WizardLayout
@@ -158,7 +265,7 @@ export default function Step1InventoryGroups() {
             <h3 className="text-lg font-medium">Inventory Groups ({inventoryGroups.length})</h3>
           </div>
           <Button 
-            onClick={() => setIsFormVisible(true)}
+            onClick={handleAddNew}
             disabled={isFormVisible}
             className="bg-blue-600 hover:bg-blue-700"
           >
@@ -171,19 +278,20 @@ export default function Step1InventoryGroups() {
         <Alert className="border-blue-200 bg-blue-50">
           <AlertCircle className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            <strong>What are Inventory Groups?</strong> These define unique combinations of Storage Instructions (SI) and Location Instructions (LI) that determine how products are stored and picked in your warehouse. Each group will be referenced in task sequences, pick strategies, and allocation rules.
+            <strong>What are Inventory Groups?</strong> These define unique combinations of Storage Instructions (category, UOM, quality) and Line Instructions (channel, customer) that determine how products are stored and picked in your warehouse.
           </AlertDescription>
         </Alert>
 
-        {/* Create Form */}
+        {/* Create/Edit Form */}
         {isFormVisible && (
           <Card className="border-2 border-blue-200">
             <CardHeader>
-              <CardTitle>Create New Inventory Group</CardTitle>
+              <CardTitle>{editingGroup ? 'Edit' : 'Create'} Inventory Group</CardTitle>
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Basic Information */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -192,7 +300,7 @@ export default function Step1InventoryGroups() {
                         <FormItem>
                           <FormLabel>Group Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., L0 Inventory Group" {...field} />
+                            <Input placeholder="e.g., L0 Bulk Good Retail" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -214,75 +322,228 @@ export default function Step1InventoryGroups() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="storageInstruction"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Storage Instruction (SI) *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select storage instruction" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {storageInstructionOptions.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  <Separator />
 
-                    <FormField
-                      control={form.control}
-                      name="locationInstruction"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Location Instruction (LI) *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  {/* Storage Identifiers */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-4">Storage Identifiers</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="storageIdentifiers.category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {categories.map((cat) => (
+                                  <SelectItem key={cat} value={cat}>
+                                    {cat}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="storageIdentifiers.skuClassType"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>SKU Class Type *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {skuClassTypes.map((type) => (
+                                  <SelectItem key={type} value={type}>
+                                    {type}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="storageIdentifiers.skuClass"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>SKU Class *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select class" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {skuClasses.map((cls) => (
+                                  <SelectItem key={cls} value={cls}>
+                                    {cls}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="storageIdentifiers.uom"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>UOM Level *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select UOM" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {uoms.map((uom) => (
+                                  <SelectItem key={uom} value={uom}>
+                                    {uom}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="storageIdentifiers.bucket"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Quality Bucket *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select bucket" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {buckets.map((bucket) => (
+                                  <SelectItem key={bucket} value={bucket}>
+                                    {bucket}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="storageIdentifiers.specialStorageIndicator"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Special Storage</FormLabel>
                             <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select location instruction" />
-                              </SelectTrigger>
+                              <Input placeholder="Optional indicator" {...field} />
                             </FormControl>
-                            <SelectContent>
-                              {locationInstructionOptions.map((option) => (
-                                <SelectItem key={option} value={option}>
-                                  {option}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex justify-end space-x-2">
+                  <Separator />
+
+                  {/* Line Identifiers */}
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-4">Line Identifiers</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="lineIdentifiers.channel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Channel *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select channel" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {channels.map((channel) => (
+                                  <SelectItem key={channel} value={channel}>
+                                    {channel}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="lineIdentifiers.customer"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Customer *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select customer" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {customers.map((customer) => (
+                                  <SelectItem key={customer} value={customer}>
+                                    {customer}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => {
-                        setIsFormVisible(false);
-                        form.reset();
-                      }}
+                      onClick={handleCancel}
                     >
                       Cancel
                     </Button>
                     <Button 
                       type="submit" 
-                      disabled={createMutation.isPending}
+                      disabled={createMutation.isPending || updateMutation.isPending}
                       className="bg-blue-600 hover:bg-blue-700"
                     >
-                      {createMutation.isPending ? 'Creating...' : 'Create Group'}
+                      {createMutation.isPending || updateMutation.isPending 
+                        ? 'Saving...' 
+                        : editingGroup ? 'Update Group' : 'Create Group'
+                      }
                     </Button>
                   </div>
                 </form>
@@ -297,55 +558,83 @@ export default function Step1InventoryGroups() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
         ) : inventoryGroups.length > 0 ? (
-          <div className="space-y-4">
-            <Separator />
-            <h4 className="font-medium text-gray-900">Existing Inventory Groups</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {inventoryGroups.map((group) => (
-                <Card key={group.id} className="border-gray-200">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <h5 className="font-medium text-gray-900">{group.name}</h5>
-                        {group.description && (
-                          <p className="text-sm text-gray-600 mt-1">{group.description}</p>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(group.id)}
-                        disabled={deleteMutation.isPending}
-                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                        SI: {group.storageInstruction}
-                      </Badge>
-                      <Badge variant="secondary" className="bg-green-100 text-green-800">
-                        LI: {group.locationInstruction}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Existing Inventory Groups</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Storage Identifiers</TableHead>
+                    <TableHead>Line Identifiers</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inventoryGroups.map((group) => {
+                    const display = getIdentifiersDisplay(group);
+                    return (
+                      <TableRow key={group.id}>
+                        <TableCell className="font-medium">{group.name}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <Badge variant="secondary" className="mr-1 mb-1">
+                              {display.storage}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <Badge variant="outline" className="mr-1 mb-1">
+                              {display.line}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          {group.description || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(group)}
+                              disabled={isFormVisible}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(group.id)}
+                              disabled={deleteMutation.isPending}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="border-dashed border-2 border-gray-300">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
               <Package className="w-12 h-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Inventory Groups</h3>
               <p className="text-gray-600 mb-6 max-w-md">
-                Create your first inventory group by defining a Storage Instruction and Location Instruction combination. 
+                Create your first inventory group by defining storage and line identifier combinations. 
                 These will be used throughout your warehouse configuration.
               </p>
               <Button 
-                onClick={() => setIsFormVisible(true)}
+                onClick={handleAddNew}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 <Plus className="w-4 h-4 mr-2" />

@@ -318,7 +318,11 @@ export class MemStorage implements IStorage {
     const id = this.currentInventoryGroupId++;
     const newGroup: InventoryGroup = { 
       id, 
-      ...group
+      userId: group.userId,
+      name: group.name,
+      storageIdentifiers: group.storageIdentifiers,
+      lineIdentifiers: group.lineIdentifiers,
+      description: group.description || null
     };
     this.inventoryGroups.set(id, newGroup);
 
@@ -382,7 +386,14 @@ export class MemStorage implements IStorage {
   async updateInventoryGroup(id: number, group: Partial<InsertInventoryGroup>): Promise<InventoryGroup | undefined> {
     const existing = this.inventoryGroups.get(id);
     if (existing) {
-      const updated = { ...existing, ...group };
+      const updated: InventoryGroup = { 
+        ...existing, 
+        userId: group.userId ?? existing.userId,
+        name: group.name ?? existing.name,
+        storageIdentifiers: group.storageIdentifiers ?? existing.storageIdentifiers,
+        lineIdentifiers: group.lineIdentifiers ?? existing.lineIdentifiers,
+        description: group.description !== undefined ? group.description || null : existing.description
+      };
       this.inventoryGroups.set(id, updated);
       return updated;
     }

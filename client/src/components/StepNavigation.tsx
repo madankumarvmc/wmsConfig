@@ -63,11 +63,19 @@ interface StepNavigationProps {
 
 export default function StepNavigation({ currentStep }: StepNavigationProps) {
   const { state } = useWizard();
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
+
+  // Get the actual current step from URL
+  const getCurrentStepFromUrl = () => {
+    const stepMatch = location.match(/\/step(\d+)/);
+    return stepMatch ? parseInt(stepMatch[1]) : currentStep;
+  };
+
+  const actualCurrentStep = getCurrentStepFromUrl();
 
   const getStepStatus = (stepNumber: number) => {
     if (state.completedSteps.includes(stepNumber)) return 'completed';
-    if (stepNumber === currentStep) return 'active';
+    if (stepNumber === actualCurrentStep) return 'active';
     return 'pending';
   };
 

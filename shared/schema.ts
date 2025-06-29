@@ -27,10 +27,9 @@ export const taskSequenceConfigurations = pgTable("task_sequence_configurations"
 export const pickStrategyConfigurations = pgTable("pick_strategy_configurations", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
+  inventoryGroupId: integer("inventory_group_id").notNull(),
   taskKind: text("task_kind").notNull(),
   taskSubKind: text("task_sub_kind").notNull(),
-  storageIdentifiers: jsonb("storage_identifiers").notNull(),
-  lineIdentifiers: jsonb("line_identifiers").notNull(),
   taskAttrs: jsonb("task_attrs").default('{}'),
   strat: text("strat").notNull(),
   sortingStrategy: text("sorting_strategy").notNull(),

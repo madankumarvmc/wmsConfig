@@ -130,12 +130,12 @@ export class MemStorage implements IStorage {
     const existing = this.wizardConfigurations.get(key);
     
     if (existing) {
-      const updated: WizardConfiguration = { ...existing, ...config };
+      const updated: WizardConfiguration = { ...existing, ...config, isComplete: config.isComplete ?? null };
       this.wizardConfigurations.set(key, updated);
       return updated;
     } else {
       const id = this.currentWizardConfigId++;
-      const newConfig: WizardConfiguration = { id, ...config };
+      const newConfig: WizardConfiguration = { id, ...config, isComplete: config.isComplete ?? null };
       this.wizardConfigurations.set(key, newConfig);
       return newConfig;
     }
@@ -155,7 +155,12 @@ export class MemStorage implements IStorage {
 
   async saveTaskSequenceConfiguration(config: InsertTaskSequenceConfiguration): Promise<TaskSequenceConfiguration> {
     const id = this.currentTaskSeqConfigId++;
-    const newConfig: TaskSequenceConfiguration = { id, ...config };
+    const newConfig: TaskSequenceConfiguration = { 
+      id, 
+      ...config, 
+      taskSequences: config.taskSequences ?? null,
+      shipmentAcknowledgment: config.shipmentAcknowledgment ?? null
+    };
     this.taskSequenceConfigurations.set(id, newConfig);
     return newConfig;
   }

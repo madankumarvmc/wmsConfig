@@ -160,7 +160,7 @@ export default function Step3PickStrategies() {
 
   const getInventoryGroupDisplay = (id: number) => {
     const group = inventoryGroups.find(g => g.id === id);
-    if (!group) return 'Unknown';
+    if (!group) return { storage: 'N/A', line: 'N/A' };
     
     const storageIds = group.storageIdentifiers as any;
     const lineIds = group.lineIdentifiers as any;
@@ -279,10 +279,10 @@ export default function Step3PickStrategies() {
                                   <div className="flex items-center space-x-2">
                                     <span>{group.name}</span>
                                     <Badge variant="secondary" className="text-xs">
-                                      {display.storage}
+                                      {typeof display === 'object' ? display.storage : 'N/A'}
                                     </Badge>
                                     <Badge variant="outline" className="text-xs">
-                                      {display.line}
+                                      {typeof display === 'object' ? display.line : 'N/A'}
                                     </Badge>
                                   </div>
                                 </SelectItem>

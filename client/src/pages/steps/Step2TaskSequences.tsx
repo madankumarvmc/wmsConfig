@@ -33,25 +33,14 @@ import {
 
 const configurationSchema = z.object({
   id: z.number().optional(),
-  storageIdentifiers: z.object({
-    category: z.string(),
-    skuClassType: z.string(),
-    skuClass: z.string(),
-    uom: z.string(),
-    bucket: z.string(),
-    specialStorage: z.boolean()
-  }),
-  lineIdentifiers: z.object({
-    channel: z.string(),
-    customer: z.string()
-  }),
-  taskSequences: z.array(z.string()),
-  shipmentAcknowledgment: z.string()
+  inventoryGroupId: z.number().min(1, 'Please select an inventory group'),
+  taskSequences: z.array(z.string()).min(1, 'Please select at least one task sequence'),
+  shipmentAcknowledgment: z.string().min(1, 'Please select shipment acknowledgment')
 });
 
 type Configuration = z.infer<typeof configurationSchema>;
 
-export default function Step1TaskSequences() {
+export default function Step2TaskSequences() {
   const [, setLocation] = useLocation();
   const { dispatch } = useWizard();
   const { toast } = useToast();

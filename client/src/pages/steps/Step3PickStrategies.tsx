@@ -213,7 +213,7 @@ export default function Step3PickStrategies() {
       title="Pick Strategies"
       description="Configure pick strategies for each inventory group to optimize warehouse picking operations."
       currentStep={3}
-      totalSteps={6}
+      totalSteps={7}
       onNext={handleNext}
       onPrevious={handlePrevious}
       nextLabel="Continue to HU Formation"

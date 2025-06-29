@@ -252,7 +252,7 @@ export default function Step1InventoryGroups() {
       title="Inventory Groups"
       description="Define Storage Instruction (SI) and Location Instruction (LI) combinations that will be used throughout your warehouse configuration."
       currentStep={1}
-      totalSteps={6}
+      totalSteps={7}
       onNext={handleNext}
       nextLabel="Continue to Task Sequences"
       isNextDisabled={inventoryGroups.length === 0}

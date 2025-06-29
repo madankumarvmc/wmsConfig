@@ -257,7 +257,7 @@ export default function Step6StockAllocation() {
       title="Stock Allocation Strategy"
       description="Define inventory groups and configure PICK and PUT stock allocation strategies for each group."
       currentStep={5}
-      totalSteps={6}
+      totalSteps={7}
       onNext={handleNext}
       onPrevious={handlePrevious}
       nextLabel="Next: Review & Confirm"

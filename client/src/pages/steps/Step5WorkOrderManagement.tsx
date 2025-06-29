@@ -179,7 +179,7 @@ export default function Step5WorkOrderManagement() {
       title="Work Order Management Strategy"
       description="Configure work order management settings for each pick strategy from Step 2."
       currentStep={4}
-      totalSteps={6}
+      totalSteps={7}
       onNext={handleNext}
       onPrevious={handlePrevious}
       nextLabel="Next: Stock Allocation"

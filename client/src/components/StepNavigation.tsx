@@ -52,8 +52,15 @@ const steps = [
     number: 6,
     title: 'Stock Allocation',
     description: 'Stock allocation strategies',
-    icon: CheckCircle,
+    icon: Database,
     path: '/step6'
+  },
+  {
+    number: 7,
+    title: 'Review & Confirm',
+    description: 'Final configuration review',
+    icon: CheckCircle,
+    path: '/step7'
   }
 ];
 

@@ -5,17 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
 
-export default function Step6ReviewConfirm() {
+export default function Step7ReviewConfirm() {
   const [, setLocation] = useLocation();
   const { dispatch } = useWizard();
 
   const handlePrevious = () => {
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 5 });
-    setLocation('/step5');
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 6 });
+    setLocation('/step6');
   };
 
   const handleConfirm = () => {
-    dispatch({ type: 'COMPLETE_STEP', payload: 6 });
+    dispatch({ type: 'COMPLETE_STEP', payload: 7 });
     // Here you would typically save the final configuration
     alert('Configuration has been saved successfully!');
   };
@@ -24,8 +24,8 @@ export default function Step6ReviewConfirm() {
     <WizardLayout
       title="Review & Confirm"
       description="Review all your configurations and confirm the setup."
-      currentStep={6}
-      totalSteps={6}
+      currentStep={7}
+      totalSteps={7}
       onPrevious={handlePrevious}
       previousLabel="Previous: Stock Allocation"
       nextLabel="Confirm & Save"

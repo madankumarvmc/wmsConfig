@@ -1,77 +1,77 @@
 export const categories = [
-  { value: 'fast_moving', label: 'Fast Moving' },
-  { value: 'slow_moving', label: 'Slow Moving' },
-  { value: 'hazardous', label: 'Hazardous' },
-  { value: 'fragile', label: 'Fragile' },
-  { value: 'bulk', label: 'Bulk' },
+  'Fast Moving',
+  'Slow Moving', 
+  'Hazardous',
+  'Fragile',
+  'Bulk'
 ];
 
 export const skuClassTypes = [
-  { value: 'standard', label: 'Standard' },
-  { value: 'promotional', label: 'Promotional' },
-  { value: 'seasonal', label: 'Seasonal' },
-  { value: 'bulk', label: 'Bulk' },
-  { value: 'special', label: 'Special' },
+  'Standard',
+  'Promotional',
+  'Seasonal',
+  'Bulk',
+  'Special'
 ];
 
 export const skuClasses = [
-  { value: 'a_class', label: 'A-Class' },
-  { value: 'b_class', label: 'B-Class' },
-  { value: 'c_class', label: 'C-Class' },
-  { value: 'd_class', label: 'D-Class' },
+  'A-Class',
+  'B-Class', 
+  'C-Class',
+  'D-Class'
 ];
 
 export const uoms = [
-  { value: 'each', label: 'Each' },
-  { value: 'case', label: 'Case' },
-  { value: 'pallet', label: 'Pallet' },
-  { value: 'kg', label: 'Kg' },
-  { value: 'liter', label: 'Liter' },
+  'Each',
+  'Case',
+  'Pallet',
+  'Kg',
+  'Liter'
 ];
 
 export const buckets = [
-  { value: 'zone_a', label: 'Zone-A' },
-  { value: 'zone_b', label: 'Zone-B' },
-  { value: 'zone_c', label: 'Zone-C' },
-  { value: 'overflow', label: 'Overflow' },
-  { value: 'special', label: 'Special' },
+  'Good',
+  'Damaged',
+  'Expired',
+  'Hold',
+  'Quarantine'
 ];
 
 export const channels = [
-  { value: 'ecommerce', label: 'E-Commerce' },
-  { value: 'retail', label: 'Retail' },
-  { value: 'b2b', label: 'B2B' },
-  { value: 'wholesale', label: 'Wholesale' },
-  { value: 'marketplace', label: 'Marketplace' },
+  'E-Commerce',
+  'Retail',
+  'B2B',
+  'Wholesale',
+  'Marketplace'
 ];
 
 export const customers = [
-  { value: 'amazon_fulfillment', label: 'Amazon Fulfillment' },
-  { value: 'walmart_stores', label: 'Walmart Stores' },
-  { value: 'target_corp', label: 'Target Corp' },
-  { value: 'industrial_supply_co', label: 'Industrial Supply Co.' },
-  { value: 'global_retailers', label: 'Global Retailers' },
-  { value: 'direct_consumer', label: 'Direct Consumer' },
+  'Amazon Fulfillment',
+  'Walmart Stores',
+  'Target Corp',
+  'Industrial Supply Co.',
+  'Global Retailers',
+  'Direct Consumer'
 ];
 
 export const taskSequenceOptions = [
-  { value: 'OUTBOUND_REPLEN', label: 'OUTBOUND_REPLEN' },
-  { value: 'OUTBOUND_PICK', label: 'OUTBOUND_PICK' },
-  { value: 'OUTBOUND_LOAD', label: 'OUTBOUND_LOAD' },
-  { value: 'OUTBOUND_PACK', label: 'OUTBOUND_PACK' },
-  { value: 'OUTBOUND_SHIP', label: 'OUTBOUND_SHIP' },
-  { value: 'OUTBOUND_SPECIAL', label: 'OUTBOUND_SPECIAL' },
-  { value: 'HAZMAT_PROCESS', label: 'HAZMAT_PROCESS' },
-  { value: 'QUALITY_CHECK', label: 'QUALITY_CHECK' },
+  'OUTBOUND_REPLEN',
+  'OUTBOUND_PICK',
+  'OUTBOUND_LOAD',
+  'OUTBOUND_PACK',
+  'OUTBOUND_SHIP',
+  'OUTBOUND_SPECIAL',
+  'HAZMAT_PROCESS',
+  'QUALITY_CHECK'
 ];
 
 export const shipmentAcknowledgmentOptions = [
-  { value: 'on_pick', label: 'On Pick' },
-  { value: 'on_load', label: 'On Load' },
-  { value: 'on_ship', label: 'On Ship' },
-  { value: 'on_pack', label: 'On Pack' },
-  { value: 'manual', label: 'Manual' },
-  { value: 'automatic', label: 'Automatic' },
+  'On Pick',
+  'On Load',
+  'On Ship',
+  'On Pack',
+  'Manual',
+  'Automatic'
 ];
 
 export const taskKinds = [

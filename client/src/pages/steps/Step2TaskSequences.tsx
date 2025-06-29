@@ -239,19 +239,23 @@ export default function Step2TaskSequences() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {inventoryGroups.map((group) => (
-                              <SelectItem key={group.id} value={group.id.toString()}>
-                                <div className="flex items-center space-x-2">
-                                  <span>{group.name}</span>
-                                  <Badge variant="secondary" className="text-xs">
-                                    SI: {group.storageInstruction}
-                                  </Badge>
-                                  <Badge variant="secondary" className="text-xs">
-                                    LI: {group.locationInstruction}
-                                  </Badge>
-                                </div>
-                              </SelectItem>
-                            ))}
+                            {inventoryGroups.map((group) => {
+                              const storageIds = group.storageIdentifiers as any;
+                              const lineIds = group.lineIdentifiers as any;
+                              return (
+                                <SelectItem key={group.id} value={group.id.toString()}>
+                                  <div className="flex items-center space-x-2">
+                                    <span>{group.name}</span>
+                                    <Badge variant="secondary" className="text-xs">
+                                      {storageIds?.category || 'N/A'} | {storageIds?.uom || 'N/A'}
+                                    </Badge>
+                                    <Badge variant="outline" className="text-xs">
+                                      {lineIds?.channel || 'N/A'} | {lineIds?.customer || 'N/A'}
+                                    </Badge>
+                                  </div>
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -377,12 +381,16 @@ export default function Step2TaskSequences() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-1">
-                            <Badge variant="secondary" className="text-xs">
-                              SI: {inventoryGroup?.storageInstruction || 'N/A'}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              LI: {inventoryGroup?.locationInstruction || 'N/A'}
-                            </Badge>
+                            {inventoryGroup && (
+                              <>
+                                <Badge variant="secondary" className="text-xs">
+                                  {(inventoryGroup.storageIdentifiers as any)?.category || 'N/A'} | {(inventoryGroup.storageIdentifiers as any)?.uom || 'N/A'}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  {(inventoryGroup.lineIdentifiers as any)?.channel || 'N/A'} | {(inventoryGroup.lineIdentifiers as any)?.customer || 'N/A'}
+                                </Badge>
+                              </>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>

@@ -71,7 +71,7 @@ const stockAllocationSchema = z.object({
 type InventoryGroup = z.infer<typeof inventoryGroupSchema>;
 type StockAllocation = z.infer<typeof stockAllocationSchema>;
 
-export default function Step5StockAllocation() {
+export default function Step6StockAllocation() {
   const [, setLocation] = useLocation();
   const { dispatch } = useWizard();
   const { toast } = useToast();

@@ -59,7 +59,7 @@ const huFormationSchema = z.object({
 
 type HUFormation = z.infer<typeof huFormationSchema>;
 
-export default function Step3HUFormation() {
+export default function Step4HUFormation() {
   const [, setLocation] = useLocation();
   const { dispatch } = useWizard();
   const { toast } = useToast();

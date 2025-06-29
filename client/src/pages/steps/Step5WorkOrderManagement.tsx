@@ -39,7 +39,7 @@ const workOrderManagementSchema = z.object({
 
 type WorkOrderManagement = z.infer<typeof workOrderManagementSchema>;
 
-export default function Step4WorkOrderManagement() {
+export default function Step5WorkOrderManagement() {
   const [, setLocation] = useLocation();
   const { dispatch } = useWizard();
   const { toast } = useToast();

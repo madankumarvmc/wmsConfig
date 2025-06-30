@@ -254,7 +254,9 @@ export default function Step1InventoryGroups() {
       currentStep={1}
       totalSteps={7}
       onNext={handleNext}
+      onPrevious={handlePrevious}
       nextLabel="Continue to Task Sequences"
+      previousLabel="Back to Home"
       isNextDisabled={inventoryGroups.length === 0}
     >
       <div className="space-y-6">

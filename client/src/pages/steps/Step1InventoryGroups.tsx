@@ -269,13 +269,13 @@ export default function Step1InventoryGroups() {
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Package className="w-5 h-5 text-blue-600" />
+            <Package className="w-5 h-5 text-black" />
             <h3 className="text-lg font-medium">Inventory Groups ({inventoryGroups.length})</h3>
           </div>
           <Button 
             onClick={handleAddNew}
             disabled={isFormVisible}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-black hover:bg-gray-800 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Inventory Group
@@ -546,7 +546,7 @@ export default function Step1InventoryGroups() {
                     <Button 
                       type="submit" 
                       disabled={createMutation.isPending || updateMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-black hover:bg-gray-800 text-white"
                     >
                       {createMutation.isPending || updateMutation.isPending 
                         ? 'Saving...' 
@@ -643,7 +643,7 @@ export default function Step1InventoryGroups() {
               </p>
               <Button 
                 onClick={handleAddNew}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create First Inventory Group

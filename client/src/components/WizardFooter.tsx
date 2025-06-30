@@ -30,7 +30,7 @@ export default function WizardFooter({
             variant="outline"
             onClick={onPrevious}
             disabled={isPreviousDisabled || currentStep === 1}
-            className="inline-flex items-center"
+            className="inline-flex items-center bg-gray-600 text-white border-gray-500 hover:bg-gray-500 disabled:bg-gray-300"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {previousLabel}
@@ -41,13 +41,13 @@ export default function WizardFooter({
         </div>
         
         <div className="flex items-center space-x-3">
-          <Button variant="ghost" size="sm" className="text-sm text-gray-600">
+          <Button variant="ghost" size="sm" className="text-sm text-gray-600 hover:bg-gray-100">
             Save & Exit
           </Button>
           <Button
             onClick={onNext}
             disabled={isNextDisabled || currentStep === totalSteps}
-            className="inline-flex items-center bg-blue-500 hover:bg-blue-600"
+            className="inline-flex items-center bg-black hover:bg-gray-800 text-white disabled:bg-gray-400"
           >
             {nextLabel}
             <ArrowRight className="w-4 h-4 ml-2" />

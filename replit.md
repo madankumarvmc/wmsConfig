@@ -98,6 +98,11 @@ The application uses three main database tables:
 ## Changelog
 
 Changelog:
+- June 30, 2025. Expanded portal from outbound-only to full warehouse configuration portal with segregated sidebar
+- June 30, 2025. Implemented MainSidebar component with Master Configuration, Outbound Configuration, Inbound Configuration, and Core Configuration sections
+- June 30, 2025. Created master configuration pages: Provisioning Setup, Master Uploads, and One-Click Templates
+- June 30, 2025. Replaced StepNavigation with MainSidebar in WizardLayout to accommodate expanded portal scope
+- June 30, 2025. Added consistent design system across home and configuration pages with unified top navbar
 - June 30, 2025. Implemented complete black, white, and grey color scheme throughout the application
 - June 30, 2025. Updated top navbar to black background with grey buttons and white text
 - June 30, 2025. Changed all button styling from blue to black/grey theme

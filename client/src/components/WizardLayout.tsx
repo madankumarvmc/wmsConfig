@@ -32,13 +32,13 @@ export default function WizardLayout({
   isPreviousDisabled = false
 }: WizardLayoutProps) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       {/* Top Navbar */}
       <TopNavbar />
 
       <div className="flex flex-1">
         {/* Left Sidebar */}
-        <div className="w-80 bg-white shadow-lg">
+        <div className="w-80 bg-gray-100 shadow-lg border-r border-gray-200">
           <StepNavigation currentStep={currentStep} />
         </div>
 

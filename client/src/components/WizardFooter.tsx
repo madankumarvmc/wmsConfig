@@ -23,7 +23,7 @@ export default function WizardFooter({
   isPreviousDisabled = false
 }: WizardFooterProps) {
   return (
-    <footer className="bg-white border-t border-gray-200 px-6 py-4">
+    <footer className="bg-gray-50 border-t border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <Button

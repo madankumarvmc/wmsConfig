@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -50,6 +51,7 @@ const inventoryGroupSchema = z.object({
 type InventoryGroupForm = z.infer<typeof inventoryGroupSchema>;
 
 export default function Step1InventoryGroups() {
+  const [, setLocation] = useLocation();
   const { state, dispatch } = useWizard();
   const { toast } = useToast();
   const queryClient = useQueryClient();

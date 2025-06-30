@@ -2,8 +2,7 @@ import { ReactNode } from 'react';
 import TopNavbar from './TopNavbar';
 import StepInfo from './StepInfo';
 import WizardFooter from './WizardFooter';
-import MainSidebar from './MainSidebar';
-import { useLocation } from 'wouter';
+import StepNavigation from './StepNavigation';
 
 interface WizardLayoutProps {
   children: ReactNode;
@@ -32,7 +31,6 @@ export default function WizardLayout({
   isNextDisabled = false,
   isPreviousDisabled = false
 }: WizardLayoutProps) {
-  const [location] = useLocation();
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Top Navbar */}
@@ -40,7 +38,9 @@ export default function WizardLayout({
 
       <div className="flex flex-1">
         {/* Left Sidebar */}
-        <MainSidebar currentPath={location} currentStep={currentStep} />
+        <div className="w-80 bg-gray-100 shadow-lg border-r border-gray-200">
+          <StepNavigation currentStep={currentStep} />
+        </div>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">

@@ -283,16 +283,16 @@ export default function Step1InventoryGroups() {
         </div>
 
         {/* Information Alert */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
+        <Alert className="border-gray-200 bg-gray-50">
+          <AlertCircle className="h-4 w-4 text-gray-600" />
+          <AlertDescription className="text-gray-800">
             <strong>What are Inventory Groups?</strong> These define unique combinations of Storage Instructions (category, UOM, quality) and Line Instructions (channel, customer) that determine how products are stored and picked in your warehouse.
           </AlertDescription>
         </Alert>
 
         {/* Create/Edit Form */}
         {isFormVisible && (
-          <Card className="border-2 border-blue-200">
+          <Card className="border-2 border-gray-200">
             <CardHeader>
               <CardTitle>{editingGroup ? 'Edit' : 'Create'} Inventory Group</CardTitle>
             </CardHeader>
@@ -563,7 +563,7 @@ export default function Step1InventoryGroups() {
         {/* Existing Groups List */}
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
           </div>
         ) : inventoryGroups.length > 0 ? (
           <Card>

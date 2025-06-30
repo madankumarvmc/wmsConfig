@@ -248,7 +248,7 @@ export default function Step3PickStrategies() {
 
         {/* Create/Edit Form */}
         {isFormVisible && inventoryGroups.length > 0 && (
-          <Card className="border-2 border-blue-200">
+          <Card className="border-2 border-gray-200">
             <CardHeader>
               <CardTitle>{editingStrategy ? 'Edit' : 'Create'} Pick Strategy</CardTitle>
             </CardHeader>

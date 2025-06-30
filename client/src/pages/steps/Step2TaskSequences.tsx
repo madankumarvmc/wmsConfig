@@ -215,7 +215,7 @@ export default function Step2TaskSequences() {
 
         {/* Create/Edit Form */}
         {isAddingConfig && inventoryGroups.length > 0 && (
-          <Card className="border-2 border-blue-200">
+          <Card className="border-2 border-gray-200">
             <CardHeader>
               <CardTitle>{editingConfig ? 'Edit' : 'Create'} Task Sequence Configuration</CardTitle>
             </CardHeader>
@@ -353,7 +353,7 @@ export default function Step2TaskSequences() {
         {/* Existing Configurations */}
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
           </div>
         ) : configurations.length > 0 ? (
           <Card>

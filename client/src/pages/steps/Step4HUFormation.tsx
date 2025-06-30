@@ -247,7 +247,7 @@ export default function Step4HUFormation() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-black">
               {configuredStrategiesCount}/{pickStrategies.length}
             </div>
             <div className="text-sm text-gray-600">
@@ -281,7 +281,7 @@ export default function Step4HUFormation() {
                     onClick={() => handleSelectStrategy(strategy)}
                     className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                       isSelected 
-                        ? 'border-blue-500 bg-blue-50' 
+                        ? 'border-black bg-gray-50' 
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -821,7 +821,7 @@ export default function Step4HUFormation() {
                     <Button
                       type="submit"
                       disabled={saveHUFormationMutation.isPending}
-                      className="bg-blue-500 hover:bg-blue-600"
+                      className="bg-black hover:bg-gray-800 text-white"
                     >
                       {saveHUFormationMutation.isPending ? 'Saving...' : 'Save HU Formation'}
                     </Button>

@@ -40,7 +40,7 @@ export default function WizardLayout({
 
       <div className="flex flex-1">
         {/* Left Sidebar */}
-        <MainSidebar currentPath={location} />
+        <MainSidebar currentPath={location} currentStep={currentStep} />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">

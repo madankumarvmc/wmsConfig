@@ -9,7 +9,10 @@ import {
   List, 
   RefreshCw, 
   CheckCircle2,
-  Lock
+  Lock,
+  Truck,
+  ClipboardList,
+  Database
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
@@ -29,10 +32,14 @@ interface SidebarItem {
 
 interface MainSidebarProps {
   currentPath?: string;
+  currentStep?: number;
 }
 
-export default function MainSidebar({ currentPath }: MainSidebarProps) {
+export default function MainSidebar({ currentPath, currentStep }: MainSidebarProps) {
   const [, setLocation] = useLocation();
+
+  // Check if we're in the outbound configuration flow
+  const isOutboundFlow = currentPath?.startsWith('/step');
 
   const sections: SidebarSection[] = [
     {
@@ -65,23 +72,28 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           path: "/step1"
         },
         {
-          icon: <Split className="w-5 h-5" />,
-          label: "Line-Split Strategies", 
+          icon: <List className="w-5 h-5" />,
+          label: "Task Sequences", 
           path: "/step2"
         },
         {
-          icon: <List className="w-5 h-5" />,
-          label: "Task Sequences",
+          icon: <Truck className="w-5 h-5" />,
+          label: "Pick Strategies",
           path: "/step3"
         },
         {
-          icon: <RefreshCw className="w-5 h-5" />,
-          label: "Replenishment Control",
+          icon: <ClipboardList className="w-5 h-5" />,
+          label: "HU Formation",
           path: "/step4"
         },
         {
-          icon: <CheckCircle2 className="w-5 h-5" />,
-          label: "Review & Publish",
+          icon: <Database className="w-5 h-5" />,
+          label: "Work Orders",
+          path: "/step5"
+        },
+        {
+          icon: <Database className="w-5 h-5" />,
+          label: "Stock Allocation",
           path: "/step6"
         }
       ]
@@ -116,6 +128,63 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
     }
   };
 
+  // If we're in outbound flow, show only outbound configuration with step numbers
+  if (isOutboundFlow) {
+    const outboundSection = sections.find(s => s.title === "OUTBOUND CONFIGURATION");
+    if (!outboundSection) return null;
+
+    return (
+      <div className="w-80 bg-gray-100 border-r border-gray-200 h-full overflow-y-auto">
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-medium text-gray-900">SBX WMS Setup</h1>
+          <p className="text-sm text-gray-600 mt-1">Outbound Module Configuration</p>
+        </div>
+        
+        <div className="p-4">
+          <div className="space-y-2">
+            {outboundSection.items.map((item, index) => {
+              const stepNumber = index + 1;
+              const isActive = currentPath === item.path;
+              const isCompleted = currentStep ? stepNumber < currentStep : false;
+              
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleNavigation(item.path, item.disabled)}
+                  className={`flex items-center p-3 rounded-lg w-full text-left transition-colors ${
+                    isActive 
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                      : isCompleted
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : 'text-gray-700 hover:bg-gray-50 border border-transparent'
+                  }`}
+                  disabled={item.disabled}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mr-3 ${
+                    isActive 
+                      ? 'bg-blue-600 text-white' 
+                      : isCompleted
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-300 text-gray-600'
+                  }`}>
+                    {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : stepNumber}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">{item.label}</div>
+                    <div className="text-xs opacity-75">
+                      Step {stepNumber} of {outboundSection.items.length}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show full sidebar for master configuration and other sections
   return (
     <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
       <div className="p-6">
@@ -127,8 +196,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
             
             <div className="space-y-1">
               {section.items.map((item, itemIndex) => {
-                const isActive = currentPath === item.path || 
-                  (currentPath?.startsWith('/step') && item.path.startsWith('/step'));
+                const isActive = currentPath === item.path;
                 
                 return (
                   <Button

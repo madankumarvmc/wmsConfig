@@ -80,15 +80,15 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           isActive: currentPath === '/step/1'
         },
         {
-          icon: <Image className="w-4 h-4" />,
-          label: 'Line-Split Strategies',
+          icon: <List className="w-4 h-4" />,
+          label: 'Task Sequences',
           path: '/step/2',
           badge: '2',
           isActive: currentPath === '/step/2'
         },
         {
-          icon: <List className="w-4 h-4" />,
-          label: 'Task Sequences',
+          icon: <Image className="w-4 h-4" />,
+          label: 'Pick Strategies',
           path: '/step/3',
           badge: '3',
           isActive: currentPath === '/step/3'

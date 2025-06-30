@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import TopNavbar from './TopNavbar';
 import StepInfo from './StepInfo';
 import WizardFooter from './WizardFooter';
-import StepNavigation from './StepNavigation';
+import MainSidebar from './MainSidebar';
 
 interface WizardLayoutProps {
   children: ReactNode;
@@ -38,9 +38,7 @@ export default function WizardLayout({
 
       <div className="flex flex-1">
         {/* Left Sidebar */}
-        <div className="w-80 bg-gray-100 shadow-lg border-r border-gray-200">
-          <StepNavigation currentStep={currentStep} />
-        </div>
+        <MainSidebar currentPath={`/step/${currentStep}`} />
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col">

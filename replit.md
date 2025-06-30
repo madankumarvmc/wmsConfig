@@ -98,6 +98,10 @@ The application uses three main database tables:
 ## Changelog
 
 Changelog:
+- June 30, 2025. Implemented complete black, white, and grey color scheme throughout the application
+- June 30, 2025. Updated top navbar to black background with grey buttons and white text
+- June 30, 2025. Changed all button styling from blue to black/grey theme
+- June 30, 2025. Updated progress bars, alerts, and component styling to match new theme
 - June 29, 2025. Added "Inventory Groups" as new Step 1 to define SI/LI combinations that are referenced throughout wizard
 - June 29, 2025. Major architectural change: Removed SI/LI forms from individual steps, now use inventory group selections
 - June 29, 2025. Updated wizard structure from 5 to 6 steps with proper step numbering and navigation

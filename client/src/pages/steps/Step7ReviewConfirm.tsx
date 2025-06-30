@@ -42,9 +42,9 @@ export default function Step7ReviewConfirm() {
           <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900">Task Sequences</h4>
-                  <p className="text-sm text-blue-700 mt-1">Storage and line identifier configurations</p>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-gray-900">Task Sequences</h4>
+                  <p className="text-sm text-gray-700 mt-1">Storage and line identifier configurations</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
                   <h4 className="font-medium text-green-900">Pick Strategies</h4>

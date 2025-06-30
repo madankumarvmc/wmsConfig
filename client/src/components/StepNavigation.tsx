@@ -97,7 +97,7 @@ export default function StepNavigation({ currentStep }: StepNavigationProps) {
   };
 
   return (
-    <div className="w-88 bg-white shadow-lg border-r border-gray-200 hidden lg:block">
+    <div className="w-88 bg-gray-100 shadow-lg border-r border-gray-200 hidden lg:block">
       <div className="p-6 border-b border-gray-200">
         <h1 className="text-xl font-medium text-gray-900">SBX WMS Setup</h1>
         <p className="text-sm text-gray-600 mt-1">Outbound Module Configuration</p>
@@ -120,8 +120,8 @@ export default function StepNavigation({ currentStep }: StepNavigationProps) {
               >
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mr-3",
-                  status === 'active' && "bg-blue-500 text-white",
-                  status === 'completed' && "bg-green-500 text-white",
+                  status === 'active' && "bg-black text-white",
+                  status === 'completed' && "bg-gray-700 text-white",
                   status === 'pending' && "bg-gray-300 text-gray-600"
                 )}>
                   {status === 'completed' || status === 'active' ? (

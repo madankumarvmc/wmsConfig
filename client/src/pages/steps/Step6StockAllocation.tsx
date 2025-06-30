@@ -264,9 +264,9 @@ export default function Step6StockAllocation() {
       previousLabel="Previous: Work Orders"
     >
       {/* Step Description */}
-      <Alert className="mb-6 border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700">
+      <Alert className="mb-6 border-gray-200 bg-gray-50">
+        <Info className="h-4 w-4 text-gray-600" />
+        <AlertDescription className="text-gray-700">
           <strong>Step 5: Stock Allocation Strategy</strong> - Create inventory groups and define PICK and PUT allocation strategies. Each group must have both PICK and PUT strategies configured.
         </AlertDescription>
       </Alert>

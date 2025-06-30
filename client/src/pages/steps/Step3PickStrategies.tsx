@@ -229,7 +229,7 @@ export default function Step3PickStrategies() {
           <Button 
             onClick={handleAddNew}
             disabled={isFormVisible || inventoryGroups.length === 0}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-black hover:bg-gray-800 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add Pick Strategy

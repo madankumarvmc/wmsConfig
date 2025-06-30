@@ -174,7 +174,7 @@ export default function Step2TaskSequences() {
         {/* Header Section */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Package className="w-5 h-5 text-blue-600" />
+            <Package className="w-5 h-5 text-black" />
             <h3 className="text-lg font-medium">Task Sequence Configurations ({configurations.length})</h3>
           </div>
           <Button 
@@ -206,9 +206,9 @@ export default function Step2TaskSequences() {
         )}
 
         {/* Information Alert */}
-        <Alert className="border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
+        <Alert className="border-gray-200 bg-gray-50">
+          <Info className="h-4 w-4 text-gray-600" />
+          <AlertDescription className="text-gray-800">
             <strong>Task Sequences:</strong> Define the workflow for each inventory group. Common sequences include OUTBOUND_REPLEN (move stock to pick locations), OUTBOUND_PICK (pick items), and OUTBOUND_LOAD (prepare for shipping).
           </AlertDescription>
         </Alert>
@@ -339,7 +339,7 @@ export default function Step2TaskSequences() {
                     <Button 
                       type="submit" 
                       disabled={saveConfigurationMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-black hover:bg-gray-800 text-white"
                     >
                       {saveConfigurationMutation.isPending ? 'Saving...' : 'Save Configuration'}
                     </Button>
@@ -445,7 +445,7 @@ export default function Step2TaskSequences() {
               </p>
               <Button 
                 onClick={() => setIsAddingConfig(true)}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-black hover:bg-gray-800 text-white"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create First Configuration

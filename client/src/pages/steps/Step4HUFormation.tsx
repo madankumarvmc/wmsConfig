@@ -230,9 +230,9 @@ export default function Step4HUFormation() {
       previousLabel="Previous: Pick Strategies"
     >
       {/* Step Description */}
-      <Alert className="mb-6 border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-blue-700">
+      <Alert className="mb-6 border-gray-200 bg-gray-50">
+        <Info className="h-4 w-4 text-gray-600" />
+        <AlertDescription className="text-gray-700">
           <strong>Step 3: HU Formation & Path Determination</strong> - Configure handling unit formation settings for each pick strategy. Select a strategy from the list and define HU kinds, thresholds, and operational parameters.
         </AlertDescription>
       </Alert>

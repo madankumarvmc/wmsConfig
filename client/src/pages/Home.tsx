@@ -148,12 +148,12 @@ export default function Home() {
             <CardContent>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <span className="text-2xl font-bold text-blue-600">{completedStepsCount}/6</span>
+                  <span className="text-2xl font-bold text-black">{completedStepsCount}/6</span>
                   <span className="text-gray-600 ml-2">steps completed</span>
                 </div>
                 <div className="w-64 bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-black h-2 rounded-full transition-all duration-300"
                     style={{ width: `${(completedStepsCount / 6) * 100}%` }}
                   />
                 </div>
@@ -173,10 +173,10 @@ export default function Home() {
         {/* Setup Options */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {/* Quick Setup */}
-          <Card className="border-2 border-blue-200 bg-blue-50">
+          <Card className="border-2 border-gray-200 bg-gray-50">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Sparkles className="w-6 h-6 mr-2 text-blue-600" />
+                <Sparkles className="w-6 h-6 mr-2 text-black" />
                 Quick Setup
                 <Badge className="ml-2 bg-blue-100 text-blue-800">Recommended</Badge>
               </CardTitle>

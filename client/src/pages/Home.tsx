@@ -125,8 +125,26 @@ export default function Home() {
   const completedStepsCount = wizardSteps.filter(step => step.isComplete).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-6xl mx-auto px-4">
+    <div className="min-h-screen bg-gray-50">
+      <TopNavbar 
+        leftButtons={[
+          {
+            icon: <HomeIcon className="w-4 h-4" />,
+            label: "Home",
+            onClick: () => setLocation('/'),
+            active: true
+          }
+        ]}
+        rightButtons={[
+          {
+            icon: <BookOpen className="w-4 h-4" />,
+            label: "Documentation",
+            onClick: () => window.open('/docs', '_blank')
+          }
+        ]}
+      />
+      
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">

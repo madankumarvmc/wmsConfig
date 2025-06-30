@@ -183,20 +183,6 @@ export default function Step1InventoryGroups() {
     }
   };
 
-  const handleNext = () => {
-    if (inventoryGroups.length === 0) {
-      toast({
-        title: "No Inventory Groups",
-        description: "Please create at least one inventory group before proceeding.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    dispatch({ type: 'COMPLETE_STEP', payload: 1 });
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 2 });
-  };
-
   const handleEdit = (group: InventoryGroup) => {
     const storageIds = group.storageIdentifiers as any;
     const lineIds = group.lineIdentifiers as any;
@@ -235,6 +221,24 @@ export default function Step1InventoryGroups() {
     setIsFormVisible(false);
     setEditingGroup(null);
     form.reset();
+  };
+
+  const handleNext = () => {
+    if (inventoryGroups.length === 0) {
+      toast({ 
+        title: "At least one inventory group required", 
+        description: "Please create at least one inventory group before proceeding.",
+        variant: "destructive" 
+      });
+      return;
+    }
+    dispatch({ type: 'COMPLETE_STEP', payload: 1 });
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 2 });
+    setLocation('/step2');
+  };
+
+  const handlePrevious = () => {
+    setLocation('/');
   };
 
   const getIdentifiersDisplay = (group: InventoryGroup) => {

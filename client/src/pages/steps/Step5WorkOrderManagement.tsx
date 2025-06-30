@@ -203,7 +203,7 @@ export default function Step5WorkOrderManagement() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-black">
               {configuredStrategiesCount}/{pickStrategies.length}
             </div>
             <div className="text-sm text-gray-600">
@@ -237,7 +237,7 @@ export default function Step5WorkOrderManagement() {
                     onClick={() => handleSelectStrategy(strategy)}
                     className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                       isSelected 
-                        ? 'border-blue-500 bg-blue-50' 
+                        ? 'border-black bg-gray-50' 
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                     }`}
                   >
@@ -537,7 +537,7 @@ export default function Step5WorkOrderManagement() {
                     <Button
                       type="submit"
                       disabled={saveWorkOrderMutation.isPending}
-                      className="bg-blue-500 hover:bg-blue-600"
+                      className="bg-black hover:bg-gray-800 text-white"
                     >
                       {saveWorkOrderMutation.isPending ? 'Saving...' : 'Save Work Order Management'}
                     </Button>

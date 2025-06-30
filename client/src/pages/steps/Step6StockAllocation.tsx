@@ -281,7 +281,7 @@ export default function Step6StockAllocation() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-black">
               {configuredGroupsCount}/{inventoryGroups.length}
             </div>
             <div className="text-sm text-gray-600">
@@ -304,7 +304,7 @@ export default function Step6StockAllocation() {
               <CardTitle className="text-lg">Inventory Groups</CardTitle>
               <Dialog open={isCreateGroupOpen} onOpenChange={setIsCreateGroupOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="bg-blue-500 hover:bg-blue-600">
+                  <Button size="sm" className="bg-black hover:bg-gray-800 text-white">
                     <Plus className="w-4 h-4 mr-1" />
                     Add
                   </Button>
@@ -468,7 +468,7 @@ export default function Step6StockAllocation() {
                         <Button
                           type="submit"
                           disabled={createGroupMutation.isPending}
-                          className="bg-blue-500 hover:bg-blue-600"
+                          className="bg-black hover:bg-gray-800 text-white"
                         >
                           {createGroupMutation.isPending ? 'Creating...' : 'Create Group'}
                         </Button>

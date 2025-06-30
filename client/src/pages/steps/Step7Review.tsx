@@ -187,7 +187,7 @@ export default function Step6Review() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Configurations:</span>
-              <span className="text-2xl font-bold text-blue-600">{count}</span>
+              <span className="text-2xl font-bold text-black">{count}</span>
             </div>
             
             {count > 0 && (
@@ -318,14 +318,14 @@ export default function Step6Review() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span>Completed Steps:</span>
-                  <span className="text-2xl font-bold text-blue-600">
+                  <span className="text-2xl font-bold text-black">
                     {[1, 2, 3, 4, 5].filter(step => getStepStatus(step) === 'complete').length}/5
                   </span>
                 </div>
                 
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-black h-2 rounded-full transition-all duration-300"
                     style={{ 
                       width: `${([1, 2, 3, 4, 5].filter(step => getStepStatus(step) === 'complete').length / 5) * 100}%` 
                     }}

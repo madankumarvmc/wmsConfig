@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowRight, Settings, Database, Package, Users, Zap, CheckCircle, Sparkles, Clock, AlertCircle } from 'lucide-react';
+import { ArrowRight, Settings, Database, Package, Users, Zap, CheckCircle, Sparkles, Clock, AlertCircle, BookOpen, Home as HomeIcon } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import TopNavbar from '@/components/TopNavbar';
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -178,7 +179,7 @@ export default function Home() {
               <CardTitle className="flex items-center">
                 <Sparkles className="w-6 h-6 mr-2 text-black" />
                 Quick Setup
-                <Badge className="ml-2 bg-blue-100 text-blue-800">Recommended</Badge>
+                <Badge className="ml-2 bg-gray-100 text-gray-800">Recommended</Badge>
               </CardTitle>
               <p className="text-gray-600">
                 Apply proven warehouse configurations based on real production setups. Perfect for getting started quickly.
@@ -204,7 +205,7 @@ export default function Home() {
               <Button 
                 onClick={handleQuickSetup}
                 disabled={quickSetupMutation.isPending}
-                className="w-full bg-blue-600 hover:bg-blue-700"
+                className="w-full bg-black hover:bg-gray-800 text-white"
                 size="lg"
               >
                 {quickSetupMutation.isPending ? (
@@ -226,7 +227,7 @@ export default function Home() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Settings className="w-6 h-6 mr-2 text-gray-600" />
+                <Settings className="w-6 h-6 mr-2 text-black" />
                 Manual Setup
               </CardTitle>
               <p className="text-gray-600">

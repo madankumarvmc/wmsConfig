@@ -555,7 +555,7 @@ export default function Step6StockAllocation() {
                       onClick={() => handleSelectStrategy(mode as "PICK" | "PUT")}
                       className={`p-4 rounded-lg border cursor-pointer transition-colors ${
                         isSelected 
-                          ? 'border-blue-500 bg-blue-50' 
+                          ? 'border-black bg-gray-50' 
                           : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
@@ -839,7 +839,7 @@ export default function Step6StockAllocation() {
                     <Button
                       type="submit"
                       disabled={updateStrategyMutation.isPending}
-                      className="bg-blue-500 hover:bg-blue-600"
+                      className="bg-black hover:bg-gray-800 text-white"
                     >
                       {updateStrategyMutation.isPending ? 'Saving...' : 'Save Strategy'}
                     </Button>

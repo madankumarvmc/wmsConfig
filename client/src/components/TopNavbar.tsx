@@ -2,7 +2,19 @@ import { Button } from '@/components/ui/button';
 import { User, Save, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 
-export default function TopNavbar() {
+interface TopNavbarButton {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+}
+
+interface TopNavbarProps {
+  leftButtons?: TopNavbarButton[];
+  rightButtons?: TopNavbarButton[];
+}
+
+export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNavbarProps) {
   const [, setLocation] = useLocation();
 
   const handleExitSetup = () => {
@@ -10,35 +22,83 @@ export default function TopNavbar() {
   };
 
   return (
-    <header className="bg-black shadow-sm border-b border-gray-800">
-      <div className="flex items-center justify-between px-6 py-3">
-        {/* Left side - Brand */}
-        <div className="flex items-center">
-          <h1 className="text-lg font-semibold text-white">SBX WMS Setup</h1>
-          <span className="ml-2 text-sm text-gray-300">Outbound Module Configuration</span>
-        </div>
-
-        {/* Right side - Actions */}
+    <nav className="bg-black text-white px-6 py-3 flex items-center justify-between border-b border-gray-800">
+      {/* Left side - Logo/Title and Navigation */}
+      <div className="flex items-center space-x-6">
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" className="bg-gray-600 text-white border-gray-500 hover:bg-gray-500">
-            <Save className="w-4 h-4 mr-2" />
-            Save Draft
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="bg-gray-600 text-white border-gray-500 hover:bg-gray-500"
-            onClick={handleExitSetup}
-          >
-            <X className="w-4 h-4 mr-2" />
-            Exit Setup
-          </Button>
-          <Button variant="ghost" size="sm" className="text-white hover:bg-gray-800">
-            <User className="w-4 h-4 mr-2" />
-            Admin User
-          </Button>
+          <div className="text-lg font-medium">SBX WMS Setup</div>
+          <div className="text-sm text-gray-300">Outbound Module Configuration</div>
         </div>
+        
+        {/* Left navigation buttons */}
+        {leftButtons.length > 0 && (
+          <div className="flex items-center space-x-2">
+            {leftButtons.map((button, index) => (
+              <Button
+                key={index}
+                variant="outline"
+                size="sm"
+                onClick={button.onClick}
+                className={`border-gray-600 text-white hover:bg-gray-600 ${
+                  button.active ? 'bg-gray-600' : 'bg-gray-700'
+                }`}
+              >
+                {button.icon}
+                <span className="ml-2">{button.label}</span>
+              </Button>
+            ))}
+          </div>
+        )}
       </div>
-    </header>
+
+      {/* Right side - Action buttons */}
+      <div className="flex items-center space-x-3">
+        {rightButtons.map((button, index) => (
+          <Button
+            key={index}
+            variant="outline"
+            size="sm"
+            onClick={button.onClick}
+            className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+          >
+            {button.icon}
+            <span className="ml-2">{button.label}</span>
+          </Button>
+        ))}
+        
+        {/* Default buttons for configuration pages */}
+        {leftButtons.length === 0 && rightButtons.length === 0 && (
+          <>
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Save Draft
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+              onClick={handleExitSetup}
+            >
+              <X className="w-4 h-4 mr-2" />
+              Exit Setup
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="bg-gray-700 border-gray-600 text-white hover:bg-gray-600"
+            >
+              <User className="w-4 h-4 mr-2" />
+              Admin User
+            </Button>
+          </>
+        )}
+      </div>
+    </nav>
   );
 }

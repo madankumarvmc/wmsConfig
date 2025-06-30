@@ -98,15 +98,15 @@ The application uses three main database tables:
 ## Changelog
 
 Changelog:
-- June 30, 2025. Expanded portal from outbound-only to full warehouse configuration portal with segregated sidebar
-- June 30, 2025. Implemented MainSidebar component with Master Configuration, Outbound Configuration, Inbound Configuration, and Core Configuration sections
-- June 30, 2025. Created master configuration pages: Provisioning Setup, Master Uploads, and One-Click Templates
-- June 30, 2025. Replaced StepNavigation with MainSidebar in WizardLayout to accommodate expanded portal scope
-- June 30, 2025. Added consistent design system across home and configuration pages with unified top navbar
-- June 30, 2025. Implemented complete black, white, and grey color scheme throughout the application
-- June 30, 2025. Updated top navbar to black background with grey buttons and white text
-- June 30, 2025. Changed all button styling from blue to black/grey theme
-- June 30, 2025. Updated progress bars, alerts, and component styling to match new theme
+- June 30, 2025. Successfully transformed portal into full warehouse configuration system with segregated sidebar navigation
+- June 30, 2025. Implemented MainSidebar component with four distinct sections: Master Configuration, Outbound Configuration, Inbound Configuration, and Core Configuration
+- June 30, 2025. Created comprehensive master configuration pages: Provisioning Setup (warehouse basic info), Master Uploads (data import/export), and One-Click Templates (industry templates)
+- June 30, 2025. Replaced StepNavigation with expandable MainSidebar while preserving all existing outbound step functionality
+- June 30, 2025. Added MainLayout component for master configuration pages with consistent navigation
+- June 30, 2025. Updated routing to support master configuration paths (/master/*) alongside existing outbound steps (/step/*)
+- June 30, 2025. Maintained design consistency with black/white/grey theme across all new pages
+- June 30, 2025. Added expandable sections in sidebar with proper active state highlighting and step badges for outbound configuration
+- June 30, 2025. Implemented "Coming Soon" placeholders for Inbound and Core Configuration sections
 - June 29, 2025. Added "Inventory Groups" as new Step 1 to define SI/LI combinations that are referenced throughout wizard
 - June 29, 2025. Major architectural change: Removed SI/LI forms from individual steps, now use inventory group selections
 - June 29, 2025. Updated wizard structure from 5 to 6 steps with proper step numbering and navigation

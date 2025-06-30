@@ -1,17 +1,19 @@
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { 
-  Settings2, 
+  Settings, 
   Upload, 
-  FileTemplate, 
+  FileText, 
   Package, 
-  Split, 
+  Image, 
   List, 
-  RefreshCw, 
-  CheckCircle2,
+  RotateCcw, 
+  CheckCircle, 
+  ChevronDown, 
+  ChevronRight,
   Lock
 } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { Button } from '@/components/ui/button';
 
 interface SidebarSection {
   title: string;
@@ -33,137 +35,185 @@ interface MainSidebarProps {
 
 export default function MainSidebar({ currentPath }: MainSidebarProps) {
   const [, setLocation] = useLocation();
+  const [expandedSections, setExpandedSections] = useState<string[]>(['Master Configuration', 'Outbound Configuration']);
+
+  const toggleSection = (sectionTitle: string) => {
+    setExpandedSections(prev => 
+      prev.includes(sectionTitle) 
+        ? prev.filter(s => s !== sectionTitle)
+        : [...prev, sectionTitle]
+    );
+  };
 
   const sections: SidebarSection[] = [
     {
-      title: "MASTER CONFIGURATION",
+      title: 'Master Configuration',
       items: [
         {
-          icon: <Settings2 className="w-5 h-5" />,
-          label: "Provisioning Setup",
-          path: "/master/provisioning",
-          badge: "Active"
+          icon: <Settings className="w-4 h-4" />,
+          label: 'Provisioning Setup',
+          path: '/master/provisioning',
+          isActive: currentPath === '/master/provisioning'
         },
         {
-          icon: <Upload className="w-5 h-5" />,
-          label: "Master Uploads",
-          path: "/master/uploads"
+          icon: <Upload className="w-4 h-4" />,
+          label: 'Master Uploads',
+          path: '/master/uploads',
+          isActive: currentPath === '/master/uploads'
         },
         {
-          icon: <FileTemplate className="w-5 h-5" />,
-          label: "One-Click Templates",
-          path: "/master/templates"
+          icon: <FileText className="w-4 h-4" />,
+          label: 'One-Click Templates',
+          path: '/master/templates',
+          isActive: currentPath === '/master/templates'
         }
       ]
     },
     {
-      title: "OUTBOUND CONFIGURATION", 
+      title: 'Outbound Configuration',
       items: [
         {
-          icon: <Package className="w-5 h-5" />,
-          label: "Inventory Groups",
-          path: "/configuration/step/1"
+          icon: <Package className="w-4 h-4" />,
+          label: 'Inventory Groups',
+          path: '/step/1',
+          badge: '1',
+          isActive: currentPath === '/step/1'
         },
         {
-          icon: <Split className="w-5 h-5" />,
-          label: "Line-Split Strategies", 
-          path: "/configuration/step/2"
+          icon: <Image className="w-4 h-4" />,
+          label: 'Line-Split Strategies',
+          path: '/step/2',
+          badge: '2',
+          isActive: currentPath === '/step/2'
         },
         {
-          icon: <List className="w-5 h-5" />,
-          label: "Task Sequences",
-          path: "/configuration/step/3"
+          icon: <List className="w-4 h-4" />,
+          label: 'Task Sequences',
+          path: '/step/3',
+          badge: '3',
+          isActive: currentPath === '/step/3'
         },
         {
-          icon: <RefreshCw className="w-5 h-5" />,
-          label: "Replenishment Control",
-          path: "/configuration/step/4"
+          icon: <Package className="w-4 h-4" />,
+          label: 'HU Formation',
+          path: '/step/4',
+          badge: '4',
+          isActive: currentPath === '/step/4'
         },
         {
-          icon: <CheckCircle2 className="w-5 h-5" />,
-          label: "Review & Publish",
-          path: "/configuration/step/6"
+          icon: <RotateCcw className="w-4 h-4" />,
+          label: 'Work Order Management',
+          path: '/step/5',
+          badge: '5',
+          isActive: currentPath === '/step/5'
+        },
+        {
+          icon: <CheckCircle className="w-4 h-4" />,
+          label: 'Stock Allocation',
+          path: '/step/6',
+          badge: '6',
+          isActive: currentPath === '/step/6'
         }
       ]
     },
     {
-      title: "INBOUND CONFIGURATION",
+      title: 'Inbound Configuration',
       items: [
         {
-          icon: <Lock className="w-5 h-5 text-gray-400" />,
-          label: "Coming Soon",
-          path: "/inbound",
+          icon: <Lock className="w-4 h-4" />,
+          label: 'Coming Soon',
+          path: '#',
           disabled: true
         }
       ]
     },
     {
-      title: "CORE CONFIGURATION", 
+      title: 'Core Configuration',
       items: [
         {
-          icon: <Lock className="w-5 h-5 text-gray-400" />,
-          label: "Coming Soon",
-          path: "/core",
+          icon: <Lock className="w-4 h-4" />,
+          label: 'Coming Soon',
+          path: '#',
           disabled: true
         }
       ]
     }
   ];
 
-  const handleNavigation = (path: string, disabled?: boolean) => {
-    if (!disabled) {
-      setLocation(path);
+  const handleItemClick = (item: SidebarItem) => {
+    if (!item.disabled && item.path !== '#') {
+      setLocation(item.path);
     }
   };
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
-      <div className="p-6">
-        {sections.map((section, sectionIndex) => (
-          <div key={sectionIndex} className="mb-8">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-              {section.title}
-            </h3>
-            
-            <div className="space-y-1">
-              {section.items.map((item, itemIndex) => {
-                const isActive = currentPath === item.path || 
-                  (currentPath?.startsWith('/configuration') && item.path.startsWith('/configuration'));
-                
-                return (
-                  <Button
-                    key={itemIndex}
-                    variant="ghost"
-                    className={`w-full justify-start px-3 py-3 h-auto text-left ${
-                      isActive 
-                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' 
-                        : item.disabled 
-                          ? 'text-gray-400 cursor-not-allowed hover:bg-transparent'
+      <div className="p-4">
+        {sections.map((section) => {
+          const isExpanded = expandedSections.includes(section.title);
+          const isComingSoon = section.items.every(item => item.disabled);
+          
+          return (
+            <div key={section.title} className="mb-6">
+              {/* Section Header */}
+              <button
+                onClick={() => toggleSection(section.title)}
+                className="w-full flex items-center justify-between text-left p-2 hover:bg-gray-50 rounded-lg transition-colors"
+                disabled={isComingSoon}
+              >
+                <h3 className={`text-sm font-medium uppercase tracking-wide ${
+                  isComingSoon ? 'text-gray-400' : 'text-gray-600'
+                }`}>
+                  {section.title}
+                </h3>
+                {!isComingSoon && (
+                  isExpanded ? 
+                    <ChevronDown className="w-4 h-4 text-gray-400" /> : 
+                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                )}
+              </button>
+
+              {/* Section Items */}
+              {isExpanded && (
+                <div className="mt-2 space-y-1">
+                  {section.items.map((item, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleItemClick(item)}
+                      disabled={item.disabled}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
+                        item.isActive
+                          ? 'bg-black text-white'
+                          : item.disabled
+                          ? 'text-gray-400 cursor-not-allowed'
                           : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={() => handleNavigation(item.path, item.disabled)}
-                    disabled={item.disabled}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center">
-                        {item.icon}
-                        <span className="ml-3 text-sm font-medium">{item.label}</span>
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`${
+                          item.isActive ? 'text-white' : 
+                          item.disabled ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
+                          {item.icon}
+                        </div>
+                        <span className="text-sm font-medium">{item.label}</span>
                       </div>
                       {item.badge && (
-                        <Badge 
-                          variant="secondary" 
-                          className="ml-2 bg-blue-100 text-blue-700 text-xs"
-                        >
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                          item.isActive 
+                            ? 'bg-white text-black' 
+                            : 'bg-gray-100 text-gray-600'
+                        }`}>
                           {item.badge}
-                        </Badge>
+                        </span>
                       )}
-                    </div>
-                  </Button>
-                );
-              })}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

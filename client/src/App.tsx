@@ -12,6 +12,9 @@ import Step4HUFormation from "@/pages/steps/Step4HUFormation";
 import Step5WorkOrderManagement from "@/pages/steps/Step5WorkOrderManagement";
 import Step6StockAllocation from "@/pages/steps/Step6StockAllocation";
 import Step7ReviewConfirm from "@/pages/steps/Step7ReviewConfirm";
+import ProvisioningSetup from "@/pages/master/ProvisioningSetup";
+import MasterUploads from "@/pages/master/MasterUploads";
+import OneClickTemplates from "@/pages/master/OneClickTemplates";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,6 +28,9 @@ function Router() {
       <Route path="/step5" component={Step5WorkOrderManagement} />
       <Route path="/step6" component={Step6StockAllocation} />
       <Route path="/step7" component={Step7ReviewConfirm} />
+      <Route path="/master/provisioning" component={ProvisioningSetup} />
+      <Route path="/master/uploads" component={MasterUploads} />
+      <Route path="/master/templates" component={OneClickTemplates} />
       <Route component={NotFound} />
     </Switch>
   );

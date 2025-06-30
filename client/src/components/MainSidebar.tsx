@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Settings2, 
   Upload, 
-  FileTemplate, 
+  FileText, 
   Package, 
   Split, 
   List, 
@@ -50,7 +50,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           path: "/master/uploads"
         },
         {
-          icon: <FileTemplate className="w-5 h-5" />,
+          icon: <FileText className="w-5 h-5" />,
           label: "One-Click Templates",
           path: "/master/templates"
         }
@@ -62,27 +62,27 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
         {
           icon: <Package className="w-5 h-5" />,
           label: "Inventory Groups",
-          path: "/configuration/step/1"
+          path: "/step1"
         },
         {
           icon: <Split className="w-5 h-5" />,
           label: "Line-Split Strategies", 
-          path: "/configuration/step/2"
+          path: "/step2"
         },
         {
           icon: <List className="w-5 h-5" />,
           label: "Task Sequences",
-          path: "/configuration/step/3"
+          path: "/step3"
         },
         {
           icon: <RefreshCw className="w-5 h-5" />,
           label: "Replenishment Control",
-          path: "/configuration/step/4"
+          path: "/step4"
         },
         {
           icon: <CheckCircle2 className="w-5 h-5" />,
           label: "Review & Publish",
-          path: "/configuration/step/6"
+          path: "/step6"
         }
       ]
     },
@@ -128,7 +128,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
             <div className="space-y-1">
               {section.items.map((item, itemIndex) => {
                 const isActive = currentPath === item.path || 
-                  (currentPath?.startsWith('/configuration') && item.path.startsWith('/configuration'));
+                  (currentPath?.startsWith('/step') && item.path.startsWith('/step'));
                 
                 return (
                   <Button

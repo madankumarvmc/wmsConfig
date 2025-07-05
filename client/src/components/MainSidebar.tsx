@@ -82,39 +82,53 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           isActive: currentPath === '/step/1'
         },
         {
-          icon: <List className="w-4 h-4" />,
-          label: 'Task Sequences',
+          icon: <Waves className="w-4 h-4" />,
+          label: 'Wave Planning',
           path: '/step/2',
           badge: '2',
           isActive: currentPath === '/step/2'
         },
         {
-          icon: <Image className="w-4 h-4" />,
-          label: 'Pick Strategies',
+          icon: <List className="w-4 h-4" />,
+          label: 'Task Sequences',
           path: '/step/3',
           badge: '3',
           isActive: currentPath === '/step/3'
         },
         {
-          icon: <Package className="w-4 h-4" />,
-          label: 'HU Formation',
+          icon: <Image className="w-4 h-4" />,
+          label: 'Pick Strategies',
           path: '/step/4',
           badge: '4',
           isActive: currentPath === '/step/4'
         },
         {
-          icon: <RotateCcw className="w-4 h-4" />,
-          label: 'Work Order Management',
+          icon: <Package className="w-4 h-4" />,
+          label: 'HU Formation',
           path: '/step/5',
           badge: '5',
           isActive: currentPath === '/step/5'
         },
         {
-          icon: <CheckCircle className="w-4 h-4" />,
-          label: 'Stock Allocation',
+          icon: <RotateCcw className="w-4 h-4" />,
+          label: 'Work Order Management',
           path: '/step/6',
           badge: '6',
           isActive: currentPath === '/step/6'
+        },
+        {
+          icon: <BarChart3 className="w-4 h-4" />,
+          label: 'Stock Allocation',
+          path: '/step/7',
+          badge: '7',
+          isActive: currentPath === '/step/7'
+        },
+        {
+          icon: <CheckCircle className="w-4 h-4" />,
+          label: 'Review & Confirm',
+          path: '/step/8',
+          badge: '8',
+          isActive: currentPath === '/step/8'
         }
       ]
     },

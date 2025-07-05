@@ -11,7 +11,9 @@ import {
   CheckCircle, 
   ChevronDown, 
   ChevronRight,
-  Lock
+  Lock,
+  Waves,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 

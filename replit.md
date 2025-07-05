@@ -98,6 +98,10 @@ The application uses three main database tables:
 ## Changelog
 
 Changelog:
+- July 5, 2025. Added "Wave Planning" as new Step 2 in outbound configuration wizard
+- July 5, 2025. Updated wizard structure from 7 to 8 steps with Wave Planning inserted after Inventory Groups
+- July 5, 2025. Created comprehensive Wave Planning page with strategy configuration, templates, and automation settings
+- July 5, 2025. Updated all subsequent step routing and navigation to accommodate new step numbering
 - June 30, 2025. Successfully transformed portal into full warehouse configuration system with segregated sidebar navigation
 - June 30, 2025. Implemented MainSidebar component with four distinct sections: Master Configuration, Outbound Configuration, Inbound Configuration, and Core Configuration
 - June 30, 2025. Created comprehensive master configuration pages: Provisioning Setup (warehouse basic info), Master Uploads (data import/export), and One-Click Templates (industry templates)

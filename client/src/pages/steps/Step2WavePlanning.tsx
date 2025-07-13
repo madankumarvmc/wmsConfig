@@ -346,100 +346,139 @@ export default function Step2WavePlanning() {
           <TabsContent value="line-split" className="space-y-6">
             <Card className="wms-card">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Target className="w-5 h-5 mr-2" />
-                  Line-Split Strategies Configuration
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Target className="w-5 h-5 mr-2" />
+                    Line-Split Strategies Configuration
+                  </div>
+                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Strategy
+                  </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Configure line-split strategies. Storage Identifiers and Line Identifiers will be selected automatically based on your configured inventory groups.
+                    Configure line-split strategies for each inventory group. Select an inventory group and define the split strategy parameters.
                   </AlertDescription>
                 </Alert>
 
-                <div className="max-w-md space-y-4">
-                  <h4 className="text-title-16 text-gray-900">Line-Split Configuration</h4>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="sequence">Sequence</Label>
-                      <Input
-                        id="sequence"
-                        type="number"
-                        placeholder="e.g., 0"
-                        defaultValue={0}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Execution order for this strategy
-                      </p>
-                    </div>
+                {/* Strategy List */}
+                <div className="space-y-4">
+                  {/* Example Strategy Card */}
+                  <Card className="border-2 border-dashed border-gray-300">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center justify-between">
+                        <span>New Line-Split Strategy</span>
+                        <Button variant="ghost" size="sm">
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Inventory Group Selection */}
+                        <div>
+                          <Label htmlFor="inventoryGroup">Inventory Group *</Label>
+                          <Select>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select inventory group" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="group1">Fast Moving Items</SelectItem>
+                              <SelectItem value="group2">Slow Moving Items</SelectItem>
+                              <SelectItem value="group3">Fragile Items</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                    <div>
-                      <Label htmlFor="mode">Split Mode</Label>
-                      <Select defaultValue="nosplit">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select split mode" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="nosplit">No Split</SelectItem>
-                          <SelectItem value="split">Split</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Whether to split order lines across multiple waves
-                      </p>
-                    </div>
+                        {/* Sequence */}
+                        <div>
+                          <Label htmlFor="sequence">Sequence</Label>
+                          <Input
+                            id="sequence"
+                            type="number"
+                            placeholder="e.g., 0"
+                            defaultValue={0}
+                          />
+                          <p className="text-xs text-gray-500 mt-1">
+                            Execution order for this strategy
+                          </p>
+                        </div>
 
-                    <div>
-                      <Label htmlFor="allowedUOMs">Allowed UOMs</Label>
-                      <div className="grid grid-cols-2 gap-3 mt-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="l0" defaultChecked />
-                          <Label htmlFor="l0" className="text-sm">L0</Label>
+                        {/* Split Mode */}
+                        <div>
+                          <Label htmlFor="mode">Split Mode</Label>
+                          <Select defaultValue="nosplit">
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select split mode" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="nosplit">No Split</SelectItem>
+                              <SelectItem value="split">Split</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Whether to split order lines across multiple waves
+                          </p>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="l1" />
-                          <Label htmlFor="l1" className="text-sm">L1</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="l2" />
-                          <Label htmlFor="l2" className="text-sm">L2</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="l3" />
-                          <Label htmlFor="l3" className="text-sm">L3</Label>
+
+                        {/* Allowed UOMs */}
+                        <div>
+                          <Label htmlFor="allowedUOMs">Allowed UOMs</Label>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="l0" defaultChecked />
+                              <Label htmlFor="l0" className="text-sm">L0</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="l1" />
+                              <Label htmlFor="l1" className="text-sm">L1</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="l2" />
+                              <Label htmlFor="l2" className="text-sm">L2</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="l3" />
+                              <Label htmlFor="l3" className="text-sm">L3</Label>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Unit of measure levels allowed for this strategy
+                          </p>
                         </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Unit of measure levels allowed for this strategy
-                      </p>
-                    </div>
-                  </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex justify-end space-x-2 pt-2">
+                        <Button variant="outline" size="sm">
+                          Cancel
+                        </Button>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white" size="sm">
+                          Save Strategy
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
 
-                {/* Auto-Selection Notice */}
+                {/* Information Notice */}
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h5 className="text-title-14 text-blue-900 mb-2">Automatic Selection</h5>
+                  <h5 className="text-title-14 text-blue-900 mb-2">How it Works</h5>
                   <p className="text-sm text-blue-800">
-                    <strong>Storage Identifiers</strong> and <strong>Line Identifiers</strong> will be automatically selected based on your configured inventory groups from Step 1. This follows the same SI/LI selection principle used throughout the system.
+                    Select an inventory group and define the line-split strategy parameters. The <strong>Storage Identifiers</strong> and <strong>Line Identifiers</strong> will be automatically inherited from the selected inventory group, following the same SI/LI principle used throughout the system.
                   </p>
                 </div>
 
-                {/* Simplified JSON Preview */}
+                {/* Strategy Summary */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h5 className="text-title-14 text-gray-900 mb-3">Configuration Preview</h5>
-                  <pre className="text-xs text-gray-700 overflow-x-auto">
-{`{
-  "sequence": 0,
-  "mode": "nosplit",
-  "allowedUOMs": ["L0"]
-}`}
-                  </pre>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Note: Storage and line identifiers will be automatically populated from your inventory groups
-                  </p>
+                  <h5 className="text-title-14 text-gray-900 mb-3">Configured Strategies</h5>
+                  <div className="text-sm text-gray-600">
+                    No line-split strategies configured yet. Click "Add Strategy" to create your first configuration.
+                  </div>
                 </div>
               </CardContent>
             </Card>

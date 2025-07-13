@@ -191,16 +191,70 @@
     @apply wms-button-secondary;
   }
 
-  /* Fix for dropdown z-index issues */
+  /* Fix for dropdown z-index issues - comprehensive solution */
   [data-radix-popper-content-wrapper] {
-    z-index: 9999 !important;
+    z-index: 99999 !important;
+    position: fixed !important;
   }
   
   [data-radix-select-content] {
-    z-index: 9999 !important;
+    z-index: 99999 !important;
+    position: fixed !important;
   }
   
   [data-radix-dropdown-menu-content] {
-    z-index: 9999 !important;
+    z-index: 99999 !important;
+    position: fixed !important;
+  }
+  
+  [data-radix-popover-content] {
+    z-index: 99999 !important;
+    position: fixed !important;
+  }
+  
+  [data-radix-context-menu-content] {
+    z-index: 99999 !important;
+    position: fixed !important;
+  }
+  
+  /* Additional fixes for portal containers */
+  [data-radix-portal] {
+    z-index: 99999 !important;
+  }
+  
+  /* Fix for select trigger in forms */
+  .select-trigger {
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Ensure all dropdowns are above other content */
+  [role="listbox"],
+  [role="menu"],
+  [role="combobox"] {
+    z-index: 99999 !important;
+    position: fixed !important;
+  }
+  
+  /* Fix for Radix Select specifically */
+  [data-state="open"] [data-radix-select-content] {
+    z-index: 99999 !important;
+    position: fixed !important;
+  }
+  
+  /* Fix stacking context issues in dialogs */
+  [data-radix-dialog-content] [data-radix-select-content] {
+    z-index: 99999 !important;
+    position: fixed !important;
+  }
+  
+  /* Ensure viewport doesn't create stacking context */
+  [data-radix-select-viewport] {
+    position: static !important;
+  }
+  
+  /* Override any transform that might create stacking context */
+  [data-radix-select-content] {
+    transform: none !important;
   }
 }

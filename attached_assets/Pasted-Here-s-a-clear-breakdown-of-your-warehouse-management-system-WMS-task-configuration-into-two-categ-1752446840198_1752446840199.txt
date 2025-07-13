@@ -1,0 +1,77 @@
+Here’s a clear breakdown of your warehouse management system (WMS) task configuration into two categories: Task Planning Config and Task Execution Config.
+
+1. Task Planning Config
+These parameters define how tasks are created, grouped, prioritized, and prepared before execution.
+
+Parameter	Value/Description
+taskKind	AUTO_REPLEN
+taskSubKind	string
+taskAttrs	{}
+strat	PICK_ALL_TRIPS
+sortingStrategy	SORT_BY_INVOICE
+loadingStrategy	LOAD_BY_CUSTOMER
+groupBy	[category]
+taskLabel	string
+mode	PICK
+priority	0
+skipZoneFace	PICK
+orderByQuantUpdatedAt	true
+searchScope	WH
+statePreferenceOrder	[PURE]
+preferFixed	true
+preferNonFixed	true
+statePreferenceSeq	[PURE]
+batchPreferenceMode	CLOSEST_PREVIOUS
+areaTypes	[INVENTORY]
+areas	[string]
+updatedAt	2025-06-04T13:07:35.853Z
+orderByPickingPosition	true
+useInventorySnapshotForPickSlotting	true
+optimizationMode	TOUCH
+2. Task Execution Config
+These parameters control the operational details of how tasks are performed on the warehouse floor.
+
+Parameter	Value/Description
+tripType	LM
+huKinds	[]
+scanSourceHUKind	NONE
+pickSourceHUKind	NONE
+carrierHUKind	NONE
+huMappingMode	BIN
+dropHUQuantThreshold	0
+dropUOM	L0
+allowComplete	true
+swapHUThreshold	0
+dropInnerHU	true
+allowInnerHUBreak	true
+displayDropUOM	true
+autoUOMConversion	true
+mobileSorting	true
+sortingParam	string
+huWeightThreshold	0
+qcMismatchMonthThreshold	0
+quantSlottingForHUsInDrop	true
+allowPickingMultiBatchfromHU	true
+displayEditPickQuantity	true
+pickBundles	true
+enableEditQtyInPickOp	true
+dropSlottingMode	BIN
+enableManualDestBinSelection	true
+mapSegregationGroupsToBins	true
+dropHUInBin	true
+scanDestHUInDrop	true
+allowHUBreakInDrop	true
+strictBatchAdherence	true
+allowWorkOrderSplit	true
+undoOp	true
+disableWorkOrder	true
+allowUnpick	true
+supportPalletScan	true
+loadingUnits	[CRATE]
+pickMandatoryScan	true
+dropMandatoryScan	true
+Summary:
+
+Task Planning Config covers how tasks are structured and organized before picking begins.
+
+Task Execution Config governs the rules, scanning, handling, and operational controls during the picking and dropping process on the warehouse floor.

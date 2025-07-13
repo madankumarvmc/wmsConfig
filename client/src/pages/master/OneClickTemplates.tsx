@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +19,9 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import MainLayout from '@/components/MainLayout';
+import type { OneClickTemplate } from '../../../../shared/schema';
 
 interface Template {
   id: string;
@@ -32,11 +36,67 @@ interface Template {
 }
 
 export default function OneClickTemplates() {
+  const [, setLocation] = useLocation();
   const [deployingTemplate, setDeployingTemplate] = useState<string | null>(null);
   const [deploymentProgress, setDeploymentProgress] = useState(0);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const templates: Template[] = [
+  const { data: templates = [], isLoading } = useQuery<OneClickTemplate[]>({
+    queryKey: ['/api/templates'],
+  });
+
+  const applyTemplateMutation = useMutation({
+    mutationFn: async (templateId: number) => {
+      const response = await apiRequest('POST', `/api/templates/${templateId}/apply`);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Template Applied Successfully",
+        description: "Your warehouse configuration has been set up. Redirecting to configuration wizard.",
+      });
+      
+      // Invalidate all queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory-groups'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/task-sequences'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/task-planning'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/task-execution'] });
+      
+      // Redirect to step 1 after a brief delay
+      setTimeout(() => {
+        setLocation('/step/1');
+      }, 1500);
+    },
+    onError: () => {
+      toast({
+        title: "Application Failed",
+        description: "Failed to apply template. Please try again.",
+        variant: "destructive"
+      });
+      setDeployingTemplate(null);
+      setDeploymentProgress(0);
+    }
+  });
+
+  const deployTemplate = async (templateId: string) => {
+    const numericId = parseInt(templateId);
+    setDeployingTemplate(templateId);
+    setDeploymentProgress(0);
+
+    // Simulate deployment progress
+    const progressSteps = [10, 25, 40, 60, 80, 100];
+    for (const progress of progressSteps) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      setDeploymentProgress(progress);
+    }
+
+    // Apply the template
+    applyTemplateMutation.mutate(numericId);
+  };
+
+  // Fallback mock templates for display if API fails
+  const mockTemplates: Template[] = [
     {
       id: 'ecommerce-basic',
       name: 'E-commerce Fulfillment',
@@ -86,26 +146,57 @@ export default function OneClickTemplates() {
       ],
       configurationTime: '30 minutes',
       complexity: 'Advanced'
-    },
-    {
-      id: 'retail-chain',
-      name: 'Retail Chain Hub',
-      description: 'Store replenishment and retail distribution operations',
-      industry: 'Retail',
-      icon: <Truck className="w-6 h-6" />,
-      features: [
-        'Store allocation',
-        'Replenishment planning',
-        'Seasonal management',
-        'Promotional handling',
-        'Multi-location sync'
-      ],
-      configurationTime: '20 minutes',
-      complexity: 'Intermediate'
     }
   ];
 
-  const getComplexityColor = (complexity: Template['complexity']) => {
+  const getTemplateIcon = (industry: string) => {
+    switch (industry.toLowerCase()) {
+      case 'distribution':
+        return <Building className="w-6 h-6" />;
+      case 'e-commerce':
+        return <ShoppingCart className="w-6 h-6" />;
+      case 'manufacturing':
+        return <Package className="w-6 h-6" />;
+      case 'retail':
+        return <Truck className="w-6 h-6" />;
+      default:
+        return <Package className="w-6 h-6" />;
+    }
+  };
+
+  const getTemplateFeatures = (templateData: any) => {
+    if (!templateData) return [];
+    
+    const features = [];
+    if (templateData.taskSequence?.taskSequences) {
+      features.push(`${templateData.taskSequence.taskSequences.length} task sequences`);
+    }
+    if (templateData.inventoryGroups?.length) {
+      features.push(`${templateData.inventoryGroups.length} inventory groups`);
+    }
+    if (templateData.taskPlanning?.strategy) {
+      features.push(`${templateData.taskPlanning.strategy} strategy`);
+    }
+    if (templateData.taskExecution) {
+      features.push('Task execution rules');
+    }
+    return features.length ? features : ['Complete configuration'];
+  };
+
+  const getEstimatedTime = (complexity: string) => {
+    switch (complexity) {
+      case 'Basic':
+        return '10 minutes';
+      case 'Intermediate':
+        return '20 minutes';
+      case 'Advanced':
+        return '30 minutes';
+      default:
+        return '15 minutes';
+    }
+  };
+
+  const getComplexityColor = (complexity: string) => {
     switch (complexity) {
       case 'Basic':
         return 'bg-green-100 text-green-800';
@@ -116,36 +207,6 @@ export default function OneClickTemplates() {
       default:
         return 'bg-gray-100 text-gray-800';
     }
-  };
-
-  const handleDeployTemplate = async (templateId: string) => {
-    setDeployingTemplate(templateId);
-    setDeploymentProgress(0);
-
-    // Simulate deployment progress
-    const progressInterval = setInterval(() => {
-      setDeploymentProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(progressInterval);
-          setDeployingTemplate(null);
-          
-          toast({
-            title: "Template deployed successfully",
-            description: "Your warehouse configuration has been applied. You can now customize the settings.",
-          });
-          
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 300);
-  };
-
-  const handleDownloadTemplate = (templateName: string) => {
-    toast({
-      title: "Template downloaded",
-      description: `${templateName} configuration file has been downloaded.`,
-    });
   };
 
   return (
@@ -187,75 +248,76 @@ export default function OneClickTemplates() {
 
         {/* Templates Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {templates.map((template) => (
-            <Card key={template.id} className={`relative ${template.isPopular ? 'border-black' : ''}`}>
-              {template.isPopular && (
+          {isLoading ? (
+            <div className="col-span-full text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading templates...</p>
+            </div>
+          ) : templates.length > 0 ? (
+            templates.map((template) => (
+              <Card key={template.id} className="relative border-black">
                 <Badge className="absolute -top-2 -right-2 bg-black text-white">
-                  Popular
+                  Ready
                 </Badge>
-              )}
-              
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-3">
-                  <div className="text-black">{template.icon}</div>
-                  <div>
-                    <span>{template.name}</span>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <Badge variant="outline" className="text-xs">
-                        {template.industry}
-                      </Badge>
-                      <Badge className={`text-xs ${getComplexityColor(template.complexity)}`}>
-                        {template.complexity}
-                      </Badge>
+                
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-3">
+                    <div className="text-black">{getTemplateIcon(template.industry)}</div>
+                    <div>
+                      <span>{template.name}</span>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {template.industry}
+                        </Badge>
+                        <Badge className={`text-xs ${getComplexityColor(template.complexity)}`}>
+                          {template.complexity}
+                        </Badge>
+                      </div>
                     </div>
+                  </CardTitle>
+                  <p className="text-gray-600">{template.description}</p>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 mb-2">Includes:</h4>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      {getTemplateFeatures(template.templateData).map((feature, index) => (
+                        <li key={index} className="flex items-center">
+                          <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </CardTitle>
-                <p className="text-gray-600">{template.description}</p>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Key Features:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    {template.features.map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
 
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span className="flex items-center">
-                    <Clock className="w-4 h-4 mr-1" />
-                    Setup time: {template.configurationTime}
-                  </span>
-                </div>
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span className="flex items-center">
+                      <Clock className="w-4 h-4 mr-1" />
+                      Setup time: {getEstimatedTime(template.complexity)}
+                    </span>
+                  </div>
 
-                <div className="flex space-x-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDownloadTemplate(template.name)}
-                    className="flex-1"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => handleDeployTemplate(template.id)}
-                    disabled={deployingTemplate === template.id}
-                    className="flex-1 bg-black hover:bg-gray-800 text-white"
-                  >
-                    <Zap className="w-4 h-4 mr-2" />
-                    {deployingTemplate === template.id ? 'Deploying...' : 'Deploy'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="flex space-x-2 pt-2">
+                    <Button
+                      size="sm"
+                      onClick={() => deployTemplate(template.id.toString())}
+                      disabled={deployingTemplate === template.id.toString() || applyTemplateMutation.isPending}
+                      className="flex-1 bg-black hover:bg-gray-800 text-white"
+                    >
+                      <Zap className="w-4 h-4 mr-2" />
+                      {deployingTemplate === template.id.toString() ? 'Applying...' : 'Apply Template'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8">
+              <AlertCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-600">No templates available</p>
+            </div>
+          )}
         </div>
 
         {/* Additional Information */}

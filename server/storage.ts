@@ -24,7 +24,9 @@ import {
   type TaskPlanningConfiguration,
   type InsertTaskPlanningConfiguration,
   type TaskExecutionConfiguration,
-  type InsertTaskExecutionConfiguration
+  type InsertTaskExecutionConfiguration,
+  type OneClickTemplate,
+  type InsertOneClickTemplate
 } from "@shared/schema";
 
 export interface IStorage {
@@ -81,6 +83,12 @@ export interface IStorage {
   saveTaskExecutionConfiguration(config: InsertTaskExecutionConfiguration): Promise<TaskExecutionConfiguration>;
   deleteTaskExecutionConfiguration(id: number): Promise<boolean>;
   updateTaskExecutionConfiguration(id: number, config: Partial<InsertTaskExecutionConfiguration>): Promise<TaskExecutionConfiguration | undefined>;
+  
+  // One-Click Templates
+  getOneClickTemplates(): Promise<OneClickTemplate[]>;
+  getOneClickTemplate(id: number): Promise<OneClickTemplate | undefined>;
+  saveOneClickTemplate(template: InsertOneClickTemplate): Promise<OneClickTemplate>;
+  applyTemplate(templateId: number, userId: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -94,6 +102,7 @@ export class MemStorage implements IStorage {
   private stockAllocationStrategies: Map<number, StockAllocationStrategy>;
   private taskPlanningConfigurations: Map<number, TaskPlanningConfiguration>;
   private taskExecutionConfigurations: Map<number, TaskExecutionConfiguration>;
+  private oneClickTemplates: Map<number, OneClickTemplate>;
   private currentUserId: number;
   private currentWizardConfigId: number;
   private currentTaskSeqConfigId: number;
@@ -104,6 +113,7 @@ export class MemStorage implements IStorage {
   private currentStockAllocationStrategyId: number;
   private currentTaskPlanningConfigId: number;
   private currentTaskExecutionConfigId: number;
+  private currentTemplateId: number;
 
   constructor() {
     this.users = new Map();
@@ -116,6 +126,7 @@ export class MemStorage implements IStorage {
     this.stockAllocationStrategies = new Map();
     this.taskPlanningConfigurations = new Map();
     this.taskExecutionConfigurations = new Map();
+    this.oneClickTemplates = new Map();
     this.currentUserId = 1;
     this.currentWizardConfigId = 1;
     this.currentTaskSeqConfigId = 1;
@@ -126,6 +137,10 @@ export class MemStorage implements IStorage {
     this.currentStockAllocationStrategyId = 1;
     this.currentTaskPlanningConfigId = 1;
     this.currentTaskExecutionConfigId = 1;
+    this.currentTemplateId = 1;
+    
+    // Initialize Distribution Center Template
+    this.initializeDistributionCenterTemplate();
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -571,6 +586,195 @@ export class MemStorage implements IStorage {
     };
     this.taskExecutionConfigurations.set(id, updated);
     return updated;
+  }
+
+  // One-Click Template Methods
+  private initializeDistributionCenterTemplate(): void {
+    const distributionCenterTemplate: OneClickTemplate = {
+      id: 1,
+      name: "Distribution Center",
+      description: "High-volume distribution with batch picking and cross-docking capabilities",
+      industry: "Distribution",
+      complexity: "Advanced",
+      isActive: true,
+      templateData: {
+        inventoryGroups: [
+          {
+            name: "L0 Items",
+            storageIdentifiers: {
+              uom: "L0"
+            },
+            lineIdentifiers: {},
+            description: "Level 0 items with area-based picking"
+          },
+          {
+            name: "L2 Items",
+            storageIdentifiers: {
+              uom: "L2"
+            },
+            lineIdentifiers: {},
+            description: "Level 2 items with UOM-based picking"
+          }
+        ],
+        taskSequence: {
+          taskSequences: ["OUTBOUND_REPLEN", "OUTBOUND_PICK", "OUTBOUND_LOAD"],
+          shipmentAcknowledgment: "SHIP_CONFIRM"
+        },
+        taskPlanning: {
+          strategy: "PICK_BY_CUSTOMER",
+          tripType: "LM",
+          groupBy: ["area", "uom"],
+          useDockdoorAssignment: true,
+          allowWorkOrderSplit: true
+        },
+        taskExecution: {
+          huConfigs: {
+            scanSourceHUKind: "PALLET",
+            pickSourceHUKind: "NONE",
+            carrierHUKind: "PALLET"
+          },
+          scanSettings: {
+            pickMandatoryScan: false,
+            dropMandatoryScan: false
+          },
+          dropSettings: {
+            dropHUInBin: true,
+            allowHUBreakInDrop: false,
+            dropInnerHU: false,
+            allowInnerHUBreak: false
+          },
+          params: {
+            replenishBundles: 1,
+            allowComplete: false,
+            autoUOMConversion: false,
+            displayEditPickQuantity: false
+          }
+        }
+      },
+      createdAt: new Date()
+    };
+
+    this.oneClickTemplates.set(1, distributionCenterTemplate);
+  }
+
+  async getOneClickTemplates(): Promise<OneClickTemplate[]> {
+    return Array.from(this.oneClickTemplates.values());
+  }
+
+  async getOneClickTemplate(id: number): Promise<OneClickTemplate | undefined> {
+    return this.oneClickTemplates.get(id);
+  }
+
+  async saveOneClickTemplate(template: InsertOneClickTemplate): Promise<OneClickTemplate> {
+    const id = this.currentTemplateId++;
+    const newTemplate: OneClickTemplate = {
+      id,
+      ...template,
+      createdAt: new Date()
+    };
+    this.oneClickTemplates.set(id, newTemplate);
+    return newTemplate;
+  }
+
+  async applyTemplate(templateId: number, userId: number): Promise<boolean> {
+    const template = this.oneClickTemplates.get(templateId);
+    if (!template) {
+      return false;
+    }
+
+    const templateData = template.templateData as any;
+
+    try {
+      // Clear existing configurations for this user
+      this.clearUserConfigurations(userId);
+
+      // Apply inventory groups
+      const inventoryGroupIds: number[] = [];
+      for (const groupData of templateData.inventoryGroups) {
+        const inventoryGroup = await this.saveInventoryGroup({
+          userId,
+          name: groupData.name,
+          storageIdentifiers: groupData.storageIdentifiers,
+          lineIdentifiers: groupData.lineIdentifiers,
+          description: groupData.description
+        });
+        inventoryGroupIds.push(inventoryGroup.id);
+      }
+
+      // Apply task sequence for each inventory group
+      for (const groupId of inventoryGroupIds) {
+        await this.saveTaskSequenceConfiguration({
+          userId,
+          inventoryGroupId: groupId,
+          taskSequences: templateData.taskSequence.taskSequences,
+          shipmentAcknowledgment: templateData.taskSequence.shipmentAcknowledgment
+        });
+      }
+
+      // Apply task planning configurations
+      for (const groupId of inventoryGroupIds) {
+        const taskPlanning = await this.saveTaskPlanningConfiguration({
+          userId,
+          inventoryGroupId: groupId,
+          strategy: templateData.taskPlanning.strategy,
+          tripType: templateData.taskPlanning.tripType,
+          groupBy: templateData.taskPlanning.groupBy,
+          useDockdoorAssignment: templateData.taskPlanning.useDockdoorAssignment,
+          allowWorkOrderSplit: templateData.taskPlanning.allowWorkOrderSplit,
+          taskExecutionConfig: templateData.taskExecution
+        });
+
+        // Apply task execution configuration
+        await this.saveTaskExecutionConfiguration({
+          userId,
+          taskPlanningConfigurationId: taskPlanning.id,
+          huConfigs: templateData.taskExecution.huConfigs,
+          scanSettings: templateData.taskExecution.scanSettings,
+          dropSettings: templateData.taskExecution.dropSettings,
+          params: templateData.taskExecution.params
+        });
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error applying template:', error);
+      return false;
+    }
+  }
+
+  private clearUserConfigurations(userId: number): void {
+    // Clear all existing configurations for the user
+    const groupsToDelete = Array.from(this.inventoryGroups.values())
+      .filter(group => group.userId === userId)
+      .map(group => group.id);
+    
+    groupsToDelete.forEach(id => {
+      this.inventoryGroups.delete(id);
+    });
+
+    const taskSeqToDelete = Array.from(this.taskSequenceConfigurations.values())
+      .filter(config => config.userId === userId)
+      .map(config => config.id);
+    
+    taskSeqToDelete.forEach(id => {
+      this.taskSequenceConfigurations.delete(id);
+    });
+
+    const taskPlanToDelete = Array.from(this.taskPlanningConfigurations.values())
+      .filter(config => config.userId === userId)
+      .map(config => config.id);
+    
+    taskPlanToDelete.forEach(id => {
+      this.taskPlanningConfigurations.delete(id);
+    });
+
+    const taskExecToDelete = Array.from(this.taskExecutionConfigurations.values())
+      .filter(config => config.userId === userId)
+      .map(config => config.id);
+    
+    taskExecToDelete.forEach(id => {
+      this.taskExecutionConfigurations.delete(id);
+    });
   }
 }
 

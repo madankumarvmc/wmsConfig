@@ -69,6 +69,18 @@ export const huFormationConfigurations = pgTable("hu_formation_configurations", 
   enableManualDestBinSelection: boolean("enable_manual_dest_bin_selection").notNull().default(true),
 });
 
+// One-Click Templates
+export const oneClickTemplates = pgTable("one_click_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  industry: text("industry").notNull(),
+  complexity: text("complexity").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  templateData: jsonb("template_data").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const workOrderManagementConfigurations = pgTable("work_order_management_configurations", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
@@ -247,6 +259,11 @@ export const insertTaskExecutionConfigurationSchema = createInsertSchema(taskExe
   updatedAt: true,
 });
 
+export const insertOneClickTemplateSchema = createInsertSchema(oneClickTemplates).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type WizardConfiguration = typeof wizardConfigurations.$inferSelect;
@@ -267,3 +284,5 @@ export type TaskPlanningConfiguration = typeof taskPlanningConfigurations.$infer
 export type InsertTaskPlanningConfiguration = z.infer<typeof insertTaskPlanningConfigurationSchema>;
 export type TaskExecutionConfiguration = typeof taskExecutionConfigurations.$inferSelect;
 export type InsertTaskExecutionConfiguration = z.infer<typeof insertTaskExecutionConfigurationSchema>;
+export type OneClickTemplate = typeof oneClickTemplates.$inferSelect;
+export type InsertOneClickTemplate = z.infer<typeof insertOneClickTemplateSchema>;

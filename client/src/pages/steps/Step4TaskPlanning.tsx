@@ -26,8 +26,8 @@ import { apiRequest } from '@/lib/queryClient';
 import type { InventoryGroup, TaskPlanningConfiguration, InsertTaskPlanningConfiguration } from '../../../../shared/schema';
 
 const taskPlanningSchema = z.object({
-  inventoryGroupId: z.number().min(1, "Inventory group is required"),
-  configurationName: z.string().min(1, "Configuration name is required"),
+  inventoryGroupId: z.number().optional(),
+  configurationName: z.string().optional(),
   description: z.string().optional(),
   taskKind: z.string().optional(),
   taskSubKind: z.string().optional(),

@@ -812,6 +812,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // One-Click Template routes
+  app.get("/api/templates", async (req, res) => {
+    try {
+      const templates = await storage.getOneClickTemplates();
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch templates" });
+    }
+  });
+
+  app.get("/api/templates/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const template = await storage.getOneClickTemplate(id);
+      if (template) {
+        res.json(template);
+      } else {
+        res.status(404).json({ error: "Template not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch template" });
+    }
+  });
+
+  app.post("/api/templates/:id/apply", async (req, res) => {
+    try {
+      const templateId = parseInt(req.params.id);
+      const success = await storage.applyTemplate(templateId, MOCK_USER_ID);
+      
+      if (success) {
+        res.json({ 
+          success: true, 
+          message: "Template applied successfully",
+          redirectTo: "/step/1"
+        });
+      } else {
+        res.status(404).json({ error: "Template not found or failed to apply" });
+      }
+    } catch (error) {
+      console.error('Template application error:', error);
+      res.status(500).json({ error: "Failed to apply template" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

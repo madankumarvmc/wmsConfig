@@ -32,18 +32,18 @@ import {
 } from '@/lib/mockData';
 
 const inventoryGroupSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().optional(),
   storageIdentifiers: z.object({
-    category: z.string().min(1, 'Category is required'),
-    skuClassType: z.string().min(1, 'SKU Class Type is required'),
-    skuClass: z.string().min(1, 'SKU Class is required'),
-    uom: z.string().min(1, 'UOM is required'),
-    bucket: z.string().min(1, 'Bucket is required'),
+    category: z.string().optional(),
+    skuClassType: z.string().optional(),
+    skuClass: z.string().optional(),
+    uom: z.string().optional(),
+    bucket: z.string().optional(),
     specialStorageIndicator: z.string().optional()
   }),
   lineIdentifiers: z.object({
-    channel: z.string().min(1, 'Channel is required'),
-    customer: z.string().min(1, 'Customer is required')
+    channel: z.string().optional(),
+    customer: z.string().optional()
   }),
   description: z.string().optional()
 });

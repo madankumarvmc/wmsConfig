@@ -23,9 +23,9 @@ import type { InventoryGroup, TaskSequenceConfiguration, InsertTaskSequenceConfi
 
 const configurationSchema = z.object({
   id: z.number().optional(),
-  inventoryGroupId: z.number().min(1, 'Please select an inventory group'),
-  taskSequences: z.array(z.string()).min(1, 'Please select at least one task sequence'),
-  shipmentAcknowledgment: z.string().min(1, 'Please select shipment acknowledgment')
+  inventoryGroupId: z.number().optional(),
+  taskSequences: z.array(z.string()).optional(),
+  shipmentAcknowledgment: z.string().optional()
 });
 
 type Configuration = z.infer<typeof configurationSchema>;

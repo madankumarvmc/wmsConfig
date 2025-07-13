@@ -26,8 +26,8 @@ import { apiRequest } from '@/lib/queryClient';
 import type { TaskPlanningConfiguration, TaskExecutionConfiguration, InsertTaskExecutionConfiguration } from '../../../../shared/schema';
 
 const taskExecutionSchema = z.object({
-  taskPlanningConfigurationId: z.number().min(1, "Task planning configuration is required"),
-  configurationName: z.string().min(1, "Configuration name is required"),
+  taskPlanningConfigurationId: z.number().optional(),
+  configurationName: z.string().optional(),
   description: z.string().optional(),
   tripType: z.string().optional(),
   huKinds: z.array(z.string()).optional(),

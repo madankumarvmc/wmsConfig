@@ -23,7 +23,8 @@ import {
   Edit,
   Calendar,
   Target,
-  BarChart3
+  BarChart3,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';

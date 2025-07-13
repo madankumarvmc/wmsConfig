@@ -5,14 +5,14 @@ import {
   Upload, 
   FileText, 
   Package, 
-  Brain,
+  Waves,
   List, 
+  Target,
   Play, 
-  CheckCircle, 
+  BarChart3, 
   ChevronDown, 
   ChevronRight,
-  Lock,
-  Waves
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -35,8 +35,11 @@ interface MainSidebarProps {
 }
 
 export default function MainSidebar({ currentPath }: MainSidebarProps) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>(['Master Configuration', 'Outbound Configuration']);
+  
+  // Use the actual location from the hook instead of props for consistency
+  const activePath = currentPath || location;
 
   const toggleSection = (sectionTitle: string) => {
     setExpandedSections(prev => 
@@ -54,19 +57,19 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           icon: <Settings className="w-4 h-4" />,
           label: 'Provisioning Setup',
           path: '/master/provisioning',
-          isActive: currentPath === '/master/provisioning'
+          isActive: activePath === '/master/provisioning'
         },
         {
           icon: <Upload className="w-4 h-4" />,
           label: 'Master Uploads',
           path: '/master/uploads',
-          isActive: currentPath === '/master/uploads'
+          isActive: activePath === '/master/uploads'
         },
         {
           icon: <FileText className="w-4 h-4" />,
           label: 'One-Click Templates',
           path: '/master/templates',
-          isActive: currentPath === '/master/templates'
+          isActive: activePath === '/master/templates'
         }
       ]
     },
@@ -78,42 +81,42 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           label: 'Inventory Groups',
           path: '/step/1',
           badge: '1',
-          isActive: currentPath === '/step/1'
+          isActive: activePath === '/step/1'
         },
         {
           icon: <Waves className="w-4 h-4" />,
           label: 'Wave Planning',
           path: '/step/2',
           badge: '2',
-          isActive: currentPath === '/step/2'
+          isActive: activePath === '/step/2'
         },
         {
           icon: <List className="w-4 h-4" />,
           label: 'Task Sequences',
           path: '/step/3',
           badge: '3',
-          isActive: currentPath === '/step/3'
+          isActive: activePath === '/step/3'
         },
         {
-          icon: <Brain className="w-4 h-4" />,
+          icon: <Target className="w-4 h-4" />,
           label: 'Task Planning',
           path: '/step/4',
           badge: '4',
-          isActive: currentPath === '/step/4'
+          isActive: activePath === '/step/4'
         },
         {
           icon: <Play className="w-4 h-4" />,
           label: 'Task Execution',
           path: '/step/5',
           badge: '5',
-          isActive: currentPath === '/step/5'
+          isActive: activePath === '/step/5'
         },
         {
-          icon: <CheckCircle className="w-4 h-4" />,
-          label: 'Review & Publish',
+          icon: <BarChart3 className="w-4 h-4" />,
+          label: 'Stock Allocation',
           path: '/step/6',
           badge: '6',
-          isActive: currentPath === '/step/6'
+          isActive: activePath === '/step/6'
         }
       ]
     },

@@ -30,7 +30,7 @@ const configurationSchema = z.object({
 
 type Configuration = z.infer<typeof configurationSchema>;
 
-export default function Step2TaskSequences() {
+export default function Step3TaskSequences() {
   const [, setLocation] = useLocation();
   const { state, dispatch } = useWizard();
   const { toast } = useToast();

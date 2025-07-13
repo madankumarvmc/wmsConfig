@@ -7,12 +7,10 @@ import { WizardProvider } from "@/contexts/WizardContext";
 import Home from "@/pages/Home";
 import Step1InventoryGroups from "@/pages/steps/Step1InventoryGroups";
 import Step2WavePlanning from "@/pages/steps/Step2WavePlanning";
-import Step2TaskSequences from "@/pages/steps/Step2TaskSequences";
-import Step3PickStrategies from "@/pages/steps/Step3PickStrategies";
-import Step4HUFormation from "@/pages/steps/Step4HUFormation";
-import Step5WorkOrderManagement from "@/pages/steps/Step5WorkOrderManagement";
-import Step6StockAllocation from "@/pages/steps/Step6StockAllocation";
-import Step7ReviewConfirm from "@/pages/steps/Step7ReviewConfirm";
+import Step3TaskSequences from "@/pages/steps/Step3TaskSequences";
+import Step4TaskPlanning from "@/pages/steps/Step4TaskPlanning";
+import Step5TaskExecution from "@/pages/steps/Step5TaskExecution";
+import Step6ReviewConfirm from "@/pages/steps/Step6ReviewConfirm";
 import NotFound from "@/pages/not-found";
 
 // Master Configuration Pages
@@ -33,22 +31,18 @@ function Router() {
       {/* Outbound Configuration Routes */}
       <Route path="/step/1" component={Step1InventoryGroups} />
       <Route path="/step/2" component={Step2WavePlanning} />
-      <Route path="/step/3" component={Step2TaskSequences} />
-      <Route path="/step/4" component={Step3PickStrategies} />
-      <Route path="/step/5" component={Step4HUFormation} />
-      <Route path="/step/6" component={Step5WorkOrderManagement} />
-      <Route path="/step/7" component={Step6StockAllocation} />
-      <Route path="/step/8" component={Step7ReviewConfirm} />
+      <Route path="/step/3" component={Step3TaskSequences} />
+      <Route path="/step/4" component={Step4TaskPlanning} />
+      <Route path="/step/5" component={Step5TaskExecution} />
+      <Route path="/step/6" component={Step6ReviewConfirm} />
       
       {/* Legacy routes for compatibility */}
       <Route path="/step1" component={Step1InventoryGroups} />
       <Route path="/step2" component={Step2WavePlanning} />
-      <Route path="/step3" component={Step2TaskSequences} />
-      <Route path="/step4" component={Step3PickStrategies} />
-      <Route path="/step5" component={Step4HUFormation} />
-      <Route path="/step6" component={Step5WorkOrderManagement} />
-      <Route path="/step7" component={Step6StockAllocation} />
-      <Route path="/step8" component={Step7ReviewConfirm} />
+      <Route path="/step3" component={Step3TaskSequences} />
+      <Route path="/step4" component={Step4TaskPlanning} />
+      <Route path="/step5" component={Step5TaskExecution} />
+      <Route path="/step6" component={Step6ReviewConfirm} />
       
       <Route component={NotFound} />
     </Switch>

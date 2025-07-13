@@ -163,10 +163,10 @@ export default function Step2WavePlanning() {
 
   return (
     <WizardLayout
-      title="Wave Planning"
-      description="Configure wave release strategies and order batching rules for optimal picking efficiency"
+      title="Wave Planning - Wave release Planning of orders"
+      description="Configure wave release strategies, order batching rules, and line-split strategies for optimal picking efficiency"
       currentStep={2}
-      totalSteps={8}
+      totalSteps={6}
       onNext={handleNext}
       onPrevious={handlePrevious}
     >
@@ -181,8 +181,9 @@ export default function Step2WavePlanning() {
         </Alert>
 
         <Tabs defaultValue="strategy" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="strategy">Wave Strategy</TabsTrigger>
+            <TabsTrigger value="line-split">Line-Split Strategies</TabsTrigger>
             <TabsTrigger value="templates">Quick Templates</TabsTrigger>
             <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
           </TabsList>
@@ -393,6 +394,138 @@ export default function Step2WavePlanning() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          {/* New Line-Split Strategies Tab */}
+          <TabsContent value="line-split" className="space-y-6">
+            <Card className="wms-card">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Target className="w-5 h-5 mr-2" />
+                  Line-Split Strategies Configuration
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Line-split strategies determine how order lines are divided and allocated across waves based on inventory group characteristics.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Split Strategy Configuration */}
+                  <div className="space-y-4">
+                    <h4 className="text-title-16 text-gray-900">Split Strategy Rules</h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="splitCriteria">Split Criteria</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select split criteria" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="inventory-group">By Inventory Group</SelectItem>
+                            <SelectItem value="storage-zone">By Storage Zone</SelectItem>
+                            <SelectItem value="product-category">By Product Category</SelectItem>
+                            <SelectItem value="order-priority">By Order Priority</SelectItem>
+                            <SelectItem value="customer-type">By Customer Type</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="maxLinesPerWave">Max Lines per Wave</Label>
+                        <Input
+                          id="maxLinesPerWave"
+                          type="number"
+                          placeholder="e.g., 500"
+                          defaultValue={500}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="splitThreshold">Split Threshold</Label>
+                        <Input
+                          id="splitThreshold"
+                          type="number"
+                          placeholder="e.g., 100"
+                          defaultValue={100}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Minimum lines required before splitting into new wave
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Line Allocation Rules */}
+                  <div className="space-y-4">
+                    <h4 className="text-title-16 text-gray-900">Line Allocation Rules</h4>
+                    
+                    <div className="space-y-3">
+                      <div>
+                        <Label htmlFor="allocationStrategy">Allocation Strategy</Label>
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select allocation strategy" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="round-robin">Round Robin</SelectItem>
+                            <SelectItem value="capacity-based">Capacity Based</SelectItem>
+                            <SelectItem value="priority-weighted">Priority Weighted</SelectItem>
+                            <SelectItem value="zone-optimized">Zone Optimized</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="balancingFactor">Load Balancing Factor</Label>
+                        <Input
+                          id="balancingFactor"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="1"
+                          placeholder="e.g., 0.8"
+                          defaultValue={0.8}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          0 = No balancing, 1 = Perfect balancing
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="preserveOrderIntegrity" defaultChecked />
+                        <Label htmlFor="preserveOrderIntegrity" className="text-sm">
+                          Preserve order integrity when possible
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Preview Section */}
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h5 className="text-title-14 text-gray-900 mb-3">Strategy Preview</h5>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div className="text-title-20 text-blue-600">85%</div>
+                      <div className="text-body-12 text-gray-500">Wave Efficiency</div>
+                    </div>
+                    <div>
+                      <div className="text-title-20 text-green-600">3.2</div>
+                      <div className="text-body-12 text-gray-500">Avg Lines/Wave</div>
+                    </div>
+                    <div>
+                      <div className="text-title-20 text-orange-600">12min</div>
+                      <div className="text-body-12 text-gray-500">Est. Processing Time</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="advanced" className="space-y-6">

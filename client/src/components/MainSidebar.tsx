@@ -5,15 +5,14 @@ import {
   Upload, 
   FileText, 
   Package, 
-  Image, 
+  Brain,
   List, 
-  RotateCcw, 
+  Play, 
   CheckCircle, 
   ChevronDown, 
   ChevronRight,
   Lock,
-  Waves,
-  BarChart3
+  Waves
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -83,7 +82,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
         },
         {
           icon: <Waves className="w-4 h-4" />,
-          label: 'Wave Planning',
+          label: 'Wave Planning - Wave release Planning of orders',
           path: '/step/2',
           badge: '2',
           isActive: currentPath === '/step/2'
@@ -96,39 +95,25 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           isActive: currentPath === '/step/3'
         },
         {
-          icon: <Image className="w-4 h-4" />,
-          label: 'Pick Strategies',
+          icon: <Brain className="w-4 h-4" />,
+          label: 'Task Planning',
           path: '/step/4',
           badge: '4',
           isActive: currentPath === '/step/4'
         },
         {
-          icon: <Package className="w-4 h-4" />,
-          label: 'HU Formation',
+          icon: <Play className="w-4 h-4" />,
+          label: 'Task Execution',
           path: '/step/5',
           badge: '5',
           isActive: currentPath === '/step/5'
         },
         {
-          icon: <RotateCcw className="w-4 h-4" />,
-          label: 'Work Order Management',
+          icon: <CheckCircle className="w-4 h-4" />,
+          label: 'Review & Publish',
           path: '/step/6',
           badge: '6',
           isActive: currentPath === '/step/6'
-        },
-        {
-          icon: <BarChart3 className="w-4 h-4" />,
-          label: 'Stock Allocation',
-          path: '/step/7',
-          badge: '7',
-          isActive: currentPath === '/step/7'
-        },
-        {
-          icon: <CheckCircle className="w-4 h-4" />,
-          label: 'Review & Confirm',
-          path: '/step/8',
-          badge: '8',
-          isActive: currentPath === '/step/8'
         }
       ]
     },

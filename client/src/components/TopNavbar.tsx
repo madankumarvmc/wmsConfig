@@ -23,16 +23,16 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
   };
 
   return (
-    <nav className="bg-slate-800 border-b border-slate-700 px-6 py-3 shadow-sm">
-      <div className="flex items-center justify-between">
+    <nav className="bg-slate-800 border-b border-slate-700 px-6 py-4 shadow-sm min-h-[72px] flex-shrink-0">
+      <div className="flex items-center justify-between h-full">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
             <img 
               src={sbxLogo} 
               alt="SBX Logo" 
-              className="w-8 h-8 rounded"
+              className="w-8 h-8 rounded flex-shrink-0"
             />
-            <div className="text-xl font-medium text-white">SBX Warehouse Configuration Portal</div>
+            <div className="text-xl font-medium text-white whitespace-nowrap">SBX Warehouse Configuration Portal</div>
           </div>
           
           {/* Left navigation buttons */}

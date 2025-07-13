@@ -113,7 +113,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
         },
         {
           icon: <BarChart3 className="w-4 h-4" />,
-          label: 'Stock Allocation',
+          label: 'Review & Confirm',
           path: '/step/6',
           badge: '6',
           isActive: activePath === '/step/6'
@@ -151,7 +151,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
   };
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 h-full overflow-y-auto">
+    <div className="w-80 bg-white border-r border-gray-200 h-screen overflow-y-auto flex-shrink-0">
       <div className="p-4">
         {sections.map((section) => {
           const isExpanded = expandedSections.includes(section.title);

@@ -355,199 +355,77 @@ export default function Step2WavePlanning() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Configure line-split strategies based on warehouse ID, storage identifiers, line identifiers, and split mode settings.
+                    Configure line-split strategies. Storage Identifiers and Line Identifiers will be selected automatically based on your configured inventory groups.
                   </AlertDescription>
                 </Alert>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Basic Configuration */}
+                <div className="max-w-md space-y-4">
+                  <h4 className="text-title-16 text-gray-900">Line-Split Configuration</h4>
+                  
                   <div className="space-y-4">
-                    <h4 className="text-title-16 text-gray-900">Basic Configuration</h4>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="whId">Warehouse ID</Label>
-                        <Input
-                          id="whId"
-                          type="number"
-                          placeholder="e.g., 0"
-                          defaultValue={0}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="sequence">Sequence</Label>
-                        <Input
-                          id="sequence"
-                          type="number"
-                          placeholder="e.g., 0"
-                          defaultValue={0}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="mode">Split Mode</Label>
-                        <Select defaultValue="nosplit">
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select split mode" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="nosplit">No Split</SelectItem>
-                            <SelectItem value="split">Split</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="allowedUOMs">Allowed UOMs</Label>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="l0" defaultChecked />
-                          <Label htmlFor="l0" className="text-sm">L0</Label>
-                        </div>
-                      </div>
+                    <div>
+                      <Label htmlFor="sequence">Sequence</Label>
+                      <Input
+                        id="sequence"
+                        type="number"
+                        placeholder="e.g., 0"
+                        defaultValue={0}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Execution order for this strategy
+                      </p>
                     </div>
-                  </div>
 
-                  {/* Storage Identifiers */}
-                  <div className="space-y-4">
-                    <h4 className="text-title-16 text-gray-900">Storage Identifiers</h4>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="category">Category</Label>
-                        <Input
-                          id="category"
-                          type="text"
-                          placeholder="e.g., string"
-                        />
-                      </div>
+                    <div>
+                      <Label htmlFor="mode">Split Mode</Label>
+                      <Select defaultValue="nosplit">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select split mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="nosplit">No Split</SelectItem>
+                          <SelectItem value="split">Split</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Whether to split order lines across multiple waves
+                      </p>
+                    </div>
 
-                      <div>
-                        <Label htmlFor="skuClassType">SKU Class Type</Label>
-                        <Input
-                          id="skuClassType"
-                          type="text"
-                          placeholder="e.g., string"
-                        />
+                    <div>
+                      <Label htmlFor="allowedUOMs">Allowed UOMs</Label>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="l0" defaultChecked />
+                        <Label htmlFor="l0" className="text-sm">L0</Label>
                       </div>
-
-                      <div>
-                        <Label htmlFor="skuClass">SKU Class</Label>
-                        <Input
-                          id="skuClass"
-                          type="text"
-                          placeholder="e.g., string"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="uom">UOM</Label>
-                        <Select defaultValue="L0">
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select UOM" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="L0">L0</SelectItem>
-                            <SelectItem value="L1">L1</SelectItem>
-                            <SelectItem value="L2">L2</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="bucket">Bucket</Label>
-                        <Select defaultValue="Good">
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select bucket" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Good">Good</SelectItem>
-                            <SelectItem value="Damaged">Damaged</SelectItem>
-                            <SelectItem value="Expired">Expired</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="specialStorageIndicator">Special Storage Indicator</Label>
-                        <Input
-                          id="specialStorageIndicator"
-                          type="text"
-                          placeholder="e.g., string"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="preferredHUKind">Preferred HU Kind</Label>
-                        <Input
-                          id="preferredHUKind"
-                          type="text"
-                          placeholder="e.g., string"
-                        />
-                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Unit of measure levels allowed for this strategy
+                      </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Line Identifiers */}
-                <div className="space-y-4">
-                  <h4 className="text-title-16 text-gray-900">Line Identifiers</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="channel">Channel</Label>
-                      <Input
-                        id="channel"
-                        type="text"
-                        placeholder="e.g., string"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="vendor">Vendor</Label>
-                      <Input
-                        id="vendor"
-                        type="text"
-                        placeholder="e.g., string"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="asnType">ASN Type</Label>
-                      <Input
-                        id="asnType"
-                        type="text"
-                        placeholder="e.g., string"
-                      />
-                    </div>
-                  </div>
+                {/* Auto-Selection Notice */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h5 className="text-title-14 text-blue-900 mb-2">Automatic Selection</h5>
+                  <p className="text-sm text-blue-800">
+                    <strong>Storage Identifiers</strong> and <strong>Line Identifiers</strong> will be automatically selected based on your configured inventory groups from Step 1. This follows the same SI/LI selection principle used throughout the system.
+                  </p>
                 </div>
 
-                {/* JSON Preview */}
+                {/* Simplified JSON Preview */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">
                   <h5 className="text-title-14 text-gray-900 mb-3">Configuration Preview</h5>
                   <pre className="text-xs text-gray-700 overflow-x-auto">
 {`{
-  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-  "whId": 0,
-  "storageIdentifiers": {
-    "category": "string",
-    "skuClassType": "string",
-    "skuClass": "string",
-    "uom": "L0",
-    "bucket": "Good",
-    "specialStorageIndicator": "string",
-    "preferredHUKind": "string"
-  },
-  "lineIdentifiers": {
-    "channel": "string",
-    "vendor": "string",
-    "asnType": "string"
-  },
   "sequence": 0,
   "mode": "nosplit",
   "allowedUOMs": ["L0"]
 }`}
                   </pre>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Note: Storage and line identifiers will be automatically populated from your inventory groups
+                  </p>
                 </div>
               </CardContent>
             </Card>

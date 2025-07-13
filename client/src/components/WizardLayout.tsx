@@ -33,12 +33,12 @@ export default function WizardLayout({
 }: WizardLayoutProps) {
   return (
     <div className="h-screen bg-white flex flex-col overflow-hidden">
-      {/* Top Navbar - Fixed */}
-      <div className="flex-shrink-0">
+      {/* Top Navbar - Fixed across full width */}
+      <div className="flex-shrink-0 fixed top-0 left-0 right-0 z-50">
         <TopNavbar />
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 pt-[72px] overflow-hidden">
         {/* Left Sidebar - Fixed height with its own scroll */}
         <MainSidebar currentPath={`/step/${currentStep}`} />
 

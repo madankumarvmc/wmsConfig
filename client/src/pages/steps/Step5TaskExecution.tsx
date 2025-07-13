@@ -1,155 +1,142 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, X, Edit, Trash2, Info, CheckCircle, AlertTriangle, Play, Settings, Zap } from 'lucide-react';
+
+import WizardLayout from '@/components/WizardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { Slider } from '@/components/ui/slider';
-import { Progress } from '@/components/ui/progress';
-import { Play, Pause, Settings, Timer, Zap, Activity } from 'lucide-react';
-import WizardLayout from '@/components/WizardLayout';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWizard } from '@/contexts/WizardContext';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import type { TaskPlanningConfiguration, TaskExecutionConfiguration, InsertTaskExecutionConfiguration } from '../../../../shared/schema';
 
-interface ExecutionParameter {
-  id: string;
-  name: string;
-  value: number | string | boolean;
-  type: 'number' | 'text' | 'boolean' | 'range';
-  min?: number;
-  max?: number;
-  unit?: string;
-  description: string;
-}
+const taskExecutionSchema = z.object({
+  taskPlanningConfigurationId: z.number().min(1, "Task planning configuration is required"),
+  configurationName: z.string().min(1, "Configuration name is required"),
+  description: z.string().optional(),
+  tripType: z.string().optional(),
+  huKinds: z.array(z.string()).optional(),
+  scanSourceHUKind: z.string().optional(),
+  pickSourceHUKind: z.string().optional(),
+  carrierHUKind: z.string().optional(),
+  huMappingMode: z.string().optional(),
+  dropHUQuantThreshold: z.number().optional(),
+  dropUOM: z.string().optional(),
+  allowComplete: z.boolean().optional(),
+  swapHUThreshold: z.number().optional(),
+  dropInnerHU: z.boolean().optional(),
+  allowInnerHUBreak: z.boolean().optional(),
+  displayDropUOM: z.boolean().optional(),
+  autoUOMConversion: z.boolean().optional(),
+  mobileSorting: z.boolean().optional(),
+  sortingParam: z.string().optional(),
+  huWeightThreshold: z.number().optional(),
+  qcMismatchMonthThreshold: z.number().optional(),
+  quantSlottingForHUsInDrop: z.boolean().optional(),
+  allowPickingMultiBatchfromHU: z.boolean().optional(),
+  displayEditPickQuantity: z.boolean().optional(),
+  pickBundles: z.boolean().optional(),
+  enableEditQtyInPickOp: z.boolean().optional(),
+  dropSlottingMode: z.string().optional(),
+  enableManualDestBinSelection: z.boolean().optional(),
+  mapSegregationGroupsToBins: z.boolean().optional(),
+  dropHUInBin: z.boolean().optional(),
+  scanDestHUInDrop: z.boolean().optional(),
+  allowHUBreakInDrop: z.boolean().optional(),
+  strictBatchAdherence: z.boolean().optional(),
+  allowWorkOrderSplit: z.boolean().optional(),
+  undoOp: z.boolean().optional(),
+  disableWorkOrder: z.boolean().optional(),
+  allowUnpick: z.boolean().optional(),
+  supportPalletScan: z.boolean().optional(),
+  loadingUnits: z.array(z.string()).optional(),
+  pickMandatoryScan: z.boolean().optional(),
+  dropMandatoryScan: z.boolean().optional(),
+});
 
-interface PerformanceMetric {
-  id: string;
-  name: string;
-  target: number;
-  current: number;
-  unit: string;
-  trend: 'up' | 'down' | 'stable';
-}
-
-interface ExecutionRule {
-  id: string;
-  name: string;
-  condition: string;
-  action: string;
-  priority: number;
-  enabled: boolean;
-}
+type TaskExecutionForm = z.infer<typeof taskExecutionSchema>;
 
 export default function Step5TaskExecution() {
-  const { currentStep, nextStep, previousStep } = useWizard();
+  const [, setLocation] = useLocation();
+  const { dispatch } = useWizard();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingConfig, setEditingConfig] = useState<TaskExecutionConfiguration | null>(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
-  const [executionParams, setExecutionParams] = useState<ExecutionParameter[]>([
-    {
-      id: 'batch_size',
-      name: 'Batch Size',
-      value: 10,
-      type: 'number',
-      min: 1,
-      max: 100,
-      unit: 'items',
-      description: 'Number of items to process in each batch'
-    },
-    {
-      id: 'timeout',
-      name: 'Task Timeout',
-      value: 300,
-      type: 'range',
-      min: 60,
-      max: 3600,
-      unit: 'seconds',
-      description: 'Maximum time allowed for task completion'
-    },
-    {
-      id: 'parallel_workers',
-      name: 'Parallel Workers',
-      value: 5,
-      type: 'range',
-      min: 1,
-      max: 20,
-      unit: 'workers',
-      description: 'Number of workers processing tasks simultaneously'
-    },
-    {
-      id: 'auto_retry',
-      name: 'Auto Retry Failed Tasks',
-      value: true,
-      type: 'boolean',
-      description: 'Automatically retry failed tasks'
+  const { data: taskPlanningConfigs = [] } = useQuery<TaskPlanningConfiguration[]>({
+    queryKey: ['/api/task-planning'],
+  });
+
+  const { data: configurations = [] } = useQuery<TaskExecutionConfiguration[]>({
+    queryKey: ['/api/task-execution'],
+  });
+
+  const form = useForm<TaskExecutionForm>({
+    resolver: zodResolver(taskExecutionSchema),
+    defaultValues: {
+      taskPlanningConfigurationId: 0,
+      configurationName: '',
+      description: '',
+      tripType: '',
+      huKinds: [],
+      scanSourceHUKind: '',
+      pickSourceHUKind: '',
+      carrierHUKind: '',
+      huMappingMode: '',
+      dropHUQuantThreshold: 0,
+      dropUOM: '',
+      allowComplete: false,
+      swapHUThreshold: 0,
+      dropInnerHU: false,
+      allowInnerHUBreak: false,
+      displayDropUOM: false,
+      autoUOMConversion: false,
+      mobileSorting: false,
+      sortingParam: '',
+      huWeightThreshold: 0,
+      qcMismatchMonthThreshold: 0,
+      quantSlottingForHUsInDrop: false,
+      allowPickingMultiBatchfromHU: false,
+      displayEditPickQuantity: false,
+      pickBundles: false,
+      enableEditQtyInPickOp: false,
+      dropSlottingMode: '',
+      enableManualDestBinSelection: false,
+      mapSegregationGroupsToBins: false,
+      dropHUInBin: false,
+      scanDestHUInDrop: false,
+      allowHUBreakInDrop: false,
+      strictBatchAdherence: false,
+      allowWorkOrderSplit: false,
+      undoOp: false,
+      disableWorkOrder: false,
+      allowUnpick: false,
+      supportPalletScan: false,
+      loadingUnits: [],
+      pickMandatoryScan: false,
+      dropMandatoryScan: false,
     }
-  ]);
+  });
 
-  const [performanceMetrics, setPerformanceMetrics] = useState<PerformanceMetric[]>([
-    {
-      id: 'throughput',
-      name: 'Throughput',
-      target: 100,
-      current: 85,
-      unit: 'items/hour',
-      trend: 'up'
-    },
-    {
-      id: 'accuracy',
-      name: 'Pick Accuracy',
-      target: 99.5,
-      current: 98.7,
-      unit: '%',
-      trend: 'stable'
-    },
-    {
-      id: 'completion_time',
-      name: 'Avg Completion Time',
-      target: 5,
-      current: 6.2,
-      unit: 'minutes',
-      trend: 'down'
-    }
-  ]);
-
-  const [executionRules, setExecutionRules] = useState<ExecutionRule[]>([
-    {
-      id: 'rule_1',
-      name: 'High Priority Orders',
-      condition: 'order.priority === "HIGH"',
-      action: 'assign_to_fastest_worker',
-      priority: 1,
-      enabled: true
-    },
-    {
-      id: 'rule_2',
-      name: 'Large Orders',
-      condition: 'order.item_count > 50',
-      action: 'split_into_batches',
-      priority: 2,
-      enabled: true
-    }
-  ]);
-
-  const saveConfiguration = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await fetch('/api/task-execution', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save task execution configuration');
-      }
-
+  const saveMutation = useMutation({
+    mutationFn: async (data: InsertTaskExecutionConfiguration) => {
+      const response = await apiRequest('POST', '/api/task-execution', data);
       return response.json();
     },
     onSuccess: () => {
@@ -158,6 +145,7 @@ export default function Step5TaskExecution() {
         title: 'Success',
         description: 'Task execution configuration saved successfully.',
       });
+      resetForm();
     },
     onError: () => {
       toast({
@@ -168,275 +156,800 @@ export default function Step5TaskExecution() {
     },
   });
 
-  const handleNext = async () => {
-    const configuration = {
-      executionParams,
-      performanceMetrics,
-      executionRules,
-      currentStep: 5,
-      userId: 1,
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/task-execution/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/task-execution'] });
+      toast({
+        title: 'Success',
+        description: 'Task execution configuration deleted successfully.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete task execution configuration.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const onSubmit = (data: TaskExecutionForm) => {
+    const submitData = {
+      ...data,
+      huKinds: data.huKinds?.length ? data.huKinds : undefined,
+      loadingUnits: data.loadingUnits?.length ? data.loadingUnits : undefined,
     };
-
-    await saveConfiguration.mutateAsync(configuration);
-    nextStep();
+    saveMutation.mutate(submitData);
   };
 
-  const updateParameter = (id: string, value: any) => {
-    setExecutionParams(prev => 
-      prev.map(param => 
-        param.id === id ? { ...param, value } : param
-      )
-    );
+  const resetForm = () => {
+    setIsFormVisible(false);
+    setEditingConfig(null);
+    form.reset();
   };
 
-  const updateRule = (id: string, updates: Partial<ExecutionRule>) => {
-    setExecutionRules(prev =>
-      prev.map(rule =>
-        rule.id === id ? { ...rule, ...updates } : rule
-      )
+  const handleEdit = (config: TaskExecutionConfiguration) => {
+    setEditingConfig(config);
+    setIsFormVisible(true);
+    form.reset({
+      taskPlanningConfigurationId: config.taskPlanningConfigurationId,
+      configurationName: config.configurationName,
+      description: config.description || '',
+      tripType: config.tripType || '',
+      huKinds: config.huKinds || [],
+      scanSourceHUKind: config.scanSourceHUKind || '',
+      pickSourceHUKind: config.pickSourceHUKind || '',
+      carrierHUKind: config.carrierHUKind || '',
+      huMappingMode: config.huMappingMode || '',
+      dropHUQuantThreshold: config.dropHUQuantThreshold || 0,
+      dropUOM: config.dropUOM || '',
+      allowComplete: config.allowComplete || false,
+      swapHUThreshold: config.swapHUThreshold || 0,
+      dropInnerHU: config.dropInnerHU || false,
+      allowInnerHUBreak: config.allowInnerHUBreak || false,
+      displayDropUOM: config.displayDropUOM || false,
+      autoUOMConversion: config.autoUOMConversion || false,
+      mobileSorting: config.mobileSorting || false,
+      sortingParam: config.sortingParam || '',
+      huWeightThreshold: config.huWeightThreshold || 0,
+      qcMismatchMonthThreshold: config.qcMismatchMonthThreshold || 0,
+      quantSlottingForHUsInDrop: config.quantSlottingForHUsInDrop || false,
+      allowPickingMultiBatchfromHU: config.allowPickingMultiBatchfromHU || false,
+      displayEditPickQuantity: config.displayEditPickQuantity || false,
+      pickBundles: config.pickBundles || false,
+      enableEditQtyInPickOp: config.enableEditQtyInPickOp || false,
+      dropSlottingMode: config.dropSlottingMode || '',
+      enableManualDestBinSelection: config.enableManualDestBinSelection || false,
+      mapSegregationGroupsToBins: config.mapSegregationGroupsToBins || false,
+      dropHUInBin: config.dropHUInBin || false,
+      scanDestHUInDrop: config.scanDestHUInDrop || false,
+      allowHUBreakInDrop: config.allowHUBreakInDrop || false,
+      strictBatchAdherence: config.strictBatchAdherence || false,
+      allowWorkOrderSplit: config.allowWorkOrderSplit || false,
+      undoOp: config.undoOp || false,
+      disableWorkOrder: config.disableWorkOrder || false,
+      allowUnpick: config.allowUnpick || false,
+      supportPalletScan: config.supportPalletScan || false,
+      loadingUnits: config.loadingUnits || [],
+      pickMandatoryScan: config.pickMandatoryScan || false,
+      dropMandatoryScan: config.dropMandatoryScan || false,
+    });
+  };
+
+  const handleContinue = () => {
+    dispatch({ type: 'COMPLETE_STEP', payload: 5 });
+    setLocation('/step/6');
+  };
+
+  const getTaskPlanningName = (id: number) => {
+    const config = taskPlanningConfigs.find(c => c.id === id);
+    return config?.configurationName || `Config ${id}`;
+  };
+
+  // Check if a task planning config already has an execution config
+  const getAvailableTaskPlanningConfigs = () => {
+    return taskPlanningConfigs.filter(config => 
+      !configurations.some(exec => exec.taskPlanningConfigurationId === config.id)
     );
   };
 
   return (
-    <WizardLayout
-      title="Task Execution"
-      description="Configure runtime parameters, performance monitoring, and execution rules"
-      currentStep={currentStep}
-      totalSteps={6}
-      onNext={handleNext}
-      onPrevious={previousStep}
-      isNextDisabled={saveConfiguration.isPending}
+    <WizardLayout 
+      currentStep={5} 
+      title="Task Execution Configuration"
+      description="Configure task execution parameters for task planning strategies"
     >
       <div className="space-y-6">
-        <Tabs defaultValue="parameters" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="parameters" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Execution Parameters
-            </TabsTrigger>
-            <TabsTrigger value="performance" className="flex items-center gap-2">
-              <Activity className="w-4 h-4" />
-              Performance Monitoring
-            </TabsTrigger>
-            <TabsTrigger value="rules" className="flex items-center gap-2">
-              <Zap className="w-4 h-4" />
-              Execution Rules
-            </TabsTrigger>
-          </TabsList>
+        {/* Header and Add Button */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Play className="w-5 h-5 text-green-600" />
+            <h2 className="text-xl font-semibold">Task Execution Strategies</h2>
+          </div>
+          <Button
+            onClick={() => setIsFormVisible(true)}
+            className="flex items-center gap-2"
+            disabled={getAvailableTaskPlanningConfigs().length === 0}
+          >
+            <Plus className="w-4 h-4" />
+            Add Configuration
+          </Button>
+        </div>
 
-          <TabsContent value="parameters" className="space-y-4">
-            <div>
-              <h3 className="text-title-18 text-gray-900 mb-2">Runtime Parameters</h3>
-              <p className="text-body-14 text-gray-500 mb-6">Configure execution settings for optimal performance</p>
-            </div>
+        {/* Info Alert */}
+        <Alert>
+          <Info className="w-4 h-4" />
+          <AlertDescription>
+            Task execution configurations define how tasks are executed for each task planning strategy. 
+            Only one execution strategy per task planning strategy is allowed. All fields are optional.
+          </AlertDescription>
+        </Alert>
 
-            <div className="grid gap-6">
-              {executionParams.map((param) => (
-                <Card key={param.id} className="wms-card">
-                  <CardHeader>
-                    <CardTitle className="text-title-16 flex items-center justify-between">
-                      {param.name}
-                      <Badge variant="outline">
-                        {param.value} {param.unit}
-                      </Badge>
-                    </CardTitle>
-                    <CardDescription>{param.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {param.type === 'number' && (
-                      <div className="space-y-2">
-                        <Label htmlFor={param.id}>Value</Label>
-                        <Input
-                          id={param.id}
-                          type="number"
-                          value={param.value as number}
-                          min={param.min}
-                          max={param.max}
-                          onChange={(e) => updateParameter(param.id, parseInt(e.target.value))}
+        {getAvailableTaskPlanningConfigs().length === 0 && taskPlanningConfigs.length > 0 && (
+          <Alert>
+            <AlertTriangle className="w-4 h-4" />
+            <AlertDescription>
+              All task planning configurations already have execution strategies assigned. 
+              To add a new execution strategy, you need to create a task planning configuration first.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Configuration Form */}
+        {isFormVisible && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                {editingConfig ? 'Edit Task Execution Configuration' : 'New Task Execution Configuration'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <Tabs defaultValue="basic" className="w-full">
+                    <TabsList className="grid w-full grid-cols-4">
+                      <TabsTrigger value="basic">Basic Settings</TabsTrigger>
+                      <TabsTrigger value="hu">Handling Units</TabsTrigger>
+                      <TabsTrigger value="operations">Operations</TabsTrigger>
+                      <TabsTrigger value="advanced">Advanced</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="basic" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="taskPlanningConfigurationId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Task Planning Configuration</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select task planning config" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {getAvailableTaskPlanningConfigs().map((config) => (
+                                    <SelectItem key={config.id} value={config.id.toString()}>
+                                      {config.configurationName}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="configurationName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Configuration Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter configuration name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
                       </div>
-                    )}
-                    
-                    {param.type === 'range' && (
-                      <div className="space-y-4">
-                        <Label htmlFor={param.id}>Value: {param.value} {param.unit}</Label>
-                        <Slider
-                          id={param.id}
-                          min={param.min}
-                          max={param.max}
-                          step={1}
-                          value={[param.value as number]}
-                          onValueChange={(value) => updateParameter(param.id, value[0])}
-                          className="w-full"
+
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Optional description" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="tripType"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Trip Type</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select trip type" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="LM">LM</SelectItem>
+                                  <SelectItem value="RF">RF</SelectItem>
+                                  <SelectItem value="BATCH">BATCH</SelectItem>
+                                  <SelectItem value="CLUSTER">CLUSTER</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                        <div className="flex justify-between text-sm text-gray-500">
-                          <span>{param.min} {param.unit}</span>
-                          <span>{param.max} {param.unit}</span>
+
+                        <FormField
+                          control={form.control}
+                          name="dropUOM"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Drop UOM</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select drop UOM" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="L0">L0</SelectItem>
+                                  <SelectItem value="L1">L1</SelectItem>
+                                  <SelectItem value="L2">L2</SelectItem>
+                                  <SelectItem value="L3">L3</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="sortingParam"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sorting Parameter</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Optional sorting param" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="hu" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="scanSourceHUKind"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Scan Source HU Kind</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select scan source HU" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="PALLET">PALLET</SelectItem>
+                                  <SelectItem value="TOTE">TOTE</SelectItem>
+                                  <SelectItem value="CART">CART</SelectItem>
+                                  <SelectItem value="NONE">NONE</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="pickSourceHUKind"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Pick Source HU Kind</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select pick source HU" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="PALLET">PALLET</SelectItem>
+                                  <SelectItem value="TOTE">TOTE</SelectItem>
+                                  <SelectItem value="CART">CART</SelectItem>
+                                  <SelectItem value="NONE">NONE</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="carrierHUKind"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Carrier HU Kind</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select carrier HU" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="PALLET">PALLET</SelectItem>
+                                  <SelectItem value="TOTE">TOTE</SelectItem>
+                                  <SelectItem value="CART">CART</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="huMappingMode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>HU Mapping Mode</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select mapping mode" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="BIN">BIN</SelectItem>
+                                  <SelectItem value="ZONE">ZONE</SelectItem>
+                                  <SelectItem value="AREA">AREA</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="dropHUQuantThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Drop HU Quantity Threshold</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="0" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="swapHUThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Swap HU Threshold</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="0" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="huWeightThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>HU Weight Threshold</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="0" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="operations" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="allowComplete"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Allow Complete</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="dropInnerHU"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Drop Inner HU</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="allowInnerHUBreak"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Allow Inner HU Break</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="autoUOMConversion"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Auto UOM Conversion</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="mobileSorting"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Mobile Sorting</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="displayEditPickQuantity"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Display Edit Pick Quantity</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="pickMandatoryScan"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Pick Mandatory Scan</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="dropMandatoryScan"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Drop Mandatory Scan</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="advanced" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="dropSlottingMode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Drop Slotting Mode</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select drop slotting mode" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="BIN">BIN</SelectItem>
+                                  <SelectItem value="ZONE">ZONE</SelectItem>
+                                  <SelectItem value="AREA">AREA</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="qcMismatchMonthThreshold"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>QC Mismatch Month Threshold</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="0" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="strictBatchAdherence"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Strict Batch Adherence</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="allowWorkOrderSplit"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Allow Work Order Split</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="supportPalletScan"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Support Pallet Scan</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="undoOp"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Undo Operation</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  <Separator />
+
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={saveMutation.isPending}>
+                      {saveMutation.isPending ? 'Saving...' : 'Save Configuration'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Existing Configurations */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Task Execution Configurations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {configurations.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Play className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No task execution configurations yet.</p>
+                <p className="text-sm">Click "Add Configuration" to get started.</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Configuration Name</TableHead>
+                    <TableHead>Task Planning</TableHead>
+                    <TableHead>Trip Type</TableHead>
+                    <TableHead>Carrier HU</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {configurations.map((config) => (
+                    <TableRow key={config.id}>
+                      <TableCell className="font-medium">{config.configurationName}</TableCell>
+                      <TableCell>{getTaskPlanningName(config.taskPlanningConfigurationId)}</TableCell>
+                      <TableCell>
+                        {config.tripType ? (
+                          <Badge variant="outline">{config.tripType}</Badge>
+                        ) : (
+                          <span className="text-gray-400">Not set</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {config.carrierHUKind ? (
+                          <Badge variant="secondary">{config.carrierHUKind}</Badge>
+                        ) : (
+                          <span className="text-gray-400">Not set</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(config)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteMutation.mutate(config.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
-                      </div>
-                    )}
-                    
-                    {param.type === 'boolean' && (
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor={param.id}>Enable {param.name}</Label>
-                        <Switch
-                          id={param.id}
-                          checked={param.value as boolean}
-                          onCheckedChange={(checked) => updateParameter(param.id, checked)}
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
 
-          <TabsContent value="performance" className="space-y-4">
-            <div>
-              <h3 className="text-title-18 text-gray-900 mb-2">Performance Metrics</h3>
-              <p className="text-body-14 text-gray-500 mb-6">Monitor and track execution performance in real-time</p>
-            </div>
-
-            <div className="grid gap-4">
-              {performanceMetrics.map((metric) => (
-                <Card key={metric.id} className="wms-card">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-title-16">{metric.name}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant={metric.trend === 'up' ? 'default' : metric.trend === 'down' ? 'destructive' : 'secondary'}
-                        >
-                          {metric.trend === 'up' ? '↑' : metric.trend === 'down' ? '↓' : '→'} {metric.trend}
-                        </Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Current: {metric.current} {metric.unit}</span>
-                      <span>Target: {metric.target} {metric.unit}</span>
-                    </div>
-                    <Progress 
-                      value={(metric.current / metric.target) * 100} 
-                      className="w-full"
-                    />
-                    <div className="text-xs text-gray-500">
-                      Performance: {((metric.current / metric.target) * 100).toFixed(1)}% of target
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            <Card className="wms-card">
-              <CardHeader>
-                <CardTitle className="text-title-16">Real-time Execution Status</CardTitle>
-                <CardDescription>Current system performance overview</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-title-20 text-blue-600">142</div>
-                    <div className="text-body-12 text-gray-500">Active Tasks</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-title-20 text-green-600">1,247</div>
-                    <div className="text-body-12 text-gray-500">Completed Today</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-title-20 text-orange-600">23</div>
-                    <div className="text-body-12 text-gray-500">In Queue</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-title-20 text-red-600">3</div>
-                    <div className="text-body-12 text-gray-500">Failed Tasks</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="rules" className="space-y-4">
-            <div>
-              <h3 className="text-title-18 text-gray-900 mb-2">Execution Rules</h3>
-              <p className="text-body-14 text-gray-500 mb-6">Define conditional logic for task execution and routing</p>
-            </div>
-
-            <div className="grid gap-4">
-              {executionRules.map((rule, index) => (
-                <Card key={rule.id} className="wms-card">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-title-16">{rule.name}</CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={rule.enabled ? "default" : "secondary"}>
-                          {rule.enabled ? "Active" : "Inactive"}
-                        </Badge>
-                        <Badge variant="outline">Priority {rule.priority}</Badge>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor={`rule-name-${index}`}>Rule Name</Label>
-                      <Input
-                        id={`rule-name-${index}`}
-                        value={rule.name}
-                        onChange={(e) => updateRule(rule.id, { name: e.target.value })}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`rule-condition-${index}`}>Condition</Label>
-                      <Textarea
-                        id={`rule-condition-${index}`}
-                        value={rule.condition}
-                        onChange={(e) => updateRule(rule.id, { condition: e.target.value })}
-                        placeholder="e.g., order.priority === 'HIGH'"
-                        rows={2}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor={`rule-action-${index}`}>Action</Label>
-                      <Textarea
-                        id={`rule-action-${index}`}
-                        value={rule.action}
-                        onChange={(e) => updateRule(rule.id, { action: e.target.value })}
-                        placeholder="e.g., assign_to_fastest_worker"
-                        rows={2}
-                      />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <Label htmlFor={`rule-priority-${index}`}>Priority</Label>
-                          <Input
-                            id={`rule-priority-${index}`}
-                            type="number"
-                            value={rule.priority}
-                            min={1}
-                            max={10}
-                            onChange={(e) => updateRule(rule.id, { priority: parseInt(e.target.value) })}
-                            className="w-20"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`rule-enabled-${index}`}>Enabled</Label>
-                        <Switch
-                          id={`rule-enabled-${index}`}
-                          checked={rule.enabled}
-                          onCheckedChange={(checked) => updateRule(rule.id, { enabled: checked })}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+        {/* Continue Button */}
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={() => setLocation('/step/4')}>
+            Previous: Task Planning
+          </Button>
+          <Button onClick={handleContinue}>
+            Next: Review & Confirm
+          </Button>
+        </div>
       </div>
     </WizardLayout>
   );

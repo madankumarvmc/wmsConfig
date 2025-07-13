@@ -1,81 +1,110 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, X, Edit, Trash2, Info, CheckCircle, AlertTriangle, Target, Brain } from 'lucide-react';
+
+import WizardLayout from '@/components/WizardLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2, Settings, Target, Package, Brain } from 'lucide-react';
-import WizardLayout from '@/components/WizardLayout';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWizard } from '@/contexts/WizardContext';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import type { InventoryGroup, TaskPlanningConfiguration, InsertTaskPlanningConfiguration } from '../../../../shared/schema';
 
-interface PickStrategy {
-  id: string;
-  name: string;
-  type: 'FIFO' | 'LIFO' | 'OPTIMAL_PATH' | 'ZONE_BASED';
-  priority: number;
-  enabled: boolean;
-  rules: PickRule[];
-}
+const taskPlanningSchema = z.object({
+  inventoryGroupId: z.number().min(1, "Inventory group is required"),
+  configurationName: z.string().min(1, "Configuration name is required"),
+  description: z.string().optional(),
+  taskKind: z.string().optional(),
+  taskSubKind: z.string().optional(),
+  strat: z.string().optional(),
+  sortingStrategy: z.string().optional(),
+  loadingStrategy: z.string().optional(),
+  groupBy: z.array(z.string()).optional(),
+  taskLabel: z.string().optional(),
+  mode: z.string().optional(),
+  priority: z.number().optional(),
+  skipZoneFace: z.string().optional(),
+  orderByQuantUpdatedAt: z.boolean().optional(),
+  searchScope: z.string().optional(),
+  statePreferenceOrder: z.array(z.string()).optional(),
+  preferFixed: z.boolean().optional(),
+  preferNonFixed: z.boolean().optional(),
+  statePreferenceSeq: z.array(z.string()).optional(),
+  batchPreferenceMode: z.string().optional(),
+  areaTypes: z.array(z.string()).optional(),
+  areas: z.array(z.string()).optional(),
+  orderByPickingPosition: z.boolean().optional(),
+  useInventorySnapshotForPickSlotting: z.boolean().optional(),
+  optimizationMode: z.string().optional(),
+});
 
-interface PickRule {
-  id: string;
-  condition: string;
-  action: string;
-  priority: number;
-}
-
-interface HUFormationConfig {
-  id: string;
-  name: string;
-  maxWeight: number;
-  maxVolume: number;
-  maxItems: number;
-  strategy: 'WEIGHT_BASED' | 'VOLUME_BASED' | 'COUNT_BASED' | 'MIXED';
-  enabled: boolean;
-}
-
-interface WorkOrderConfig {
-  id: string;
-  name: string;
-  priority: 'HIGH' | 'MEDIUM' | 'LOW';
-  autoAssign: boolean;
-  maxConcurrentOrders: number;
-  timeoutMinutes: number;
-}
+type TaskPlanningForm = z.infer<typeof taskPlanningSchema>;
 
 export default function Step4TaskPlanning() {
-  const { currentStep, nextStep, previousStep } = useWizard();
+  const [, setLocation] = useLocation();
+  const { dispatch } = useWizard();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [editingConfig, setEditingConfig] = useState<TaskPlanningConfiguration | null>(null);
+  const [isFormVisible, setIsFormVisible] = useState(false);
 
-  const [pickStrategies, setPickStrategies] = useState<PickStrategy[]>([]);
-  const [huConfigs, setHuConfigs] = useState<HUFormationConfig[]>([]);
-  const [workOrderConfigs, setWorkOrderConfigs] = useState<WorkOrderConfig[]>([]);
-
-  const { data: inventoryGroups } = useQuery({
+  const { data: inventoryGroups = [] } = useQuery<InventoryGroup[]>({
     queryKey: ['/api/inventory-groups'],
   });
 
-  const saveConfiguration = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await fetch('/api/task-planning', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
+  const { data: configurations = [] } = useQuery<TaskPlanningConfiguration[]>({
+    queryKey: ['/api/task-planning'],
+  });
 
-      if (!response.ok) {
-        throw new Error('Failed to save task planning configuration');
-      }
+  const form = useForm<TaskPlanningForm>({
+    resolver: zodResolver(taskPlanningSchema),
+    defaultValues: {
+      inventoryGroupId: 0,
+      configurationName: '',
+      description: '',
+      taskKind: '',
+      taskSubKind: '',
+      strat: '',
+      sortingStrategy: '',
+      loadingStrategy: '',
+      groupBy: [],
+      taskLabel: '',
+      mode: '',
+      priority: 100,
+      skipZoneFace: '',
+      orderByQuantUpdatedAt: false,
+      searchScope: '',
+      statePreferenceOrder: [],
+      preferFixed: false,
+      preferNonFixed: false,
+      statePreferenceSeq: [],
+      batchPreferenceMode: '',
+      areaTypes: [],
+      areas: [],
+      orderByPickingPosition: false,
+      useInventorySnapshotForPickSlotting: false,
+      optimizationMode: '',
+    }
+  });
 
+  const saveMutation = useMutation({
+    mutationFn: async (data: InsertTaskPlanningConfiguration) => {
+      const response = await apiRequest('POST', '/api/task-planning', data);
       return response.json();
     },
     onSuccess: () => {
@@ -84,6 +113,7 @@ export default function Step4TaskPlanning() {
         title: 'Success',
         description: 'Task planning configuration saved successfully.',
       });
+      resetForm();
     },
     onError: () => {
       toast({
@@ -94,444 +124,565 @@ export default function Step4TaskPlanning() {
     },
   });
 
-  const handleNext = async () => {
-    const configuration = {
-      pickStrategies,
-      huConfigs,
-      workOrderConfigs,
-      currentStep: 4,
-      userId: 1,
-    };
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/task-planning/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/task-planning'] });
+      toast({
+        title: 'Success',
+        description: 'Task planning configuration deleted successfully.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete task planning configuration.',
+        variant: 'destructive',
+      });
+    },
+  });
 
-    await saveConfiguration.mutateAsync(configuration);
-    nextStep();
+  const onSubmit = (data: TaskPlanningForm) => {
+    const submitData = {
+      ...data,
+      groupBy: data.groupBy?.length ? data.groupBy : undefined,
+      statePreferenceOrder: data.statePreferenceOrder?.length ? data.statePreferenceOrder : undefined,
+      statePreferenceSeq: data.statePreferenceSeq?.length ? data.statePreferenceSeq : undefined,
+      areaTypes: data.areaTypes?.length ? data.areaTypes : undefined,
+      areas: data.areas?.length ? data.areas : undefined,
+    };
+    saveMutation.mutate(submitData);
   };
 
-  const addPickStrategy = () => {
-    const newStrategy: PickStrategy = {
-      id: `strategy-${Date.now()}`,
-      name: `Pick Strategy ${pickStrategies.length + 1}`,
-      type: 'FIFO',
-      priority: pickStrategies.length + 1,
-      enabled: true,
-      rules: [],
-    };
-    setPickStrategies([...pickStrategies, newStrategy]);
+  const resetForm = () => {
+    setIsFormVisible(false);
+    setEditingConfig(null);
+    form.reset();
   };
 
-  const addHUConfig = () => {
-    const newConfig: HUFormationConfig = {
-      id: `hu-${Date.now()}`,
-      name: `HU Formation ${huConfigs.length + 1}`,
-      maxWeight: 50,
-      maxVolume: 100,
-      maxItems: 20,
-      strategy: 'MIXED',
-      enabled: true,
-    };
-    setHuConfigs([...huConfigs, newConfig]);
+  const handleEdit = (config: TaskPlanningConfiguration) => {
+    setEditingConfig(config);
+    setIsFormVisible(true);
+    form.reset({
+      inventoryGroupId: config.inventoryGroupId,
+      configurationName: config.configurationName,
+      description: config.description || '',
+      taskKind: config.taskKind || '',
+      taskSubKind: config.taskSubKind || '',
+      strat: config.strat || '',
+      sortingStrategy: config.sortingStrategy || '',
+      loadingStrategy: config.loadingStrategy || '',
+      groupBy: config.groupBy || [],
+      taskLabel: config.taskLabel || '',
+      mode: config.mode || '',
+      priority: config.priority || 100,
+      skipZoneFace: config.skipZoneFace || '',
+      orderByQuantUpdatedAt: config.orderByQuantUpdatedAt || false,
+      searchScope: config.searchScope || '',
+      statePreferenceOrder: config.statePreferenceOrder || [],
+      preferFixed: config.preferFixed || false,
+      preferNonFixed: config.preferNonFixed || false,
+      statePreferenceSeq: config.statePreferenceSeq || [],
+      batchPreferenceMode: config.batchPreferenceMode || '',
+      areaTypes: config.areaTypes || [],
+      areas: config.areas || [],
+      orderByPickingPosition: config.orderByPickingPosition || false,
+      useInventorySnapshotForPickSlotting: config.useInventorySnapshotForPickSlotting || false,
+      optimizationMode: config.optimizationMode || '',
+    });
   };
 
-  const addWorkOrderConfig = () => {
-    const newConfig: WorkOrderConfig = {
-      id: `wo-${Date.now()}`,
-      name: `Work Order ${workOrderConfigs.length + 1}`,
-      priority: 'MEDIUM',
-      autoAssign: true,
-      maxConcurrentOrders: 5,
-      timeoutMinutes: 60,
-    };
-    setWorkOrderConfigs([...workOrderConfigs, newConfig]);
+  const handleContinue = () => {
+    dispatch({ type: 'COMPLETE_STEP', payload: 4 });
+    setLocation('/step/5');
+  };
+
+  const getInventoryGroupName = (id: number) => {
+    const group = inventoryGroups.find(g => g.id === id);
+    return group?.name || `Group ${id}`;
   };
 
   return (
-    <WizardLayout
-      title="Task Planning"
-      description="Configure pick strategies, HU formation rules, and work order management settings"
-      currentStep={currentStep}
-      totalSteps={6}
-      onNext={handleNext}
-      onPrevious={previousStep}
-      isNextDisabled={saveConfiguration.isPending}
+    <WizardLayout 
+      currentStep={4} 
+      title="Task Planning Configuration"
+      description="Configure task planning strategies for inventory groups"
     >
       <div className="space-y-6">
-        <Tabs defaultValue="pick-strategies" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="pick-strategies" className="flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              Pick Strategies
-            </TabsTrigger>
-            <TabsTrigger value="hu-formation" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              HU Formation
-            </TabsTrigger>
-            <TabsTrigger value="work-orders" className="flex items-center gap-2">
-              <Brain className="w-4 h-4" />
-              Work Orders
-            </TabsTrigger>
-          </TabsList>
+        {/* Header and Add Button */}
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            <h2 className="text-xl font-semibold">Task Planning Strategies</h2>
+          </div>
+          <Button
+            onClick={() => setIsFormVisible(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Configuration
+          </Button>
+        </div>
 
-          <TabsContent value="pick-strategies" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-title-18 text-gray-900">Pick Strategy Configuration</h3>
-                <p className="text-body-14 text-gray-500">Define how items should be picked from inventory</p>
+        {/* Info Alert */}
+        <Alert>
+          <Info className="w-4 h-4" />
+          <AlertDescription>
+            Task planning configurations define how tasks are organized and prioritized for each inventory group. 
+            All fields are optional and can be configured based on your warehouse requirements.
+          </AlertDescription>
+        </Alert>
+
+        {/* Configuration Form */}
+        {isFormVisible && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="w-5 h-5" />
+                {editingConfig ? 'Edit Task Planning Configuration' : 'New Task Planning Configuration'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <Tabs defaultValue="basic" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="basic">Basic Settings</TabsTrigger>
+                      <TabsTrigger value="strategy">Strategy Config</TabsTrigger>
+                      <TabsTrigger value="advanced">Advanced Options</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="basic" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="inventoryGroupId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Inventory Group</FormLabel>
+                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select inventory group" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {inventoryGroups.map((group) => (
+                                    <SelectItem key={group.id} value={group.id.toString()}>
+                                      {group.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="configurationName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Configuration Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter configuration name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description</FormLabel>
+                            <FormControl>
+                              <Textarea placeholder="Optional description" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="taskKind"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Task Kind</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select task kind" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="OUTBOUND_PICK">OUTBOUND_PICK</SelectItem>
+                                  <SelectItem value="OUTBOUND_REPLEN">OUTBOUND_REPLEN</SelectItem>
+                                  <SelectItem value="INBOUND_PUT">INBOUND_PUT</SelectItem>
+                                  <SelectItem value="CYCLE_COUNT">CYCLE_COUNT</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="taskSubKind"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Task Sub Kind</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Optional sub kind" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="priority"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Priority</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="100" {...field} onChange={(e) => field.onChange(parseInt(e.target.value) || 0)} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="strategy" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="strat"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Strategy</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select strategy" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="OPTIMIZE_PICK_PATH">OPTIMIZE_PICK_PATH</SelectItem>
+                                  <SelectItem value="FIFO">FIFO</SelectItem>
+                                  <SelectItem value="LIFO">LIFO</SelectItem>
+                                  <SelectItem value="ZONE_BASED">ZONE_BASED</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="sortingStrategy"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sorting Strategy</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select sorting strategy" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="BY_LOCATION">BY_LOCATION</SelectItem>
+                                  <SelectItem value="BY_PRIORITY">BY_PRIORITY</SelectItem>
+                                  <SelectItem value="BY_QUANTITY">BY_QUANTITY</SelectItem>
+                                  <SelectItem value="BY_SKU">BY_SKU</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="loadingStrategy"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Loading Strategy</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select loading strategy" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="LOAD_BY_LM_TRIP">LOAD_BY_LM_TRIP</SelectItem>
+                                  <SelectItem value="LOAD_BY_ZONE">LOAD_BY_ZONE</SelectItem>
+                                  <SelectItem value="LOAD_BY_CAPACITY">LOAD_BY_CAPACITY</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="mode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Mode</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select mode" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="BATCH">BATCH</SelectItem>
+                                  <SelectItem value="SINGLE">SINGLE</SelectItem>
+                                  <SelectItem value="CLUSTER">CLUSTER</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={form.control}
+                        name="taskLabel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Task Label</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Optional task label" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="advanced" className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="searchScope"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Search Scope</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select search scope" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="AREA">AREA</SelectItem>
+                                  <SelectItem value="ZONE">ZONE</SelectItem>
+                                  <SelectItem value="WH">WAREHOUSE</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="optimizationMode"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Optimization Mode</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select optimization mode" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="TOUCH">TOUCH</SelectItem>
+                                  <SelectItem value="DISTANCE">DISTANCE</SelectItem>
+                                  <SelectItem value="TIME">TIME</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="orderByQuantUpdatedAt"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Order by Quantity Updated</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="preferFixed"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Prefer Fixed Locations</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="orderByPickingPosition"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                              <div className="space-y-0.5">
+                                <FormLabel>Order by Picking Position</FormLabel>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  <Separator />
+
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={saveMutation.isPending}>
+                      {saveMutation.isPending ? 'Saving...' : 'Save Configuration'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Existing Configurations */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Task Planning Configurations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {configurations.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Target className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>No task planning configurations yet.</p>
+                <p className="text-sm">Click "Add Configuration" to get started.</p>
               </div>
-              <Button onClick={addPickStrategy} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add Strategy
-              </Button>
-            </div>
-
-            {pickStrategies.length === 0 ? (
-              <Card className="wms-card">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Target className="w-12 h-12 text-gray-400 mb-4" />
-                  <h3 className="text-title-16 text-gray-900 mb-2">No Pick Strategies Configured</h3>
-                  <p className="text-body-14 text-gray-500 text-center mb-4">
-                    Start by adding a pick strategy to define how items should be selected from inventory.
-                  </p>
-                  <Button onClick={addPickStrategy} className="wms-button-primary">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Strategy
-                  </Button>
-                </CardContent>
-              </Card>
             ) : (
-              <div className="grid gap-4">
-                {pickStrategies.map((strategy, index) => (
-                  <Card key={strategy.id} className="wms-card">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-title-16">{strategy.name}</CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={strategy.enabled ? "default" : "secondary"}>
-                            {strategy.enabled ? "Enabled" : "Disabled"}
-                          </Badge>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Configuration Name</TableHead>
+                    <TableHead>Inventory Group</TableHead>
+                    <TableHead>Task Kind</TableHead>
+                    <TableHead>Strategy</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {configurations.map((config) => (
+                    <TableRow key={config.id}>
+                      <TableCell className="font-medium">{config.configurationName}</TableCell>
+                      <TableCell>{getInventoryGroupName(config.inventoryGroupId)}</TableCell>
+                      <TableCell>
+                        {config.taskKind ? (
+                          <Badge variant="outline">{config.taskKind}</Badge>
+                        ) : (
+                          <span className="text-gray-400">Not set</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {config.strat ? (
+                          <Badge variant="secondary">{config.strat}</Badge>
+                        ) : (
+                          <span className="text-gray-400">Not set</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{config.priority || 'Default'}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              const updated = pickStrategies.filter(s => s.id !== strategy.id);
-                              setPickStrategies(updated);
-                            }}
+                            onClick={() => handleEdit(config)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteMutation.mutate(config.id)}
+                            disabled={deleteMutation.isPending}
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`strategy-name-${index}`}>Strategy Name</Label>
-                          <Input
-                            id={`strategy-name-${index}`}
-                            value={strategy.name}
-                            onChange={(e) => {
-                              const updated = [...pickStrategies];
-                              updated[index].name = e.target.value;
-                              setPickStrategies(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`strategy-type-${index}`}>Strategy Type</Label>
-                          <Select
-                            value={strategy.type}
-                            onValueChange={(value: PickStrategy['type']) => {
-                              const updated = [...pickStrategies];
-                              updated[index].type = value;
-                              setPickStrategies(updated);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="FIFO">First In, First Out</SelectItem>
-                              <SelectItem value="LIFO">Last In, First Out</SelectItem>
-                              <SelectItem value="OPTIMAL_PATH">Optimal Path</SelectItem>
-                              <SelectItem value="ZONE_BASED">Zone Based</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor={`strategy-enabled-${index}`}>Enable Strategy</Label>
-                        <Switch
-                          id={`strategy-enabled-${index}`}
-                          checked={strategy.enabled}
-                          onCheckedChange={(checked) => {
-                            const updated = [...pickStrategies];
-                            updated[index].enabled = checked;
-                            setPickStrategies(updated);
-                          }}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
-          </TabsContent>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="hu-formation" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-title-18 text-gray-900">HU Formation Configuration</h3>
-                <p className="text-body-14 text-gray-500">Define handling unit formation rules and constraints</p>
-              </div>
-              <Button onClick={addHUConfig} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add Configuration
-              </Button>
-            </div>
-
-            {huConfigs.length === 0 ? (
-              <Card className="wms-card">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Package className="w-12 h-12 text-gray-400 mb-4" />
-                  <h3 className="text-title-16 text-gray-900 mb-2">No HU Formation Rules</h3>
-                  <p className="text-body-14 text-gray-500 text-center mb-4">
-                    Configure handling unit formation rules to optimize packaging and shipping.
-                  </p>
-                  <Button onClick={addHUConfig} className="wms-button-primary">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Rule
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {huConfigs.map((config, index) => (
-                  <Card key={config.id} className="wms-card">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-title-16">{config.name}</CardTitle>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const updated = huConfigs.filter(c => c.id !== config.id);
-                            setHuConfigs(updated);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`hu-name-${index}`}>Configuration Name</Label>
-                          <Input
-                            id={`hu-name-${index}`}
-                            value={config.name}
-                            onChange={(e) => {
-                              const updated = [...huConfigs];
-                              updated[index].name = e.target.value;
-                              setHuConfigs(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`hu-strategy-${index}`}>Formation Strategy</Label>
-                          <Select
-                            value={config.strategy}
-                            onValueChange={(value: HUFormationConfig['strategy']) => {
-                              const updated = [...huConfigs];
-                              updated[index].strategy = value;
-                              setHuConfigs(updated);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="WEIGHT_BASED">Weight Based</SelectItem>
-                              <SelectItem value="VOLUME_BASED">Volume Based</SelectItem>
-                              <SelectItem value="COUNT_BASED">Count Based</SelectItem>
-                              <SelectItem value="MIXED">Mixed Strategy</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <Label htmlFor={`hu-weight-${index}`}>Max Weight (kg)</Label>
-                          <Input
-                            id={`hu-weight-${index}`}
-                            type="number"
-                            value={config.maxWeight}
-                            onChange={(e) => {
-                              const updated = [...huConfigs];
-                              updated[index].maxWeight = parseInt(e.target.value);
-                              setHuConfigs(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`hu-volume-${index}`}>Max Volume (L)</Label>
-                          <Input
-                            id={`hu-volume-${index}`}
-                            type="number"
-                            value={config.maxVolume}
-                            onChange={(e) => {
-                              const updated = [...huConfigs];
-                              updated[index].maxVolume = parseInt(e.target.value);
-                              setHuConfigs(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`hu-items-${index}`}>Max Items</Label>
-                          <Input
-                            id={`hu-items-${index}`}
-                            type="number"
-                            value={config.maxItems}
-                            onChange={(e) => {
-                              const updated = [...huConfigs];
-                              updated[index].maxItems = parseInt(e.target.value);
-                              setHuConfigs(updated);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="work-orders" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-title-18 text-gray-900">Work Order Management</h3>
-                <p className="text-body-14 text-gray-500">Configure work order creation and assignment rules</p>
-              </div>
-              <Button onClick={addWorkOrderConfig} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Add Configuration
-              </Button>
-            </div>
-
-            {workOrderConfigs.length === 0 ? (
-              <Card className="wms-card">
-                <CardContent className="flex flex-col items-center justify-center py-12">
-                  <Brain className="w-12 h-12 text-gray-400 mb-4" />
-                  <h3 className="text-title-16 text-gray-900 mb-2">No Work Order Rules</h3>
-                  <p className="text-body-14 text-gray-500 text-center mb-4">
-                    Set up work order management rules to automate task assignment and prioritization.
-                  </p>
-                  <Button onClick={addWorkOrderConfig} className="wms-button-primary">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add First Rule
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {workOrderConfigs.map((config, index) => (
-                  <Card key={config.id} className="wms-card">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-title-16">{config.name}</CardTitle>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const updated = workOrderConfigs.filter(c => c.id !== config.id);
-                            setWorkOrderConfigs(updated);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`wo-name-${index}`}>Configuration Name</Label>
-                          <Input
-                            id={`wo-name-${index}`}
-                            value={config.name}
-                            onChange={(e) => {
-                              const updated = [...workOrderConfigs];
-                              updated[index].name = e.target.value;
-                              setWorkOrderConfigs(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`wo-priority-${index}`}>Priority Level</Label>
-                          <Select
-                            value={config.priority}
-                            onValueChange={(value: WorkOrderConfig['priority']) => {
-                              const updated = [...workOrderConfigs];
-                              updated[index].priority = value;
-                              setWorkOrderConfigs(updated);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="HIGH">High</SelectItem>
-                              <SelectItem value="MEDIUM">Medium</SelectItem>
-                              <SelectItem value="LOW">Low</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor={`wo-concurrent-${index}`}>Max Concurrent Orders</Label>
-                          <Input
-                            id={`wo-concurrent-${index}`}
-                            type="number"
-                            value={config.maxConcurrentOrders}
-                            onChange={(e) => {
-                              const updated = [...workOrderConfigs];
-                              updated[index].maxConcurrentOrders = parseInt(e.target.value);
-                              setWorkOrderConfigs(updated);
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor={`wo-timeout-${index}`}>Timeout (minutes)</Label>
-                          <Input
-                            id={`wo-timeout-${index}`}
-                            type="number"
-                            value={config.timeoutMinutes}
-                            onChange={(e) => {
-                              const updated = [...workOrderConfigs];
-                              updated[index].timeoutMinutes = parseInt(e.target.value);
-                              setWorkOrderConfigs(updated);
-                            }}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor={`wo-auto-${index}`}>Auto-assign Orders</Label>
-                        <Switch
-                          id={`wo-auto-${index}`}
-                          checked={config.autoAssign}
-                          onCheckedChange={(checked) => {
-                            const updated = [...workOrderConfigs];
-                            updated[index].autoAssign = checked;
-                            setWorkOrderConfigs(updated);
-                          }}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* Continue Button */}
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={() => setLocation('/step/3')}>
+            Previous: Task Sequences
+          </Button>
+          <Button onClick={handleContinue}>
+            Next: Task Execution
+          </Button>
+        </div>
       </div>
     </WizardLayout>
   );

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema, insertHUFormationConfigurationSchema, insertWorkOrderManagementConfigurationSchema, insertInventoryGroupSchema, insertStockAllocationStrategySchema } from "@shared/schema";
+import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertPickStrategyConfigurationSchema, insertHUFormationConfigurationSchema, insertWorkOrderManagementConfigurationSchema, insertInventoryGroupSchema, insertStockAllocationStrategySchema, insertTaskPlanningConfigurationSchema, insertTaskExecutionConfigurationSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user for development (in production this would come from authentication)
@@ -373,6 +373,128 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       res.status(500).json({ error: "Failed to delete strategy" });
+    }
+  });
+
+  // Task Planning Configuration routes
+  app.get("/api/task-planning", async (req, res) => {
+    try {
+      const configurations = await storage.getTaskPlanningConfigurations(MOCK_USER_ID);
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch task planning configurations" });
+    }
+  });
+
+  app.get("/api/task-planning/by-group/:inventoryGroupId", async (req, res) => {
+    try {
+      const inventoryGroupId = parseInt(req.params.inventoryGroupId);
+      const configurations = await storage.getTaskPlanningConfigurationsByGroup(inventoryGroupId);
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch task planning configurations" });
+    }
+  });
+
+  app.post("/api/task-planning", async (req, res) => {
+    try {
+      const validatedData = insertTaskPlanningConfigurationSchema.parse({
+        ...req.body,
+        userId: MOCK_USER_ID
+      });
+      const configuration = await storage.saveTaskPlanningConfiguration(validatedData);
+      res.json(configuration);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid task planning configuration data" });
+    }
+  });
+
+  app.put("/api/task-planning/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const configuration = await storage.updateTaskPlanningConfiguration(id, req.body);
+      if (configuration) {
+        res.json(configuration);
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Invalid configuration data" });
+    }
+  });
+
+  app.delete("/api/task-planning/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteTaskPlanningConfiguration(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete configuration" });
+    }
+  });
+
+  // Task Execution Configuration routes
+  app.get("/api/task-execution", async (req, res) => {
+    try {
+      const configurations = await storage.getTaskExecutionConfigurations(MOCK_USER_ID);
+      res.json(configurations);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch task execution configurations" });
+    }
+  });
+
+  app.get("/api/task-execution/by-planning/:taskPlanningConfigurationId", async (req, res) => {
+    try {
+      const taskPlanningConfigurationId = parseInt(req.params.taskPlanningConfigurationId);
+      const configuration = await storage.getTaskExecutionByPlanning(taskPlanningConfigurationId);
+      res.json(configuration || null);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch task execution configuration" });
+    }
+  });
+
+  app.post("/api/task-execution", async (req, res) => {
+    try {
+      const validatedData = insertTaskExecutionConfigurationSchema.parse({
+        ...req.body,
+        userId: MOCK_USER_ID
+      });
+      const configuration = await storage.saveTaskExecutionConfiguration(validatedData);
+      res.json(configuration);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid task execution configuration data" });
+    }
+  });
+
+  app.put("/api/task-execution/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const configuration = await storage.updateTaskExecutionConfiguration(id, req.body);
+      if (configuration) {
+        res.json(configuration);
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Invalid configuration data" });
+    }
+  });
+
+  app.delete("/api/task-execution/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteTaskExecutionConfiguration(id);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete configuration" });
     }
   });
 

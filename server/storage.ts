@@ -20,7 +20,11 @@ import {
   type InventoryGroup,
   type InsertInventoryGroup,
   type StockAllocationStrategy,
-  type InsertStockAllocationStrategy
+  type InsertStockAllocationStrategy,
+  type TaskPlanningConfiguration,
+  type InsertTaskPlanningConfiguration,
+  type TaskExecutionConfiguration,
+  type InsertTaskExecutionConfiguration
 } from "@shared/schema";
 
 export interface IStorage {
@@ -64,6 +68,18 @@ export interface IStorage {
   saveStockAllocationStrategy(strategy: InsertStockAllocationStrategy): Promise<StockAllocationStrategy>;
   deleteStockAllocationStrategy(id: number): Promise<boolean>;
   updateStockAllocationStrategy(id: number, strategy: Partial<InsertStockAllocationStrategy>): Promise<StockAllocationStrategy | undefined>;
+  
+  getTaskPlanningConfigurations(userId: number): Promise<TaskPlanningConfiguration[]>;
+  getTaskPlanningConfigurationByGroup(inventoryGroupId: number): Promise<TaskPlanningConfiguration | undefined>;
+  saveTaskPlanningConfiguration(config: InsertTaskPlanningConfiguration): Promise<TaskPlanningConfiguration>;
+  deleteTaskPlanningConfiguration(id: number): Promise<boolean>;
+  updateTaskPlanningConfiguration(id: number, config: Partial<InsertTaskPlanningConfiguration>): Promise<TaskPlanningConfiguration | undefined>;
+  
+  getTaskExecutionConfigurations(userId: number): Promise<TaskExecutionConfiguration[]>;
+  getTaskExecutionConfigurationByGroup(inventoryGroupId: number): Promise<TaskExecutionConfiguration | undefined>;
+  saveTaskExecutionConfiguration(config: InsertTaskExecutionConfiguration): Promise<TaskExecutionConfiguration>;
+  deleteTaskExecutionConfiguration(id: number): Promise<boolean>;
+  updateTaskExecutionConfiguration(id: number, config: Partial<InsertTaskExecutionConfiguration>): Promise<TaskExecutionConfiguration | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -75,6 +91,8 @@ export class MemStorage implements IStorage {
   private workOrderManagementConfigurations: Map<number, WorkOrderManagementConfiguration>;
   private inventoryGroups: Map<number, InventoryGroup>;
   private stockAllocationStrategies: Map<number, StockAllocationStrategy>;
+  private taskPlanningConfigurations: Map<number, TaskPlanningConfiguration>;
+  private taskExecutionConfigurations: Map<number, TaskExecutionConfiguration>;
   private currentUserId: number;
   private currentWizardConfigId: number;
   private currentTaskSeqConfigId: number;
@@ -83,6 +101,8 @@ export class MemStorage implements IStorage {
   private currentWorkOrderManagementConfigId: number;
   private currentInventoryGroupId: number;
   private currentStockAllocationStrategyId: number;
+  private currentTaskPlanningConfigId: number;
+  private currentTaskExecutionConfigId: number;
 
   constructor() {
     this.users = new Map();
@@ -93,6 +113,8 @@ export class MemStorage implements IStorage {
     this.workOrderManagementConfigurations = new Map();
     this.inventoryGroups = new Map();
     this.stockAllocationStrategies = new Map();
+    this.taskPlanningConfigurations = new Map();
+    this.taskExecutionConfigurations = new Map();
     this.currentUserId = 1;
     this.currentWizardConfigId = 1;
     this.currentTaskSeqConfigId = 1;
@@ -101,6 +123,8 @@ export class MemStorage implements IStorage {
     this.currentWorkOrderManagementConfigId = 1;
     this.currentInventoryGroupId = 1;
     this.currentStockAllocationStrategyId = 1;
+    this.currentTaskPlanningConfigId = 1;
+    this.currentTaskExecutionConfigId = 1;
   }
 
   async getUser(id: number): Promise<User | undefined> {
@@ -450,6 +474,82 @@ export class MemStorage implements IStorage {
       return updated;
     }
     return undefined;
+  }
+
+  // Task Planning Configuration methods
+  async getTaskPlanningConfigurations(userId: number): Promise<TaskPlanningConfiguration[]> {
+    return Array.from(this.taskPlanningConfigurations.values())
+      .filter(config => config.userId === userId);
+  }
+
+  async getTaskPlanningConfigurationByGroup(inventoryGroupId: number): Promise<TaskPlanningConfiguration | undefined> {
+    return Array.from(this.taskPlanningConfigurations.values())
+      .find(config => config.inventoryGroupId === inventoryGroupId);
+  }
+
+  async saveTaskPlanningConfiguration(config: InsertTaskPlanningConfiguration): Promise<TaskPlanningConfiguration> {
+    const id = this.currentTaskPlanningConfigId++;
+    const newConfig: TaskPlanningConfiguration = { 
+      id, 
+      ...config,
+      taskAttrs: config.taskAttrs || {},
+      groupBy: config.groupBy || ['category'],
+      statePreferenceOrder: config.statePreferenceOrder || ['PURE'],
+      statePreferenceSeq: config.statePreferenceSeq || ['PURE'],
+      areaTypes: config.areaTypes || ['INVENTORY'],
+      areas: config.areas || []
+    };
+    this.taskPlanningConfigurations.set(id, newConfig);
+    return newConfig;
+  }
+
+  async deleteTaskPlanningConfiguration(id: number): Promise<boolean> {
+    return this.taskPlanningConfigurations.delete(id);
+  }
+
+  async updateTaskPlanningConfiguration(id: number, config: Partial<InsertTaskPlanningConfiguration>): Promise<TaskPlanningConfiguration | undefined> {
+    const existing = this.taskPlanningConfigurations.get(id);
+    if (!existing) return undefined;
+    
+    const updated: TaskPlanningConfiguration = { ...existing, ...config };
+    this.taskPlanningConfigurations.set(id, updated);
+    return updated;
+  }
+
+  // Task Execution Configuration methods
+  async getTaskExecutionConfigurations(userId: number): Promise<TaskExecutionConfiguration[]> {
+    return Array.from(this.taskExecutionConfigurations.values())
+      .filter(config => config.userId === userId);
+  }
+
+  async getTaskExecutionConfigurationByGroup(inventoryGroupId: number): Promise<TaskExecutionConfiguration | undefined> {
+    return Array.from(this.taskExecutionConfigurations.values())
+      .find(config => config.inventoryGroupId === inventoryGroupId);
+  }
+
+  async saveTaskExecutionConfiguration(config: InsertTaskExecutionConfiguration): Promise<TaskExecutionConfiguration> {
+    const id = this.currentTaskExecutionConfigId++;
+    const newConfig: TaskExecutionConfiguration = { 
+      id, 
+      ...config,
+      huKinds: config.huKinds || [],
+      loadingUnits: config.loadingUnits || ['CRATE']
+    };
+    this.taskExecutionConfigurations.set(id, newConfig);
+    return newConfig;
+  }
+
+  async deleteTaskExecutionConfiguration(id: number): Promise<boolean> {
+    return this.taskExecutionConfigurations.delete(id);
+  }
+
+  async updateTaskExecutionConfiguration(id: number, config: Partial<InsertTaskExecutionConfiguration>): Promise<TaskExecutionConfiguration | undefined> {
+    const existing = this.taskExecutionConfigurations.get(id);
+    if (!existing) return undefined;
+    
+    const updated: TaskExecutionConfiguration = { ...existing, ...config };
+    this.taskExecutionConfigurations.set(id, updated);
+    return updated;
   }
 }
 

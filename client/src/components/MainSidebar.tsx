@@ -281,20 +281,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
                     </button>
                   ))}
                   
-                  {/* Export button for Outbound Configuration */}
-                  {section.title === 'Outbound Configuration' && !isCollapsed && (
-                    <div className="mt-4 pt-3 border-t border-gray-200">
-                      <Button
-                        onClick={handleExportOutboundConfig}
-                        variant="outline"
-                        size="sm"
-                        className="w-full flex items-center justify-center space-x-2 text-gray-700 hover:bg-gray-50"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span className="text-sm font-medium">Export JSON</span>
-                      </Button>
-                    </div>
-                  )}
+
                 </div>
               )}
             </div>

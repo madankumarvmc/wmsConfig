@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { X, Save, User } from 'lucide-react';
+import { Download, Save, User } from 'lucide-react';
 import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 import sbxLogo from '@assets/sbx_logo.png';
 
 interface TopNavbarButton {
@@ -17,9 +18,37 @@ interface TopNavbarProps {
 
 export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNavbarProps) {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
 
-  const handleExitSetup = () => {
-    setLocation('/');
+  const handleExportOutboundConfig = async () => {
+    try {
+      const response = await fetch('/api/export/outbound');
+      if (!response.ok) {
+        throw new Error('Failed to export configuration');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `outbound-config-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'Export Successful',
+        description: 'Outbound configuration exported successfully.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to export outbound configuration.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -90,10 +119,10 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
                 variant="outline" 
                 size="sm"
                 className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-500"
-                onClick={handleExitSetup}
+                onClick={handleExportOutboundConfig}
               >
-                <X className="w-4 h-4 mr-1" />
-                Exit Setup
+                <Download className="w-4 h-4 mr-1" />
+                Export JSON
               </Button>
               
               <Button 

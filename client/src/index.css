@@ -193,42 +193,60 @@
     @apply wms-button-secondary;
   }
 
-  /* Fix for dropdown z-index issues - proper solution */
+  /* Comprehensive fix for dropdown z-index issues */
   [data-radix-popper-content-wrapper] {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
+    position: fixed !important;
   }
   
   [data-radix-select-content] {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
+    position: fixed !important;
   }
   
   [data-radix-dropdown-menu-content] {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
+    position: fixed !important;
   }
   
   [data-radix-popover-content] {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
+    position: fixed !important;
   }
   
   [data-radix-context-menu-content] {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
+    position: fixed !important;
   }
   
   /* Additional fixes for portal containers */
   [data-radix-portal] {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
   }
   
   /* Ensure all dropdowns are above other content */
   [role="listbox"],
   [role="menu"],
   [role="combobox"] {
-    z-index: 99999 !important;
+    z-index: 999999 !important;
+    position: fixed !important;
   }
   
-  /* Reset any problematic dialog transforms that affect dropdowns */
-  [data-radix-dialog-content] {
-    /* Allow proper stacking for child elements */
-    isolation: isolate;
+  /* Reset any problematic transforms and isolation */
+  [data-radix-dialog-content],
+  .dialog-content {
+    isolation: auto !important;
+    transform: none !important;
+  }
+  
+  /* Force select content to use portal positioning */
+  [data-radix-select-viewport] {
+    z-index: 999999 !important;
+  }
+  
+  /* Additional select content fixes */
+  .select-content-wrapper {
+    z-index: 999999 !important;
+    position: fixed !important;
   }
 }

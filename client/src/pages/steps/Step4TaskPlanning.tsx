@@ -104,7 +104,13 @@ export default function Step4TaskPlanning() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: InsertTaskPlanningConfiguration) => {
+      console.log('Submitting task planning data:', data);
       const response = await apiRequest('POST', '/api/task-planning', data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || 'Failed to save configuration');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -115,10 +121,11 @@ export default function Step4TaskPlanning() {
       });
       resetForm();
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Save error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save task planning configuration.',
+        description: error.message || 'Failed to save task planning configuration.',
         variant: 'destructive',
       });
     },
@@ -146,6 +153,9 @@ export default function Step4TaskPlanning() {
   });
 
   const onSubmit = (data: TaskPlanningForm) => {
+    console.log('Form submitted with data:', data);
+    console.log('Form errors:', form.formState.errors);
+    
     const submitData = {
       ...data,
       groupBy: data.groupBy?.length ? data.groupBy : undefined,
@@ -154,13 +164,41 @@ export default function Step4TaskPlanning() {
       areaTypes: data.areaTypes?.length ? data.areaTypes : undefined,
       areas: data.areas?.length ? data.areas : undefined,
     };
+    
+    console.log('Submit data:', submitData);
     saveMutation.mutate(submitData);
   };
 
   const resetForm = () => {
     setIsFormVisible(false);
     setEditingConfig(null);
-    form.reset();
+    form.reset({
+      inventoryGroupId: 0,
+      configurationName: '',
+      description: '',
+      taskKind: '',
+      taskSubKind: '',
+      strat: '',
+      sortingStrategy: '',
+      loadingStrategy: '',
+      groupBy: [],
+      taskLabel: '',
+      mode: '',
+      priority: 100,
+      skipZoneFace: '',
+      orderByQuantUpdatedAt: false,
+      searchScope: '',
+      statePreferenceOrder: [],
+      preferFixed: false,
+      preferNonFixed: false,
+      statePreferenceSeq: [],
+      batchPreferenceMode: '',
+      areaTypes: [],
+      areas: [],
+      orderByPickingPosition: false,
+      useInventorySnapshotForPickSlotting: false,
+      optimizationMode: '',
+    });
   };
 
   const handleEdit = (config: TaskPlanningConfiguration) => {
@@ -263,7 +301,10 @@ export default function Step4TaskPlanning() {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Inventory Group</FormLabel>
-                              <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                              <Select 
+                                onValueChange={(value) => field.onChange(parseInt(value))} 
+                                value={field.value > 0 ? field.value.toString() : ""}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue placeholder="Select inventory group" />

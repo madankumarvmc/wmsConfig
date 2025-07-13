@@ -12,7 +12,9 @@ import {
   BarChart3, 
   ChevronDown, 
   ChevronRight,
-  Lock
+  Lock,
+  ChevronLeft,
+  Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -37,9 +39,10 @@ interface MainSidebarProps {
 export default function MainSidebar({ currentPath }: MainSidebarProps) {
   const [location, setLocation] = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>(['Master Configuration', 'Outbound Configuration']);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   
-  // Use the actual location from the hook instead of props for consistency
-  const activePath = currentPath || location;
+  // Use the actual location from the hook for consistency
+  const activePath = location;
 
   const toggleSection = (sectionTitle: string) => {
     setExpandedSections(prev => 
@@ -151,7 +154,19 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
   };
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 h-screen overflow-y-auto flex-shrink-0">
+    <div className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 h-screen overflow-y-auto flex-shrink-0 transition-all duration-300`}>
+      {/* Collapse/Expand Button */}
+      <div className="flex justify-end p-2 border-b border-gray-100">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="w-8 h-8 p-0 hover:bg-gray-100"
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </Button>
+      </div>
+      
       <div className="p-4">
         {sections.map((section) => {
           const isExpanded = expandedSections.includes(section.title);
@@ -167,9 +182,14 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
               >
                 <h3 className={`text-sm font-medium uppercase tracking-wide ${
                   isComingSoon ? 'text-gray-400' : 'text-gray-600'
-                }`}>
+                } ${isCollapsed ? 'hidden' : ''}`}>
                   {section.title}
                 </h3>
+                {isCollapsed && (
+                  <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                    <div className="w-2 h-2 bg-gray-600 rounded"></div>
+                  </div>
+                )}
                 {!isComingSoon && (
                   isExpanded ? 
                     <ChevronDown className="w-4 h-4 text-gray-400" /> : 
@@ -178,14 +198,15 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
               </button>
 
               {/* Section Items */}
-              {isExpanded && (
+              {(isExpanded || isCollapsed) && (
                 <div className="mt-2 space-y-1">
                   {section.items.map((item, index) => (
                     <button
                       key={index}
                       onClick={() => handleItemClick(item)}
                       disabled={item.disabled}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
+                      title={isCollapsed ? item.label : undefined}
+                      className={`w-full flex items-center ${isCollapsed ? 'justify-center relative' : 'justify-between'} p-3 rounded-lg text-left transition-colors ${
                         item.isActive
                           ? 'bg-black text-white'
                           : item.disabled
@@ -193,16 +214,25 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}>
                         <div className={`${
                           item.isActive ? 'text-white' : 
                           item.disabled ? 'text-gray-400' : 'text-gray-500'
                         }`}>
                           {item.icon}
                         </div>
-                        <span className="text-sm font-medium">{item.label}</span>
+                        {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                        {isCollapsed && item.badge && (
+                          <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs font-medium ${
+                            item.isActive 
+                              ? 'bg-white text-black' 
+                              : 'bg-red-500 text-white'
+                          }`}>
+                            {item.badge}
+                          </div>
+                        )}
                       </div>
-                      {item.badge && (
+                      {item.badge && !isCollapsed && (
                         <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                           item.isActive 
                             ? 'bg-white text-black' 

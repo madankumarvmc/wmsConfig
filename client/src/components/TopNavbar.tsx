@@ -74,7 +74,7 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
             </Button>
           ))}
           
-          {/* Default buttons for configuration pages */}
+          {/* Always show default buttons when no custom buttons are provided */}
           {leftButtons.length === 0 && rightButtons.length === 0 && (
             <>
               <Button 

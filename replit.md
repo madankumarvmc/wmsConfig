@@ -98,8 +98,12 @@ The application uses three main database tables:
 ## Changelog
 
 Changelog:
+- July 13, 2025. Fixed header positioning issues - prevented shifting when sidebar state changes by making top navbar fixed across full width
+- July 13, 2025. Enhanced toggle switch visibility with better contrast (gray background for unchecked, black for checked states)
+- July 13, 2025. Updated Review & Confirm page to reflect current 6-step workflow structure with proper step names and descriptions
+- July 13, 2025. Completed one-click template system with Distribution Center template auto-applying comprehensive configurations
+- July 13, 2025. Removed mandatory field requirements across all form schemas to enable smooth template application
 - July 13, 2025. Added JSON export functionality for outbound configurations with comprehensive data export
-- July 13, 2025. Fixed toggle switch visibility issues in Task Planning and Task Execution forms with enhanced styling
 - July 5, 2025. Added "Wave Planning" as new Step 2 in outbound configuration wizard
 - July 5, 2025. Updated wizard structure from 7 to 8 steps with Wave Planning inserted after Inventory Groups
 - July 5, 2025. Created comprehensive Wave Planning page with strategy configuration, templates, and automation settings

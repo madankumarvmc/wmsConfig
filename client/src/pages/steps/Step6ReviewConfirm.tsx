@@ -5,17 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
 
-export default function Step7ReviewConfirm() {
+export default function Step6ReviewConfirm() {
   const [, setLocation] = useLocation();
   const { dispatch } = useWizard();
 
   const handlePrevious = () => {
-    dispatch({ type: 'SET_CURRENT_STEP', payload: 6 });
-    setLocation('/step6');
+    dispatch({ type: 'SET_CURRENT_STEP', payload: 5 });
+    setLocation('/step/5');
   };
 
   const handleConfirm = () => {
-    dispatch({ type: 'COMPLETE_STEP', payload: 7 });
+    dispatch({ type: 'COMPLETE_STEP', payload: 6 });
     // Here you would typically save the final configuration
     alert('Configuration has been saved successfully!');
   };
@@ -24,10 +24,10 @@ export default function Step7ReviewConfirm() {
     <WizardLayout
       title="Review & Confirm"
       description="Review all your configurations and confirm the setup."
-      currentStep={7}
-      totalSteps={7}
+      currentStep={6}
+      totalSteps={6}
       onPrevious={handlePrevious}
-      previousLabel="Previous: Stock Allocation"
+      previousLabel="Previous: Task Execution"
       nextLabel="Confirm & Save"
       onNext={handleConfirm}
     >
@@ -42,25 +42,29 @@ export default function Step7ReviewConfirm() {
           <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-blue-900">Inventory Groups</h4>
+                  <p className="text-sm text-blue-700 mt-1">Storage and line identifier combinations</p>
+                </div>
+                <div className="bg-indigo-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-indigo-900">Wave Planning</h4>
+                  <p className="text-sm text-indigo-700 mt-1">Batch processing and wave strategies</p>
+                </div>
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium text-gray-900">Task Sequences</h4>
-                  <p className="text-sm text-gray-700 mt-1">Storage and line identifier configurations</p>
+                  <p className="text-sm text-gray-700 mt-1">Outbound operation sequence configurations</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-green-900">Pick Strategies</h4>
-                  <p className="text-sm text-green-700 mt-1">Task configuration strategies</p>
+                  <h4 className="font-medium text-green-900">Task Planning</h4>
+                  <p className="text-sm text-green-700 mt-1">Planning strategies and optimization rules</p>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-purple-900">HU Formation</h4>
-                  <p className="text-sm text-purple-700 mt-1">Handling unit path determination</p>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-orange-900">Work Orders</h4>
-                  <p className="text-sm text-orange-700 mt-1">Management strategy configuration</p>
+                  <h4 className="font-medium text-purple-900">Task Execution</h4>
+                  <p className="text-sm text-purple-700 mt-1">Execution rules and mobile configurations</p>
                 </div>
                 <div className="bg-teal-50 p-4 rounded-lg">
                   <h4 className="font-medium text-teal-900">Stock Allocation</h4>
-                  <p className="text-sm text-teal-700 mt-1">Bin allocation strategies</p>
+                  <p className="text-sm text-teal-700 mt-1">Pick and put allocation strategies</p>
                 </div>
               </div>
             </div>
@@ -80,7 +84,7 @@ export default function Step7ReviewConfirm() {
                 <CheckCircle className="w-4 h-4 mr-2" />
                 Confirm & Save Configuration
               </Button>
-              <Button variant="outline" onClick={() => setLocation('/step1')}>
+              <Button variant="outline" onClick={() => setLocation('/step/1')}>
                 Review from Beginning
               </Button>
             </div>

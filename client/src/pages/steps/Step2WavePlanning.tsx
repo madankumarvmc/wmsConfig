@@ -394,9 +394,23 @@ export default function Step2WavePlanning() {
 
                     <div>
                       <Label htmlFor="allowedUOMs">Allowed UOMs</Label>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="l0" defaultChecked />
-                        <Label htmlFor="l0" className="text-sm">L0</Label>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="l0" defaultChecked />
+                          <Label htmlFor="l0" className="text-sm">L0</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="l1" />
+                          <Label htmlFor="l1" className="text-sm">L1</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="l2" />
+                          <Label htmlFor="l2" className="text-sm">L2</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="l3" />
+                          <Label htmlFor="l3" className="text-sm">L3</Label>
+                        </div>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Unit of measure levels allowed for this strategy

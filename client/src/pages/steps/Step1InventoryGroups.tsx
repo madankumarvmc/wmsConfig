@@ -348,7 +348,7 @@ export default function Step1InventoryGroups() {
                                   <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="z-[9999] relative">
                                 {categories.map((cat) => (
                                   <SelectItem key={cat} value={cat}>
                                     {cat}
@@ -373,7 +373,7 @@ export default function Step1InventoryGroups() {
                                   <SelectValue placeholder="Select type" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="z-[9999] relative">
                                 {skuClassTypes.map((type) => (
                                   <SelectItem key={type} value={type}>
                                     {type}
@@ -398,7 +398,7 @@ export default function Step1InventoryGroups() {
                                   <SelectValue placeholder="Select class" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="z-[9999] relative">
                                 {skuClasses.map((cls) => (
                                   <SelectItem key={cls} value={cls}>
                                     {cls}
@@ -423,7 +423,7 @@ export default function Step1InventoryGroups() {
                                   <SelectValue placeholder="Select UOM" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="z-[9999] relative">
                                 {uoms.map((uom) => (
                                   <SelectItem key={uom} value={uom}>
                                     {uom}
@@ -448,7 +448,7 @@ export default function Step1InventoryGroups() {
                                   <SelectValue placeholder="Select bucket" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="z-[9999] relative">
                                 {buckets.map((bucket) => (
                                   <SelectItem key={bucket} value={bucket}>
                                     {bucket}
@@ -495,7 +495,7 @@ export default function Step1InventoryGroups() {
                                   <SelectValue placeholder="Select channel" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="z-[9999] relative">
                                 {channels.map((channel) => (
                                   <SelectItem key={channel} value={channel}>
                                     {channel}
@@ -520,7 +520,7 @@ export default function Step1InventoryGroups() {
                                   <SelectValue placeholder="Select customer" />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="z-[9999] relative">
                                 {customers.map((customer) => (
                                   <SelectItem key={customer} value={customer}>
                                     {customer}

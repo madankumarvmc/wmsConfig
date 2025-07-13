@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { X, Save, User } from 'lucide-react';
 import { useLocation } from 'wouter';
+import sbxLogo from '@assets/sbx_logo.png';
 
 interface TopNavbarButton {
   icon: React.ReactNode;
@@ -22,14 +23,16 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
   };
 
   return (
-    <nav className="bg-slate-800 border-b border-slate-700 px-6 py-4 shadow-sm">
+    <nav className="bg-slate-800 border-b border-slate-700 px-6 py-3 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-slate-800 rounded flex items-center justify-center">
-              <div className="text-white font-bold text-sm">SBX</div>
-            </div>
-            <div className="text-title-20 text-white">SBX Warehouse Configuration Portal</div>
+            <img 
+              src={sbxLogo} 
+              alt="SBX Logo" 
+              className="w-8 h-8 rounded"
+            />
+            <div className="text-xl font-medium text-white">SBX Warehouse Configuration Portal</div>
           </div>
           
           {/* Left navigation buttons */}
@@ -54,7 +57,7 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
         </div>
 
         {/* Right side - Action buttons */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           {rightButtons.map((button, index) => (
             <Button
               key={index}
@@ -67,7 +70,7 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
               }
             >
               {button.icon}
-              <span className="ml-2 text-body-14">{button.label}</span>
+              <span className="ml-1 text-sm">{button.label}</span>
             </Button>
           ))}
           
@@ -79,7 +82,7 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
                 size="sm"
                 className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-500"
               >
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="w-4 h-4 mr-1" />
                 Save Draft
               </Button>
               
@@ -89,7 +92,7 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
                 className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-500"
                 onClick={handleExitSetup}
               >
-                <X className="w-4 h-4 mr-2" />
+                <X className="w-4 h-4 mr-1" />
                 Exit Setup
               </Button>
               
@@ -98,7 +101,7 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [] }: TopNa
                 size="sm"
                 className="border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white hover:border-slate-500"
               >
-                <User className="w-4 h-4 mr-2" />
+                <User className="w-4 h-4 mr-1" />
                 Admin User
               </Button>
             </>

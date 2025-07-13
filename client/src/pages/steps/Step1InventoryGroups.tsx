@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Trash2, AlertCircle, Package, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, Package, Edit } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,8 +16,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import WizardLayout from '@/components/WizardLayout';
-import TaskPlanningConfig from '@/components/TaskPlanningConfig';
-import TaskExecutionConfig from '@/components/TaskExecutionConfig';
 
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +57,6 @@ export default function Step1InventoryGroups() {
   const queryClient = useQueryClient();
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingGroup, setEditingGroup] = useState<InventoryGroup | null>(null);
-  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set());
 
   const { data: inventoryGroups = [], isLoading } = useQuery<InventoryGroup[]>({
     queryKey: ['/api/inventory-groups'],
@@ -254,16 +251,6 @@ export default function Step1InventoryGroups() {
       storage: `${storageIds?.category || 'N/A'} | ${storageIds?.uom || 'N/A'} | ${storageIds?.bucket || 'N/A'}`,
       line: `${lineIds?.channel || 'N/A'} | ${lineIds?.customer || 'N/A'}`
     };
-  };
-
-  const toggleGroupExpansion = (groupId: number) => {
-    const newExpanded = new Set(expandedGroups);
-    if (newExpanded.has(groupId)) {
-      newExpanded.delete(groupId);
-    } else {
-      newExpanded.add(groupId);
-    }
-    setExpandedGroups(newExpanded);
   };
 
   return (
@@ -579,80 +566,72 @@ export default function Step1InventoryGroups() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
           </div>
         ) : inventoryGroups.length > 0 ? (
-          <div className="space-y-4">
-            {inventoryGroups.map((group) => {
-              const display = getIdentifiersDisplay(group);
-              const isExpanded = expandedGroups.has(group.id);
-              return (
-                <Card key={group.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleGroupExpansion(group.id)}
-                          className="p-1 h-auto"
-                        >
-                          {isExpanded ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <div>
-                          <h3 className="font-medium text-lg">{group.name}</h3>
-                          <p className="text-sm text-gray-600">{group.description || 'No description'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEdit(group)}
-                          disabled={isFormVisible}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(group.id)}
-                          disabled={deleteMutation.isPending}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      <Badge variant="secondary">
-                        {display.storage}
-                      </Badge>
-                      <Badge variant="outline">
-                        {display.line}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  
-                  {isExpanded && (
-                    <CardContent className="pt-0">
-                      <div className="space-y-6">
-                        <TaskPlanningConfig 
-                          inventoryGroupId={group.id} 
-                          inventoryGroupName={group.name}
-                        />
-                        <TaskExecutionConfig 
-                          inventoryGroupId={group.id} 
-                          inventoryGroupName={group.name}
-                        />
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Existing Inventory Groups</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Storage Identifiers</TableHead>
+                    <TableHead>Line Identifiers</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inventoryGroups.map((group) => {
+                    const display = getIdentifiersDisplay(group);
+                    return (
+                      <TableRow key={group.id}>
+                        <TableCell className="font-medium">{group.name}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <Badge variant="secondary" className="mr-1 mb-1">
+                              {display.storage}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <Badge variant="outline" className="mr-1 mb-1">
+                              {display.line}
+                            </Badge>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600">
+                          {group.description || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(group)}
+                              disabled={isFormVisible}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(group.id)}
+                              disabled={deleteMutation.isPending}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         ) : (
           <Card className="border-dashed border-2 border-gray-300">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">

@@ -82,7 +82,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
         },
         {
           icon: <Waves className="w-4 h-4" />,
-          label: 'Wave Planning - Wave release Planning of orders',
+          label: 'Wave Planning',
           path: '/step/2',
           badge: '2',
           isActive: currentPath === '/step/2'

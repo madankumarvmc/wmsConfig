@@ -180,11 +180,10 @@ export default function Step2WavePlanning() {
           </AlertDescription>
         </Alert>
 
-        <Tabs defaultValue="strategy" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="strategy">Wave Strategy</TabsTrigger>
+        <Tabs defaultValue="line-split" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="line-split">Line-Split Strategies</TabsTrigger>
-            <TabsTrigger value="templates">Quick Templates</TabsTrigger>
+            <TabsTrigger value="strategy">Wave Strategy</TabsTrigger>
             <TabsTrigger value="advanced">Advanced Settings</TabsTrigger>
           </TabsList>
 
@@ -341,62 +340,9 @@ export default function Step2WavePlanning() {
             </div>
           </TabsContent>
 
-          <TabsContent value="templates" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {waveTemplates.map((template) => (
-                <Card key={template.id} className={`cursor-pointer transition-all ${
-                  selectedTemplate === template.id ? 'border-black bg-gray-50' : ''
-                }`}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{template.name}</CardTitle>
-                    <p className="text-sm text-gray-600">{template.description}</p>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Strategy:</span>
-                        <Badge variant="outline">{template.strategy}</Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Max Orders:</span>
-                        <span>{template.maxOrders}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Timing:</span>
-                        <span>{template.timing}</span>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Priority Rules:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {template.priority.slice(0, 2).map((rule) => (
-                          <Badge key={rule} variant="secondary" className="text-xs">
-                            {rule}
-                          </Badge>
-                        ))}
-                        {template.priority.length > 2 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{template.priority.length - 2} more
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
 
-                    <Button
-                      onClick={() => applyTemplate(template)}
-                      className="w-full"
-                      variant={selectedTemplate === template.id ? "default" : "outline"}
-                    >
-                      {selectedTemplate === template.id ? "Applied" : "Apply Template"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
 
-          {/* New Line-Split Strategies Tab */}
+          {/* Line-Split Strategies Tab */}
           <TabsContent value="line-split" className="space-y-6">
             <Card className="wms-card">
               <CardHeader>
@@ -409,120 +355,199 @@ export default function Step2WavePlanning() {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Line-split strategies determine how order lines are divided and allocated across waves based on inventory group characteristics.
+                    Configure line-split strategies based on warehouse ID, storage identifiers, line identifiers, and split mode settings.
                   </AlertDescription>
                 </Alert>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Split Strategy Configuration */}
+                  {/* Basic Configuration */}
                   <div className="space-y-4">
-                    <h4 className="text-title-16 text-gray-900">Split Strategy Rules</h4>
+                    <h4 className="text-title-16 text-gray-900">Basic Configuration</h4>
                     
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor="splitCriteria">Split Criteria</Label>
-                        <Select>
+                        <Label htmlFor="whId">Warehouse ID</Label>
+                        <Input
+                          id="whId"
+                          type="number"
+                          placeholder="e.g., 0"
+                          defaultValue={0}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="sequence">Sequence</Label>
+                        <Input
+                          id="sequence"
+                          type="number"
+                          placeholder="e.g., 0"
+                          defaultValue={0}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="mode">Split Mode</Label>
+                        <Select defaultValue="nosplit">
                           <SelectTrigger>
-                            <SelectValue placeholder="Select split criteria" />
+                            <SelectValue placeholder="Select split mode" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="inventory-group">By Inventory Group</SelectItem>
-                            <SelectItem value="storage-zone">By Storage Zone</SelectItem>
-                            <SelectItem value="product-category">By Product Category</SelectItem>
-                            <SelectItem value="order-priority">By Order Priority</SelectItem>
-                            <SelectItem value="customer-type">By Customer Type</SelectItem>
+                            <SelectItem value="nosplit">No Split</SelectItem>
+                            <SelectItem value="split">Split</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div>
-                        <Label htmlFor="maxLinesPerWave">Max Lines per Wave</Label>
-                        <Input
-                          id="maxLinesPerWave"
-                          type="number"
-                          placeholder="e.g., 500"
-                          defaultValue={500}
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="splitThreshold">Split Threshold</Label>
-                        <Input
-                          id="splitThreshold"
-                          type="number"
-                          placeholder="e.g., 100"
-                          defaultValue={100}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Minimum lines required before splitting into new wave
-                        </p>
+                        <Label htmlFor="allowedUOMs">Allowed UOMs</Label>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="l0" defaultChecked />
+                          <Label htmlFor="l0" className="text-sm">L0</Label>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Line Allocation Rules */}
+                  {/* Storage Identifiers */}
                   <div className="space-y-4">
-                    <h4 className="text-title-16 text-gray-900">Line Allocation Rules</h4>
+                    <h4 className="text-title-16 text-gray-900">Storage Identifiers</h4>
                     
                     <div className="space-y-3">
                       <div>
-                        <Label htmlFor="allocationStrategy">Allocation Strategy</Label>
-                        <Select>
+                        <Label htmlFor="category">Category</Label>
+                        <Input
+                          id="category"
+                          type="text"
+                          placeholder="e.g., string"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="skuClassType">SKU Class Type</Label>
+                        <Input
+                          id="skuClassType"
+                          type="text"
+                          placeholder="e.g., string"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="skuClass">SKU Class</Label>
+                        <Input
+                          id="skuClass"
+                          type="text"
+                          placeholder="e.g., string"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="uom">UOM</Label>
+                        <Select defaultValue="L0">
                           <SelectTrigger>
-                            <SelectValue placeholder="Select allocation strategy" />
+                            <SelectValue placeholder="Select UOM" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="round-robin">Round Robin</SelectItem>
-                            <SelectItem value="capacity-based">Capacity Based</SelectItem>
-                            <SelectItem value="priority-weighted">Priority Weighted</SelectItem>
-                            <SelectItem value="zone-optimized">Zone Optimized</SelectItem>
+                            <SelectItem value="L0">L0</SelectItem>
+                            <SelectItem value="L1">L1</SelectItem>
+                            <SelectItem value="L2">L2</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div>
-                        <Label htmlFor="balancingFactor">Load Balancing Factor</Label>
-                        <Input
-                          id="balancingFactor"
-                          type="number"
-                          step="0.1"
-                          min="0"
-                          max="1"
-                          placeholder="e.g., 0.8"
-                          defaultValue={0.8}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          0 = No balancing, 1 = Perfect balancing
-                        </p>
+                        <Label htmlFor="bucket">Bucket</Label>
+                        <Select defaultValue="Good">
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select bucket" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Good">Good</SelectItem>
+                            <SelectItem value="Damaged">Damaged</SelectItem>
+                            <SelectItem value="Expired">Expired</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="preserveOrderIntegrity" defaultChecked />
-                        <Label htmlFor="preserveOrderIntegrity" className="text-sm">
-                          Preserve order integrity when possible
-                        </Label>
+                      <div>
+                        <Label htmlFor="specialStorageIndicator">Special Storage Indicator</Label>
+                        <Input
+                          id="specialStorageIndicator"
+                          type="text"
+                          placeholder="e.g., string"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="preferredHUKind">Preferred HU Kind</Label>
+                        <Input
+                          id="preferredHUKind"
+                          type="text"
+                          placeholder="e.g., string"
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Preview Section */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h5 className="text-title-14 text-gray-900 mb-3">Strategy Preview</h5>
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                {/* Line Identifiers */}
+                <div className="space-y-4">
+                  <h4 className="text-title-16 text-gray-900">Line Identifiers</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <div className="text-title-20 text-blue-600">85%</div>
-                      <div className="text-body-12 text-gray-500">Wave Efficiency</div>
+                      <Label htmlFor="channel">Channel</Label>
+                      <Input
+                        id="channel"
+                        type="text"
+                        placeholder="e.g., string"
+                      />
                     </div>
+
                     <div>
-                      <div className="text-title-20 text-green-600">3.2</div>
-                      <div className="text-body-12 text-gray-500">Avg Lines/Wave</div>
+                      <Label htmlFor="vendor">Vendor</Label>
+                      <Input
+                        id="vendor"
+                        type="text"
+                        placeholder="e.g., string"
+                      />
                     </div>
+
                     <div>
-                      <div className="text-title-20 text-orange-600">12min</div>
-                      <div className="text-body-12 text-gray-500">Est. Processing Time</div>
+                      <Label htmlFor="asnType">ASN Type</Label>
+                      <Input
+                        id="asnType"
+                        type="text"
+                        placeholder="e.g., string"
+                      />
                     </div>
                   </div>
+                </div>
+
+                {/* JSON Preview */}
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h5 className="text-title-14 text-gray-900 mb-3">Configuration Preview</h5>
+                  <pre className="text-xs text-gray-700 overflow-x-auto">
+{`{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "whId": 0,
+  "storageIdentifiers": {
+    "category": "string",
+    "skuClassType": "string",
+    "skuClass": "string",
+    "uom": "L0",
+    "bucket": "Good",
+    "specialStorageIndicator": "string",
+    "preferredHUKind": "string"
+  },
+  "lineIdentifiers": {
+    "channel": "string",
+    "vendor": "string",
+    "asnType": "string"
+  },
+  "sequence": 0,
+  "mode": "nosplit",
+  "allowedUOMs": ["L0"]
+}`}
+                  </pre>
                 </div>
               </CardContent>
             </Card>

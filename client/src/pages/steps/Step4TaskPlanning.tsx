@@ -575,14 +575,16 @@ export default function Step4TaskPlanning() {
                           control={form.control}
                           name="orderByQuantUpdatedAt"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Order by Quantity Updated</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Order by Quantity Updated</FormLabel>
+                                <p className="text-xs text-gray-500">Sort by quantity update timestamp</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -593,14 +595,16 @@ export default function Step4TaskPlanning() {
                           control={form.control}
                           name="preferFixed"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Prefer Fixed Locations</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Prefer Fixed Locations</FormLabel>
+                                <p className="text-xs text-gray-500">Prioritize fixed bin locations</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -611,14 +615,16 @@ export default function Step4TaskPlanning() {
                           control={form.control}
                           name="orderByPickingPosition"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Order by Picking Position</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Order by Picking Position</FormLabel>
+                                <p className="text-xs text-gray-500">Sort by optimal picking sequence</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>

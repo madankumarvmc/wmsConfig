@@ -590,14 +590,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="allowComplete"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Allow Complete</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Allow Complete</FormLabel>
+                                <p className="text-xs text-gray-500">Enable task completion</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -608,14 +610,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="dropInnerHU"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Drop Inner HU</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Drop Inner HU</FormLabel>
+                                <p className="text-xs text-gray-500">Allow dropping inner handling units</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -628,14 +632,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="allowInnerHUBreak"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Allow Inner HU Break</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Allow Inner HU Break</FormLabel>
+                                <p className="text-xs text-gray-500">Enable breaking inner handling units</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -646,14 +652,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="autoUOMConversion"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Auto UOM Conversion</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Auto UOM Conversion</FormLabel>
+                                <p className="text-xs text-gray-500">Automatic unit of measure conversion</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -666,14 +674,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="mobileSorting"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Mobile Sorting</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Mobile Sorting</FormLabel>
+                                <p className="text-xs text-gray-500">Enable mobile device sorting</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -684,14 +694,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="displayEditPickQuantity"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Display Edit Pick Quantity</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Display Edit Pick Quantity</FormLabel>
+                                <p className="text-xs text-gray-500">Allow editing pick quantities</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -704,14 +716,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="pickMandatoryScan"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Pick Mandatory Scan</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Pick Mandatory Scan</FormLabel>
+                                <p className="text-xs text-gray-500">Require scanning during pick operations</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -722,14 +736,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="dropMandatoryScan"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Drop Mandatory Scan</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Drop Mandatory Scan</FormLabel>
+                                <p className="text-xs text-gray-500">Require scanning during drop operations</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -783,14 +799,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="strictBatchAdherence"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Strict Batch Adherence</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Strict Batch Adherence</FormLabel>
+                                <p className="text-xs text-gray-500">Enforce strict batch processing rules</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -801,14 +819,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="allowWorkOrderSplit"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Allow Work Order Split</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Allow Work Order Split</FormLabel>
+                                <p className="text-xs text-gray-500">Enable splitting work orders</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -821,14 +841,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="supportPalletScan"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Support Pallet Scan</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Support Pallet Scan</FormLabel>
+                                <p className="text-xs text-gray-500">Enable pallet scanning capabilities</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>
@@ -839,14 +861,16 @@ export default function Step5TaskExecution() {
                           control={form.control}
                           name="undoOp"
                           render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border border-gray-200 p-4 bg-gray-50">
                               <div className="space-y-0.5">
-                                <FormLabel>Undo Operation</FormLabel>
+                                <FormLabel className="text-sm font-medium text-gray-900">Undo Operation</FormLabel>
+                                <p className="text-xs text-gray-500">Allow undoing task operations</p>
                               </div>
                               <FormControl>
                                 <Switch
-                                  checked={field.value}
+                                  checked={field.value || false}
                                   onCheckedChange={field.onChange}
+                                  className="data-[state=checked]:bg-blue-600"
                                 />
                               </FormControl>
                             </FormItem>

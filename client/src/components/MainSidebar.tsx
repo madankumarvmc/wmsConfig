@@ -156,7 +156,10 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
   return (
     <div className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 h-screen overflow-y-auto flex-shrink-0 transition-all duration-300`}>
       {/* Collapse/Expand Button */}
-      <div className="flex justify-end p-2 border-b border-gray-100">
+      <div className="flex justify-between items-center p-2 border-b border-gray-100">
+        {!isCollapsed && (
+          <span className="text-sm font-medium text-gray-600 uppercase tracking-wide">Modules</span>
+        )}
         <Button
           variant="ghost"
           size="sm"

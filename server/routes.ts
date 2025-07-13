@@ -437,6 +437,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Configuration Export route
+  app.get("/api/export/outbound", async (req, res) => {
+    try {
+      const [
+        inventoryGroups,
+        taskSequences,
+        pickStrategies,
+        huFormations,
+        workOrderManagement,
+        stockAllocationStrategies,
+        taskPlanningConfigurations,
+        taskExecutionConfigurations
+      ] = await Promise.all([
+        storage.getInventoryGroups(MOCK_USER_ID),
+        storage.getTaskSequenceConfigurations(MOCK_USER_ID),
+        storage.getPickStrategyConfigurations(MOCK_USER_ID),
+        storage.getHUFormationConfigurations(MOCK_USER_ID),
+        storage.getWorkOrderManagementConfigurations(MOCK_USER_ID),
+        storage.getStockAllocationStrategies(MOCK_USER_ID),
+        storage.getTaskPlanningConfigurations(MOCK_USER_ID),
+        storage.getTaskExecutionConfigurations(MOCK_USER_ID)
+      ]);
+
+      const exportData = {
+        exportTimestamp: new Date().toISOString(),
+        version: "1.0",
+        configurations: {
+          inventoryGroups,
+          taskSequences,
+          pickStrategies,
+          huFormations,
+          workOrderManagement,
+          stockAllocationStrategies,
+          taskPlanningConfigurations,
+          taskExecutionConfigurations
+        }
+      };
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="outbound-config-${new Date().toISOString().split('T')[0]}.json"`);
+      res.json(exportData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export configurations" });
+    }
+  });
+
   // Task Execution Configuration routes
   app.get("/api/task-execution", async (req, res) => {
     try {

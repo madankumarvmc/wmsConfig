@@ -14,9 +14,11 @@ import {
   ChevronRight,
   Lock,
   ChevronLeft,
-  Menu
+  Menu,
+  Download
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface SidebarSection {
   title: string;
@@ -40,6 +42,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
   const [location, setLocation] = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>(['Master Configuration', 'Outbound Configuration']);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const { toast } = useToast();
   
   // Use the actual location from the hook for consistency
   const activePath = location;
@@ -50,6 +53,37 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
         ? prev.filter(s => s !== sectionTitle)
         : [...prev, sectionTitle]
     );
+  };
+
+  const handleExportOutboundConfig = async () => {
+    try {
+      const response = await fetch('/api/export/outbound');
+      if (!response.ok) {
+        throw new Error('Failed to export configuration');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `outbound-config-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: 'Export Successful',
+        description: 'Outbound configuration exported successfully.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to export outbound configuration.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const sections: SidebarSection[] = [
@@ -246,6 +280,21 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
                       )}
                     </button>
                   ))}
+                  
+                  {/* Export button for Outbound Configuration */}
+                  {section.title === 'Outbound Configuration' && !isCollapsed && (
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <Button
+                        onClick={handleExportOutboundConfig}
+                        variant="outline"
+                        size="sm"
+                        className="w-full flex items-center justify-center space-x-2 text-gray-700 hover:bg-gray-50"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span className="text-sm font-medium">Export JSON</span>
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

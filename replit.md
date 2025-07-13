@@ -98,6 +98,8 @@ The application uses three main database tables:
 ## Changelog
 
 Changelog:
+- July 13, 2025. Added JSON export functionality for outbound configurations with comprehensive data export
+- July 13, 2025. Fixed toggle switch visibility issues in Task Planning and Task Execution forms with enhanced styling
 - July 5, 2025. Added "Wave Planning" as new Step 2 in outbound configuration wizard
 - July 5, 2025. Updated wizard structure from 7 to 8 steps with Wave Planning inserted after Inventory Groups
 - July 5, 2025. Created comprehensive Wave Planning page with strategy configuration, templates, and automation settings

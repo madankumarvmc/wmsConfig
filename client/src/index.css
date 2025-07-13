@@ -190,4 +190,17 @@
   .btn-secondary {
     @apply wms-button-secondary;
   }
+
+  /* Fix for dropdown z-index issues */
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+  }
+  
+  [data-radix-select-content] {
+    z-index: 9999 !important;
+  }
+  
+  [data-radix-dropdown-menu-content] {
+    z-index: 9999 !important;
+  }
 }

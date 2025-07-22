@@ -24,50 +24,9 @@ export const taskSequenceConfigurations = pgTable("task_sequence_configurations"
   shipmentAcknowledgment: text("shipment_acknowledgment"),
 });
 
-export const pickStrategyConfigurations = pgTable("pick_strategy_configurations", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  inventoryGroupId: integer("inventory_group_id").notNull(),
-  taskKind: text("task_kind").notNull(),
-  taskSubKind: text("task_sub_kind").notNull(),
-  taskAttrs: jsonb("task_attrs").default('{}'),
-  strat: text("strat").notNull(),
-  sortingStrategy: text("sorting_strategy").notNull(),
-  loadingStrategy: text("loading_strategy").notNull(),
-  groupBy: text("group_by").array(),
-  taskLabel: text("task_label").notNull(),
-});
 
-export const huFormationConfigurations = pgTable("hu_formation_configurations", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  pickStrategyId: integer("pick_strategy_id").notNull(),
-  tripType: text("trip_type").notNull(),
-  huKinds: text("hu_kinds").array(),
-  scanSourceHUKind: text("scan_source_hu_kind").notNull(),
-  pickSourceHUKind: text("pick_source_hu_kind").notNull(),
-  carrierHUKind: text("carrier_hu_kind").notNull(),
-  huMappingMode: text("hu_mapping_mode").notNull(),
-  dropHUQuantThreshold: integer("drop_hu_quant_threshold").notNull().default(0),
-  dropUOM: text("drop_uom").notNull(),
-  allowComplete: boolean("allow_complete").notNull().default(true),
-  swapHUThreshold: integer("swap_hu_threshold").notNull().default(0),
-  dropInnerHU: boolean("drop_inner_hu").notNull().default(true),
-  allowInnerHUBreak: boolean("allow_inner_hu_break").notNull().default(true),
-  displayDropUOM: boolean("display_drop_uom").notNull().default(true),
-  autoUOMConversion: boolean("auto_uom_conversion").notNull().default(true),
-  mobileSorting: boolean("mobile_sorting").notNull().default(true),
-  sortingParam: text("sorting_param").notNull(),
-  huWeightThreshold: integer("hu_weight_threshold").notNull().default(0),
-  qcMismatchMonthThreshold: integer("qc_mismatch_month_threshold").notNull().default(0),
-  quantSlottingForHUsInDrop: boolean("quant_slotting_for_hus_in_drop").notNull().default(true),
-  allowPickingMultiBatchfromHU: boolean("allow_picking_multi_batch_from_hu").notNull().default(true),
-  displayEditPickQuantity: boolean("display_edit_pick_quantity").notNull().default(true),
-  pickBundles: boolean("pick_bundles").notNull().default(true),
-  enableEditQtyInPickOp: boolean("enable_edit_qty_in_pick_op").notNull().default(true),
-  dropSlottingMode: text("drop_slotting_mode").notNull(),
-  enableManualDestBinSelection: boolean("enable_manual_dest_bin_selection").notNull().default(true),
-});
+
+
 
 // One-Click Templates
 export const oneClickTemplates = pgTable("one_click_templates", {
@@ -81,24 +40,7 @@ export const oneClickTemplates = pgTable("one_click_templates", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const workOrderManagementConfigurations = pgTable("work_order_management_configurations", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  pickStrategyId: integer("pick_strategy_id").notNull(),
-  mapSegregationGroupsToBins: boolean("map_segregation_groups_to_bins").notNull().default(true),
-  dropHUInBin: boolean("drop_hu_in_bin").notNull().default(true),
-  scanDestHUInDrop: boolean("scan_dest_hu_in_drop").notNull().default(true),
-  allowHUBreakInDrop: boolean("allow_hu_break_in_drop").notNull().default(true),
-  strictBatchAdherence: boolean("strict_batch_adherence").notNull().default(true),
-  allowWorkOrderSplit: boolean("allow_work_order_split").notNull().default(true),
-  undoOp: boolean("undo_op").notNull().default(true),
-  disableWorkOrder: boolean("disable_work_order").notNull().default(false),
-  allowUnpick: boolean("allow_unpick").notNull().default(true),
-  supportPalletScan: boolean("support_pallet_scan").notNull().default(true),
-  loadingUnits: text("loading_units").array(),
-  pickMandatoryScan: boolean("pick_mandatory_scan").notNull().default(true),
-  dropMandatoryScan: boolean("drop_mandatory_scan").notNull().default(true),
-});
+
 
 export const inventoryGroups = pgTable("inventory_groups", {
   id: serial("id").primaryKey(),
@@ -227,17 +169,7 @@ export const insertTaskSequenceConfigurationSchema = createInsertSchema(taskSequ
   id: true,
 });
 
-export const insertPickStrategyConfigurationSchema = createInsertSchema(pickStrategyConfigurations).omit({
-  id: true,
-});
 
-export const insertHUFormationConfigurationSchema = createInsertSchema(huFormationConfigurations).omit({
-  id: true,
-});
-
-export const insertWorkOrderManagementConfigurationSchema = createInsertSchema(workOrderManagementConfigurations).omit({
-  id: true,
-});
 
 export const insertInventoryGroupSchema = createInsertSchema(inventoryGroups).omit({
   id: true,
@@ -270,12 +202,7 @@ export type WizardConfiguration = typeof wizardConfigurations.$inferSelect;
 export type InsertWizardConfiguration = z.infer<typeof insertWizardConfigurationSchema>;
 export type TaskSequenceConfiguration = typeof taskSequenceConfigurations.$inferSelect;
 export type InsertTaskSequenceConfiguration = z.infer<typeof insertTaskSequenceConfigurationSchema>;
-export type PickStrategyConfiguration = typeof pickStrategyConfigurations.$inferSelect;
-export type InsertPickStrategyConfiguration = z.infer<typeof insertPickStrategyConfigurationSchema>;
-export type HUFormationConfiguration = typeof huFormationConfigurations.$inferSelect;
-export type InsertHUFormationConfiguration = z.infer<typeof insertHUFormationConfigurationSchema>;
-export type WorkOrderManagementConfiguration = typeof workOrderManagementConfigurations.$inferSelect;
-export type InsertWorkOrderManagementConfiguration = z.infer<typeof insertWorkOrderManagementConfigurationSchema>;
+
 export type InventoryGroup = typeof inventoryGroups.$inferSelect;
 export type InsertInventoryGroup = z.infer<typeof insertInventoryGroupSchema>;
 export type StockAllocationStrategy = typeof stockAllocationStrategies.$inferSelect;

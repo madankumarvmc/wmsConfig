@@ -1,7 +1,4 @@
 import { 
-  users, 
-  wizardConfigurations,
-  taskSequenceConfigurations,
   type User, 
   type InsertUser,
   type WizardConfiguration,
@@ -343,9 +340,32 @@ export class MemStorage implements IStorage {
     const id = this.currentTaskPlanningConfigId++;
     const newConfig: TaskPlanningConfiguration = { 
       id,
-      ...config,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      userId: config.userId,
+      inventoryGroupId: config.inventoryGroupId,
+      configurationName: config.configurationName,
+      description: config.description || null,
+      taskKind: config.taskKind || null,
+      taskSubKind: config.taskSubKind || null,
+      strat: config.strat || null,
+      sortingStrategy: config.sortingStrategy || null,
+      loadingStrategy: config.loadingStrategy || null,
+      groupBy: config.groupBy || null,
+      taskLabel: config.taskLabel || null,
+      mode: config.mode || null,
+      priority: config.priority || null,
+      skipZoneFace: config.skipZoneFace || null,
+      orderByQuantUpdatedAt: config.orderByQuantUpdatedAt || null,
+      searchScope: config.searchScope || null,
+      statePreferenceOrder: config.statePreferenceOrder || null,
+      preferFixed: config.preferFixed || null,
+      preferNonFixed: config.preferNonFixed || null,
+      statePreferenceSeq: config.statePreferenceSeq || null,
+      batchPreferenceMode: config.batchPreferenceMode || null,
+      areaTypes: config.areaTypes || null,
+      areas: config.areas || null,
+      orderByPickingPosition: config.orderByPickingPosition || null,
+      useInventorySnapshotForPickSlotting: config.useInventorySnapshotForPickSlotting || null,
+      optimizationMode: config.optimizationMode || null
     };
     this.taskPlanningConfigurations.set(id, newConfig);
     return newConfig;
@@ -369,8 +389,7 @@ export class MemStorage implements IStorage {
     const updated: TaskPlanningConfiguration = { 
       ...existing,
       ...config,
-      id,
-      updatedAt: new Date()
+      id
     };
     this.taskPlanningConfigurations.set(id, updated);
     return updated;
@@ -396,9 +415,48 @@ export class MemStorage implements IStorage {
     const id = this.currentTaskExecutionConfigId++;
     const newConfig: TaskExecutionConfiguration = { 
       id,
-      ...config,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      userId: config.userId,
+      configurationName: config.configurationName,
+      taskPlanningConfigurationId: config.taskPlanningConfigurationId,
+      description: config.description || null,
+      tripType: config.tripType || null,
+      huKinds: config.huKinds || null,
+      scanSourceHUKind: config.scanSourceHUKind || null,
+      pickSourceHUKind: config.pickSourceHUKind || null,
+      carrierHUKind: config.carrierHUKind || null,
+      huMappingMode: config.huMappingMode || null,
+      dropHUQuantThreshold: config.dropHUQuantThreshold || null,
+      dropUOM: config.dropUOM || null,
+      allowComplete: config.allowComplete || null,
+      swapHUThreshold: config.swapHUThreshold || null,
+      dropInnerHU: config.dropInnerHU || null,
+      allowInnerHUBreak: config.allowInnerHUBreak || null,
+      displayDropUOM: config.displayDropUOM || null,
+      autoUOMConversion: config.autoUOMConversion || null,
+      mobileSorting: config.mobileSorting || null,
+      sortingParam: config.sortingParam || null,
+      huWeightThreshold: config.huWeightThreshold || null,
+      qcMismatchMonthThreshold: config.qcMismatchMonthThreshold || null,
+      quantSlottingForHUsInDrop: config.quantSlottingForHUsInDrop || null,
+      allowPickingMultiBatchfromHU: config.allowPickingMultiBatchfromHU || null,
+      displayEditPickQuantity: config.displayEditPickQuantity || null,
+      pickBundles: config.pickBundles || null,
+      enableEditQtyInPickOp: config.enableEditQtyInPickOp || null,
+      dropSlottingMode: config.dropSlottingMode || null,
+      enableManualDestBinSelection: config.enableManualDestBinSelection || null,
+      mapSegregationGroupsToBins: config.mapSegregationGroupsToBins || null,
+      dropHUInBin: config.dropHUInBin || null,
+      scanDestHUInDrop: config.scanDestHUInDrop || null,
+      allowHUBreakInDrop: config.allowHUBreakInDrop || null,
+      strictBatchAdherence: config.strictBatchAdherence || null,
+      allowWorkOrderSplit: config.allowWorkOrderSplit || null,
+      undoOp: config.undoOp || null,
+      disableWorkOrder: config.disableWorkOrder || null,
+      allowUnpick: config.allowUnpick || null,
+      supportPalletScan: config.supportPalletScan || null,
+      loadingUnits: config.loadingUnits || null,
+      pickMandatoryScan: config.pickMandatoryScan || null,
+      dropMandatoryScan: config.dropMandatoryScan || null
     };
     this.taskExecutionConfigurations.set(id, newConfig);
     return newConfig;
@@ -417,8 +475,7 @@ export class MemStorage implements IStorage {
     const updated: TaskExecutionConfiguration = { 
       ...existing,
       ...config,
-      id,
-      updatedAt: new Date()
+      id
     };
     this.taskExecutionConfigurations.set(id, updated);
     return updated;
@@ -457,34 +514,26 @@ export class MemStorage implements IStorage {
           shipmentAcknowledgment: "SHIP_CONFIRM"
         },
         taskPlanning: {
-          strategy: "PICK_BY_CUSTOMER",
+          configurationName: "PICK_BY_CUSTOMER",
           tripType: "LM",
           groupBy: ["area", "uom"],
           useDockdoorAssignment: true,
           allowWorkOrderSplit: true
         },
         taskExecution: {
-          huConfigs: {
-            scanSourceHUKind: "PALLET",
-            pickSourceHUKind: "NONE",
-            carrierHUKind: "PALLET"
-          },
-          scanSettings: {
-            pickMandatoryScan: false,
-            dropMandatoryScan: false
-          },
-          dropSettings: {
-            dropHUInBin: true,
-            allowHUBreakInDrop: false,
-            dropInnerHU: false,
-            allowInnerHUBreak: false
-          },
-          params: {
-            replenishBundles: 1,
-            allowComplete: false,
-            autoUOMConversion: false,
-            displayEditPickQuantity: false
-          }
+          configurationName: "Distribution Center Execution",
+          scanSourceHUKind: "PALLET",
+          pickSourceHUKind: "NONE",
+          carrierHUKind: "PALLET",
+          pickMandatoryScan: false,
+          dropMandatoryScan: false,
+          dropHUInBin: true,
+          allowHUBreakInDrop: false,
+          dropInnerHU: false,
+          allowInnerHUBreak: false,
+          allowComplete: false,
+          autoUOMConversion: false,
+          displayEditPickQuantity: false
         }
       },
       createdAt: new Date()
@@ -552,22 +601,27 @@ export class MemStorage implements IStorage {
         const taskPlanning = await this.saveTaskPlanningConfiguration({
           userId,
           inventoryGroupId: groupId,
-          strategy: templateData.taskPlanning.strategy,
-          tripType: templateData.taskPlanning.tripType,
-          groupBy: templateData.taskPlanning.groupBy,
-          useDockdoorAssignment: templateData.taskPlanning.useDockdoorAssignment,
-          allowWorkOrderSplit: templateData.taskPlanning.allowWorkOrderSplit,
-          taskExecutionConfig: templateData.taskExecution
+          configurationName: templateData.taskPlanning.configurationName || "Template Planning Config",
+          tripType: templateData.taskPlanning.tripType
         });
 
         // Apply task execution configuration
         await this.saveTaskExecutionConfiguration({
           userId,
           taskPlanningConfigurationId: taskPlanning.id,
-          huConfigs: templateData.taskExecution.huConfigs,
-          scanSettings: templateData.taskExecution.scanSettings,
-          dropSettings: templateData.taskExecution.dropSettings,
-          params: templateData.taskExecution.params
+          configurationName: templateData.taskExecution.configurationName || "Template Execution Config",
+          scanSourceHUKind: templateData.taskExecution.scanSourceHUKind,
+          pickSourceHUKind: templateData.taskExecution.pickSourceHUKind,
+          carrierHUKind: templateData.taskExecution.carrierHUKind,
+          pickMandatoryScan: templateData.taskExecution.pickMandatoryScan,
+          dropMandatoryScan: templateData.taskExecution.dropMandatoryScan,
+          dropHUInBin: templateData.taskExecution.dropHUInBin,
+          allowHUBreakInDrop: templateData.taskExecution.allowHUBreakInDrop,
+          dropInnerHU: templateData.taskExecution.dropInnerHU,
+          allowInnerHUBreak: templateData.taskExecution.allowInnerHUBreak,
+          allowComplete: templateData.taskExecution.allowComplete,
+          autoUOMConversion: templateData.taskExecution.autoUOMConversion,
+          displayEditPickQuantity: templateData.taskExecution.displayEditPickQuantity
         });
       }
 

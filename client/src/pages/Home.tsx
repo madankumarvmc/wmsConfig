@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowRight, Settings, Database, Package, Users, Zap, CheckCircle, Sparkles, Clock, AlertCircle, BookOpen, Home as HomeIcon } from 'lucide-react';
+import { ArrowRight, Settings, Database, Package, Users, Zap, CheckCircle, Sparkles, Clock, AlertCircle, BookOpen, Home as HomeIcon, Radio, Target } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
@@ -24,15 +24,11 @@ export default function Home() {
     queryKey: ['/api/task-sequences'],
   });
 
-  const { data: pickStrategies = [] } = useQuery<any[]>({
-    queryKey: ['/api/pick-strategies'],
-  });
-
   const { data: inventoryGroups = [] } = useQuery<any[]>({
     queryKey: ['/api/inventory-groups'],
   });
 
-  const hasExistingConfig = taskSequences.length > 0 || pickStrategies.length > 0 || inventoryGroups.length > 0;
+  const hasExistingConfig = taskSequences.length > 0 || inventoryGroups.length > 0;
 
   const quickSetupMutation = useMutation({
     mutationFn: async () => {
@@ -42,9 +38,6 @@ export default function Home() {
     onSuccess: (data) => {
       // Invalidate all queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['/api/task-sequences'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/pick-strategies'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/hu-formation'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/work-order-management'] });
       queryClient.invalidateQueries({ queryKey: ['/api/inventory-groups'] });
       queryClient.invalidateQueries({ queryKey: ['/api/stock-allocation-strategies'] });
       
@@ -87,37 +80,37 @@ export default function Home() {
     },
     {
       number: 2,
-      title: "Task Sequences",
-      description: "Configure task sequences for your inventory groups",
-      icon: <Zap className="w-5 h-5" />,
+      title: "Wave Planning",
+      description: "Configure wave strategies and batch processing rules",
+      icon: <Radio className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(2)
     },
     {
       number: 3,
-      title: "Pick Strategies",
-      description: "Configure pick strategies with sorting and loading preferences",
-      icon: <Database className="w-5 h-5" />,
+      title: "Task Sequences",
+      description: "Configure task sequences for your inventory groups",
+      icon: <Zap className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(3)
     },
     {
       number: 4,
-      title: "HU Formation",
-      description: "Set up handling unit formation rules and scanning requirements",
-      icon: <Settings className="w-5 h-5" />,
+      title: "Task Planning",
+      description: "Configure task planning strategies and optimization rules",
+      icon: <Target className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(4)
     },
     {
       number: 5,
-      title: "Work Order Management",
-      description: "Configure work order management settings and loading units",
-      icon: <Users className="w-5 h-5" />,
+      title: "Task Execution",
+      description: "Configure execution rules and mobile device settings",
+      icon: <Settings className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(5)
     },
     {
       number: 6,
-      title: "Stock Allocation",
-      description: "Define PICK and PUT allocation strategies for inventory groups",
-      icon: <Users className="w-5 h-5" />,
+      title: "Review & Confirm",
+      description: "Review all configurations and confirm setup",
+      icon: <CheckCircle className="w-5 h-5" />,
       isComplete: state.completedSteps.includes(6)
     }
   ];

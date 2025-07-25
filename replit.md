@@ -16,16 +16,21 @@ This is a full-stack web application built for configuring Warehouse Management 
 
 ### Backend Architecture
 - **Express.js** server with TypeScript for API endpoints
-- **Drizzle ORM** for type-safe database operations and schema management
-- **PostgreSQL** database (configured via environment variables)
-- **Neon Database** serverless connection for cloud-based PostgreSQL
+- **In-Memory Storage** using JavaScript Maps for fast data operations and development
+- **MemStorage Class** implements the storage interface with volatile data persistence
+- **TypeScript Types** for schema validation using Zod instead of database schemas
 - RESTful API design with proper error handling and logging middleware
 
-### Database Schema
-The application uses three main database tables:
+### Data Storage Architecture
+The application uses in-memory storage with the following data structures:
 - **users**: Basic user authentication (currently using mock user for development)
 - **wizard_configurations**: Stores step-by-step wizard progress and data
-- **task_sequence_configurations**: Stores complete task sequence configurations with storage identifiers, line identifiers, and task sequences
+- **task_sequence_configurations**: Task sequence configurations with inventory group associations
+- **inventory_groups**: Storage and line identifier combinations for task organization
+- **stock_allocation_strategies**: PICK/PUT strategies linked to inventory groups
+- **task_planning_configurations**: Planning strategies for task execution
+- **task_execution_configurations**: Execution parameters linked to planning configurations
+- **one_click_templates**: Pre-configured template data for quick setup
 
 ## Key Components
 
@@ -66,15 +71,13 @@ The application uses three main database tables:
 - **embla-carousel-react**: Carousel/slider functionality
 
 ### Backend Dependencies
-- **drizzle-orm**: Type-safe ORM for database operations
-- **@neondatabase/serverless**: Serverless PostgreSQL driver
-- **connect-pg-simple**: PostgreSQL session store (for future session management)
-- **drizzle-zod**: Integration between Drizzle and Zod for schema validation
+- **zod**: Runtime type validation and schema parsing
+- **TypeScript interfaces**: Type-safe data structures for in-memory storage
+- **JavaScript Maps**: High-performance data storage with O(1) operations
 
 ### Development Dependencies
 - **tsx**: TypeScript execution for development
 - **esbuild**: Fast JavaScript bundler for production builds
-- **drizzle-kit**: Database migration and schema management tools
 
 ## Deployment Strategy
 
@@ -90,14 +93,21 @@ The application uses three main database tables:
 - **Static Asset Serving**: Express serves built frontend assets
 - **Environment Configuration**: Separate development and production configurations
 
-### Database Management
-- **Drizzle Migrations**: Version-controlled database schema changes
-- **Environment Variables**: DATABASE_URL for flexible database configuration
-- **Connection Pooling**: Neon serverless handles connection management
+### Data Management
+- **In-Memory Storage**: Fast, volatile data storage using JavaScript Maps
+- **Auto-incrementing IDs**: Each entity type has unique identifier generation
+- **Type Safety**: TypeScript interfaces ensure data consistency across the application
+- **Template System**: Pre-configured templates for quick warehouse setup
 
 ## Changelog
 
 Changelog:
+- July 25, 2025. Added CLAUDE.md file with comprehensive development guidance and architecture documentation
+- July 25, 2025. Successfully merged updates from GitHub remote repository while preserving in-memory storage architecture
+- July 22, 2025. Completed database removal and migration to in-memory storage with MemStorage class for development efficiency
+- July 22, 2025. Cleaned up all deprecated API endpoints and files - removed drizzle.config.ts, PostgreSQL schemas, and unused route handlers
+- July 22, 2025. Fixed all TypeScript errors and LSP diagnostics - application now runs cleanly with pure in-memory storage
+- July 22, 2025. Updated schema.ts from Drizzle ORM to pure TypeScript interfaces with Zod validation for runtime type checking
 - July 13, 2025. Fixed header positioning issues - prevented shifting when sidebar state changes by making top navbar fixed across full width
 - July 13, 2025. Enhanced toggle switch visibility with better contrast (gray background for unchecked, black for checked states)
 - July 13, 2025. Updated Review & Confirm page to reflect current 6-step workflow structure with proper step names and descriptions

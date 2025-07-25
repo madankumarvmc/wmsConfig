@@ -1,22 +1,10 @@
 import { 
-  users, 
-  wizardConfigurations,
-  taskSequenceConfigurations,
-  pickStrategyConfigurations,
-  huFormationConfigurations,
-  workOrderManagementConfigurations,
   type User, 
   type InsertUser,
   type WizardConfiguration,
   type InsertWizardConfiguration,
   type TaskSequenceConfiguration,
   type InsertTaskSequenceConfiguration,
-  type PickStrategyConfiguration,
-  type InsertPickStrategyConfiguration,
-  type HUFormationConfiguration,
-  type InsertHUFormationConfiguration,
-  type WorkOrderManagementConfiguration,
-  type InsertWorkOrderManagementConfiguration,
   type InventoryGroup,
   type InsertInventoryGroup,
   type StockAllocationStrategy,
@@ -43,22 +31,7 @@ export interface IStorage {
   deleteTaskSequenceConfiguration(id: number): Promise<boolean>;
   updateTaskSequenceConfiguration(id: number, config: Partial<InsertTaskSequenceConfiguration>): Promise<TaskSequenceConfiguration | undefined>;
   
-  getPickStrategyConfigurations(userId: number): Promise<PickStrategyConfiguration[]>;
-  savePickStrategyConfiguration(config: InsertPickStrategyConfiguration): Promise<PickStrategyConfiguration>;
-  deletePickStrategyConfiguration(id: number): Promise<boolean>;
-  updatePickStrategyConfiguration(id: number, config: Partial<InsertPickStrategyConfiguration>): Promise<PickStrategyConfiguration | undefined>;
-  
-  getHUFormationConfigurations(userId: number): Promise<HUFormationConfiguration[]>;
-  getHUFormationByPickStrategy(pickStrategyId: number): Promise<HUFormationConfiguration | undefined>;
-  saveHUFormationConfiguration(config: InsertHUFormationConfiguration): Promise<HUFormationConfiguration>;
-  deleteHUFormationConfiguration(id: number): Promise<boolean>;
-  updateHUFormationConfiguration(id: number, config: Partial<InsertHUFormationConfiguration>): Promise<HUFormationConfiguration | undefined>;
-  
-  getWorkOrderManagementConfigurations(userId: number): Promise<WorkOrderManagementConfiguration[]>;
-  getWorkOrderManagementByPickStrategy(pickStrategyId: number): Promise<WorkOrderManagementConfiguration | undefined>;
-  saveWorkOrderManagementConfiguration(config: InsertWorkOrderManagementConfiguration): Promise<WorkOrderManagementConfiguration>;
-  deleteWorkOrderManagementConfiguration(id: number): Promise<boolean>;
-  updateWorkOrderManagementConfiguration(id: number, config: Partial<InsertWorkOrderManagementConfiguration>): Promise<WorkOrderManagementConfiguration | undefined>;
+
   
   getInventoryGroups(userId: number): Promise<InventoryGroup[]>;
   saveInventoryGroup(group: InsertInventoryGroup): Promise<InventoryGroup>;
@@ -95,9 +68,7 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private wizardConfigurations: Map<string, WizardConfiguration>;
   private taskSequenceConfigurations: Map<number, TaskSequenceConfiguration>;
-  private pickStrategyConfigurations: Map<number, PickStrategyConfiguration>;
-  private huFormationConfigurations: Map<number, HUFormationConfiguration>;
-  private workOrderManagementConfigurations: Map<number, WorkOrderManagementConfiguration>;
+
   private inventoryGroups: Map<number, InventoryGroup>;
   private stockAllocationStrategies: Map<number, StockAllocationStrategy>;
   private taskPlanningConfigurations: Map<number, TaskPlanningConfiguration>;
@@ -106,9 +77,7 @@ export class MemStorage implements IStorage {
   private currentUserId: number;
   private currentWizardConfigId: number;
   private currentTaskSeqConfigId: number;
-  private currentPickStrategyConfigId: number;
-  private currentHUFormationConfigId: number;
-  private currentWorkOrderManagementConfigId: number;
+
   private currentInventoryGroupId: number;
   private currentStockAllocationStrategyId: number;
   private currentTaskPlanningConfigId: number;
@@ -119,9 +88,7 @@ export class MemStorage implements IStorage {
     this.users = new Map();
     this.wizardConfigurations = new Map();
     this.taskSequenceConfigurations = new Map();
-    this.pickStrategyConfigurations = new Map();
-    this.huFormationConfigurations = new Map();
-    this.workOrderManagementConfigurations = new Map();
+
     this.inventoryGroups = new Map();
     this.stockAllocationStrategies = new Map();
     this.taskPlanningConfigurations = new Map();
@@ -130,9 +97,7 @@ export class MemStorage implements IStorage {
     this.currentUserId = 1;
     this.currentWizardConfigId = 1;
     this.currentTaskSeqConfigId = 1;
-    this.currentPickStrategyConfigId = 1;
-    this.currentHUFormationConfigId = 1;
-    this.currentWorkOrderManagementConfigId = 1;
+
     this.currentInventoryGroupId = 1;
     this.currentStockAllocationStrategyId = 1;
     this.currentTaskPlanningConfigId = 1;
@@ -219,139 +184,7 @@ export class MemStorage implements IStorage {
     return undefined;
   }
 
-  async getPickStrategyConfigurations(userId: number): Promise<PickStrategyConfiguration[]> {
-    return Array.from(this.pickStrategyConfigurations.values()).filter(
-      config => config.userId === userId
-    );
-  }
 
-  async savePickStrategyConfiguration(config: InsertPickStrategyConfiguration): Promise<PickStrategyConfiguration> {
-    const id = this.currentPickStrategyConfigId++;
-    const newConfig: PickStrategyConfiguration = { 
-      id, 
-      ...config,
-      taskAttrs: config.taskAttrs || {},
-      groupBy: config.groupBy || []
-    };
-    this.pickStrategyConfigurations.set(id, newConfig);
-    return newConfig;
-  }
-
-  async deletePickStrategyConfiguration(id: number): Promise<boolean> {
-    return this.pickStrategyConfigurations.delete(id);
-  }
-
-  async updatePickStrategyConfiguration(id: number, config: Partial<InsertPickStrategyConfiguration>): Promise<PickStrategyConfiguration | undefined> {
-    const existing = this.pickStrategyConfigurations.get(id);
-    if (existing) {
-      const updated = { ...existing, ...config };
-      this.pickStrategyConfigurations.set(id, updated);
-      return updated;
-    }
-    return undefined;
-  }
-
-  async getHUFormationConfigurations(userId: number): Promise<HUFormationConfiguration[]> {
-    return Array.from(this.huFormationConfigurations.values()).filter(
-      config => config.userId === userId
-    );
-  }
-
-  async getHUFormationByPickStrategy(pickStrategyId: number): Promise<HUFormationConfiguration | undefined> {
-    return Array.from(this.huFormationConfigurations.values()).find(
-      config => config.pickStrategyId === pickStrategyId
-    );
-  }
-
-  async saveHUFormationConfiguration(config: InsertHUFormationConfiguration): Promise<HUFormationConfiguration> {
-    const id = this.currentHUFormationConfigId++;
-    const newConfig: HUFormationConfiguration = { 
-      id, 
-      ...config,
-      huKinds: config.huKinds || [],
-      dropHUQuantThreshold: config.dropHUQuantThreshold ?? 0,
-      swapHUThreshold: config.swapHUThreshold ?? 0,
-      huWeightThreshold: config.huWeightThreshold ?? 0,
-      qcMismatchMonthThreshold: config.qcMismatchMonthThreshold ?? 0,
-      allowComplete: config.allowComplete ?? true,
-      dropInnerHU: config.dropInnerHU ?? true,
-      allowInnerHUBreak: config.allowInnerHUBreak ?? true,
-      displayDropUOM: config.displayDropUOM ?? true,
-      autoUOMConversion: config.autoUOMConversion ?? true,
-      mobileSorting: config.mobileSorting ?? true,
-      quantSlottingForHUsInDrop: config.quantSlottingForHUsInDrop ?? true,
-      allowPickingMultiBatchfromHU: config.allowPickingMultiBatchfromHU ?? true,
-      displayEditPickQuantity: config.displayEditPickQuantity ?? true,
-      pickBundles: config.pickBundles ?? true,
-      enableEditQtyInPickOp: config.enableEditQtyInPickOp ?? true,
-      enableManualDestBinSelection: config.enableManualDestBinSelection ?? true
-    };
-    this.huFormationConfigurations.set(id, newConfig);
-    return newConfig;
-  }
-
-  async deleteHUFormationConfiguration(id: number): Promise<boolean> {
-    return this.huFormationConfigurations.delete(id);
-  }
-
-  async updateHUFormationConfiguration(id: number, config: Partial<InsertHUFormationConfiguration>): Promise<HUFormationConfiguration | undefined> {
-    const existing = this.huFormationConfigurations.get(id);
-    if (existing) {
-      const updated = { ...existing, ...config };
-      this.huFormationConfigurations.set(id, updated);
-      return updated;
-    }
-    return undefined;
-  }
-
-  async getWorkOrderManagementConfigurations(userId: number): Promise<WorkOrderManagementConfiguration[]> {
-    return Array.from(this.workOrderManagementConfigurations.values()).filter(
-      config => config.userId === userId
-    );
-  }
-
-  async getWorkOrderManagementByPickStrategy(pickStrategyId: number): Promise<WorkOrderManagementConfiguration | undefined> {
-    return Array.from(this.workOrderManagementConfigurations.values()).find(
-      config => config.pickStrategyId === pickStrategyId
-    );
-  }
-
-  async saveWorkOrderManagementConfiguration(config: InsertWorkOrderManagementConfiguration): Promise<WorkOrderManagementConfiguration> {
-    const id = this.currentWorkOrderManagementConfigId++;
-    const newConfig: WorkOrderManagementConfiguration = { 
-      id, 
-      ...config,
-      loadingUnits: config.loadingUnits || [],
-      mapSegregationGroupsToBins: config.mapSegregationGroupsToBins ?? true,
-      dropHUInBin: config.dropHUInBin ?? true,
-      scanDestHUInDrop: config.scanDestHUInDrop ?? true,
-      allowHUBreakInDrop: config.allowHUBreakInDrop ?? true,
-      strictBatchAdherence: config.strictBatchAdherence ?? true,
-      allowWorkOrderSplit: config.allowWorkOrderSplit ?? true,
-      undoOp: config.undoOp ?? true,
-      disableWorkOrder: config.disableWorkOrder ?? false,
-      allowUnpick: config.allowUnpick ?? true,
-      supportPalletScan: config.supportPalletScan ?? true,
-      pickMandatoryScan: config.pickMandatoryScan ?? true,
-      dropMandatoryScan: config.dropMandatoryScan ?? true
-    };
-    this.workOrderManagementConfigurations.set(id, newConfig);
-    return newConfig;
-  }
-
-  async deleteWorkOrderManagementConfiguration(id: number): Promise<boolean> {
-    return this.workOrderManagementConfigurations.delete(id);
-  }
-
-  async updateWorkOrderManagementConfiguration(id: number, config: Partial<InsertWorkOrderManagementConfiguration>): Promise<WorkOrderManagementConfiguration | undefined> {
-    const existing = this.workOrderManagementConfigurations.get(id);
-    if (existing) {
-      const updated = { ...existing, ...config };
-      this.workOrderManagementConfigurations.set(id, updated);
-      return updated;
-    }
-    return undefined;
-  }
 
   async getInventoryGroups(userId: number): Promise<InventoryGroup[]> {
     return Array.from(this.inventoryGroups.values()).filter(
@@ -507,9 +340,32 @@ export class MemStorage implements IStorage {
     const id = this.currentTaskPlanningConfigId++;
     const newConfig: TaskPlanningConfiguration = { 
       id,
-      ...config,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      userId: config.userId,
+      inventoryGroupId: config.inventoryGroupId,
+      configurationName: config.configurationName,
+      description: config.description || null,
+      taskKind: config.taskKind || null,
+      taskSubKind: config.taskSubKind || null,
+      strat: config.strat || null,
+      sortingStrategy: config.sortingStrategy || null,
+      loadingStrategy: config.loadingStrategy || null,
+      groupBy: config.groupBy || null,
+      taskLabel: config.taskLabel || null,
+      mode: config.mode || null,
+      priority: config.priority || null,
+      skipZoneFace: config.skipZoneFace || null,
+      orderByQuantUpdatedAt: config.orderByQuantUpdatedAt || null,
+      searchScope: config.searchScope || null,
+      statePreferenceOrder: config.statePreferenceOrder || null,
+      preferFixed: config.preferFixed || null,
+      preferNonFixed: config.preferNonFixed || null,
+      statePreferenceSeq: config.statePreferenceSeq || null,
+      batchPreferenceMode: config.batchPreferenceMode || null,
+      areaTypes: config.areaTypes || null,
+      areas: config.areas || null,
+      orderByPickingPosition: config.orderByPickingPosition || null,
+      useInventorySnapshotForPickSlotting: config.useInventorySnapshotForPickSlotting || null,
+      optimizationMode: config.optimizationMode || null
     };
     this.taskPlanningConfigurations.set(id, newConfig);
     return newConfig;
@@ -533,8 +389,7 @@ export class MemStorage implements IStorage {
     const updated: TaskPlanningConfiguration = { 
       ...existing,
       ...config,
-      id,
-      updatedAt: new Date()
+      id
     };
     this.taskPlanningConfigurations.set(id, updated);
     return updated;
@@ -560,9 +415,48 @@ export class MemStorage implements IStorage {
     const id = this.currentTaskExecutionConfigId++;
     const newConfig: TaskExecutionConfiguration = { 
       id,
-      ...config,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      userId: config.userId,
+      configurationName: config.configurationName,
+      taskPlanningConfigurationId: config.taskPlanningConfigurationId,
+      description: config.description || null,
+      tripType: config.tripType || null,
+      huKinds: config.huKinds || null,
+      scanSourceHUKind: config.scanSourceHUKind || null,
+      pickSourceHUKind: config.pickSourceHUKind || null,
+      carrierHUKind: config.carrierHUKind || null,
+      huMappingMode: config.huMappingMode || null,
+      dropHUQuantThreshold: config.dropHUQuantThreshold || null,
+      dropUOM: config.dropUOM || null,
+      allowComplete: config.allowComplete || null,
+      swapHUThreshold: config.swapHUThreshold || null,
+      dropInnerHU: config.dropInnerHU || null,
+      allowInnerHUBreak: config.allowInnerHUBreak || null,
+      displayDropUOM: config.displayDropUOM || null,
+      autoUOMConversion: config.autoUOMConversion || null,
+      mobileSorting: config.mobileSorting || null,
+      sortingParam: config.sortingParam || null,
+      huWeightThreshold: config.huWeightThreshold || null,
+      qcMismatchMonthThreshold: config.qcMismatchMonthThreshold || null,
+      quantSlottingForHUsInDrop: config.quantSlottingForHUsInDrop || null,
+      allowPickingMultiBatchfromHU: config.allowPickingMultiBatchfromHU || null,
+      displayEditPickQuantity: config.displayEditPickQuantity || null,
+      pickBundles: config.pickBundles || null,
+      enableEditQtyInPickOp: config.enableEditQtyInPickOp || null,
+      dropSlottingMode: config.dropSlottingMode || null,
+      enableManualDestBinSelection: config.enableManualDestBinSelection || null,
+      mapSegregationGroupsToBins: config.mapSegregationGroupsToBins || null,
+      dropHUInBin: config.dropHUInBin || null,
+      scanDestHUInDrop: config.scanDestHUInDrop || null,
+      allowHUBreakInDrop: config.allowHUBreakInDrop || null,
+      strictBatchAdherence: config.strictBatchAdherence || null,
+      allowWorkOrderSplit: config.allowWorkOrderSplit || null,
+      undoOp: config.undoOp || null,
+      disableWorkOrder: config.disableWorkOrder || null,
+      allowUnpick: config.allowUnpick || null,
+      supportPalletScan: config.supportPalletScan || null,
+      loadingUnits: config.loadingUnits || null,
+      pickMandatoryScan: config.pickMandatoryScan || null,
+      dropMandatoryScan: config.dropMandatoryScan || null
     };
     this.taskExecutionConfigurations.set(id, newConfig);
     return newConfig;
@@ -581,8 +475,7 @@ export class MemStorage implements IStorage {
     const updated: TaskExecutionConfiguration = { 
       ...existing,
       ...config,
-      id,
-      updatedAt: new Date()
+      id
     };
     this.taskExecutionConfigurations.set(id, updated);
     return updated;
@@ -621,34 +514,26 @@ export class MemStorage implements IStorage {
           shipmentAcknowledgment: "SHIP_CONFIRM"
         },
         taskPlanning: {
-          strategy: "PICK_BY_CUSTOMER",
+          configurationName: "PICK_BY_CUSTOMER",
           tripType: "LM",
           groupBy: ["area", "uom"],
           useDockdoorAssignment: true,
           allowWorkOrderSplit: true
         },
         taskExecution: {
-          huConfigs: {
-            scanSourceHUKind: "PALLET",
-            pickSourceHUKind: "NONE",
-            carrierHUKind: "PALLET"
-          },
-          scanSettings: {
-            pickMandatoryScan: false,
-            dropMandatoryScan: false
-          },
-          dropSettings: {
-            dropHUInBin: true,
-            allowHUBreakInDrop: false,
-            dropInnerHU: false,
-            allowInnerHUBreak: false
-          },
-          params: {
-            replenishBundles: 1,
-            allowComplete: false,
-            autoUOMConversion: false,
-            displayEditPickQuantity: false
-          }
+          configurationName: "Distribution Center Execution",
+          scanSourceHUKind: "PALLET",
+          pickSourceHUKind: "NONE",
+          carrierHUKind: "PALLET",
+          pickMandatoryScan: false,
+          dropMandatoryScan: false,
+          dropHUInBin: true,
+          allowHUBreakInDrop: false,
+          dropInnerHU: false,
+          allowInnerHUBreak: false,
+          allowComplete: false,
+          autoUOMConversion: false,
+          displayEditPickQuantity: false
         }
       },
       createdAt: new Date()
@@ -716,22 +601,27 @@ export class MemStorage implements IStorage {
         const taskPlanning = await this.saveTaskPlanningConfiguration({
           userId,
           inventoryGroupId: groupId,
-          strategy: templateData.taskPlanning.strategy,
-          tripType: templateData.taskPlanning.tripType,
-          groupBy: templateData.taskPlanning.groupBy,
-          useDockdoorAssignment: templateData.taskPlanning.useDockdoorAssignment,
-          allowWorkOrderSplit: templateData.taskPlanning.allowWorkOrderSplit,
-          taskExecutionConfig: templateData.taskExecution
+          configurationName: templateData.taskPlanning.configurationName || "Template Planning Config",
+          tripType: templateData.taskPlanning.tripType
         });
 
         // Apply task execution configuration
         await this.saveTaskExecutionConfiguration({
           userId,
           taskPlanningConfigurationId: taskPlanning.id,
-          huConfigs: templateData.taskExecution.huConfigs,
-          scanSettings: templateData.taskExecution.scanSettings,
-          dropSettings: templateData.taskExecution.dropSettings,
-          params: templateData.taskExecution.params
+          configurationName: templateData.taskExecution.configurationName || "Template Execution Config",
+          scanSourceHUKind: templateData.taskExecution.scanSourceHUKind,
+          pickSourceHUKind: templateData.taskExecution.pickSourceHUKind,
+          carrierHUKind: templateData.taskExecution.carrierHUKind,
+          pickMandatoryScan: templateData.taskExecution.pickMandatoryScan,
+          dropMandatoryScan: templateData.taskExecution.dropMandatoryScan,
+          dropHUInBin: templateData.taskExecution.dropHUInBin,
+          allowHUBreakInDrop: templateData.taskExecution.allowHUBreakInDrop,
+          dropInnerHU: templateData.taskExecution.dropInnerHU,
+          allowInnerHUBreak: templateData.taskExecution.allowInnerHUBreak,
+          allowComplete: templateData.taskExecution.allowComplete,
+          autoUOMConversion: templateData.taskExecution.autoUOMConversion,
+          displayEditPickQuantity: templateData.taskExecution.displayEditPickQuantity
         });
       }
 

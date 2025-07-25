@@ -9,12 +9,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run build` - Build both frontend (Vite) and backend (esbuild)
 - `npm run start` - Start production server
 - `npm run check` - Run TypeScript type checking
-- `npm run db:push` - Push database schema changes to PostgreSQL
-
-### Database Management  
-- `drizzle-kit push` - Push schema changes to database
-- Database migrations are stored in `./migrations/`
-- Schema definition is in `./shared/schema.ts`
 
 ## Architecture Overview
 
@@ -30,8 +24,8 @@ This is a full-stack warehouse management system (WMS) configuration portal with
 
 ### Backend Stack
 - **Express.js** server with TypeScript
-- **Drizzle ORM** for type-safe database operations
-- **PostgreSQL** database with Neon serverless connection
+- **In-Memory Storage** using JavaScript Maps for fast data operations
+- **MemStorage Class** implements the storage interface with volatile data persistence
 - RESTful API design with proper error handling middleware
 
 ### Project Structure
@@ -50,25 +44,25 @@ client/src/
 server/
 ├── index.ts            # Express server setup
 ├── routes.ts           # API route definitions
-└── storage.ts          # Database connection logic
+└── storage.ts          # In-memory storage implementation
 
 shared/
-└── schema.ts           # Drizzle database schema and types
+└── schema.ts           # TypeScript interfaces and Zod validation schemas
 ```
 
 ## Key Concepts
 
 ### Wizard Flow Architecture
 - **Multi-step configuration**: 6-step outbound configuration wizard
-- **Step persistence**: Each step saves data to `wizard_configurations` table
+- **Step persistence**: Each step saves data to in-memory storage
 - **Navigation state**: WizardContext manages current step and completion status
 - **Data validation**: Zod schemas validate form data before submission
 
-### Database Schema Design
-- **Primary tables**: `users`, `wizard_configurations`, `task_sequence_configurations`, `inventory_groups`
-- **Configuration tables**: Separate tables for pick strategies, HU formation, stock allocation
+### In-Memory Storage Design
+- **Primary data structures**: `users`, `wizard_configurations`, `task_sequence_configurations`, `inventory_groups`
+- **Configuration storage**: Separate Maps for pick strategies, HU formation, stock allocation
 - **Mock user**: Development uses userId=1 for all operations
-- **JSONB fields**: Complex configuration stored as JSON in PostgreSQL
+- **Type safety**: TypeScript interfaces with Zod runtime validation
 
 ### Component Patterns
 - **Layout components**: `WizardLayout` for wizard steps, `MainLayout` for master pages
@@ -77,14 +71,10 @@ shared/
 - **Query patterns**: TanStack Query for all server communication with proper cache management
 
 ### Development Environment
-- **Port 5005**: Single server serves both API (`/api/*`) and frontend assets
+- **Port 5000**: Single server serves both API (`/api/*`) and frontend assets
 - **Hot reload**: Vite provides instant feedback during development  
 - **API logging**: Express middleware logs all API requests with response data
 - **Error boundaries**: Development error overlays for runtime issues
-
-### Environment Configuration
-- **DATABASE_URL**: Required environment variable for PostgreSQL connection
-- **Development vs Production**: Different asset serving strategies based on NODE_ENV
 
 ## Important Notes
 
@@ -93,4 +83,4 @@ shared/
 - **Master configuration**: Separate section with provisioning, uploads, and templates
 - **Mock data**: Extensive mock data in `lib/mockData.ts` and `lib/defaultConfigurations.ts`
 - **No authentication**: Currently uses mock user (ID: 1) for all operations
-- **Database first**: All configuration changes persist to PostgreSQL immediately
+- **In-memory first**: All configuration changes persist to volatile storage for development efficiency

@@ -102,6 +102,8 @@ The application uses in-memory storage with the following data structures:
 ## Changelog
 
 Changelog:
+- July 25, 2025. Added CLAUDE.md file with comprehensive development guidance and architecture documentation
+- July 25, 2025. Successfully merged updates from GitHub remote repository while preserving in-memory storage architecture
 - July 22, 2025. Completed database removal and migration to in-memory storage with MemStorage class for development efficiency
 - July 22, 2025. Cleaned up all deprecated API endpoints and files - removed drizzle.config.ts, PostgreSQL schemas, and unused route handlers
 - July 22, 2025. Fixed all TypeScript errors and LSP diagnostics - application now runs cleanly with pure in-memory storage

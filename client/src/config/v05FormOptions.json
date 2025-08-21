@@ -1,0 +1,224 @@
+{
+  "categories": [
+    "KFC_UNIFORM_CRAT",
+    "MD_CSTLMN_CRAT", 
+    "MD_FOOD AIRCON_CRAT",
+    "MD_FOOD DRY_CRAT",
+    "MD_NON FOOD_CRAT",
+    "PRODUCTION_FOOD AIRCON_CRAT",
+    "PRODUCTION_FOOD DRY_CRAT", 
+    "PRODUCTION_NON FOOD_CRAT",
+    "PRODUCTION_SMALLWARE_CRAT",
+    "TOKYO_CLEANING MATERIAL_CRAT",
+    "TOKYO_FOOD DRY_CRAT",
+    "TOKYO_NON FOOD_CRAT",
+    "TOKYO_OFFICE SUPPLY_CRAT",
+    "TOKYO_SMALLWARE_CRAT",
+    "TOKYO_UNIFORM_CRAT",
+    "KFC_SMALLWARE_CRAT",
+    "KFC_OFFICE SUPPLY_CRAT",
+    "KFC_NON FOOD_CRAT",
+    "KFC_FOOD DRY_CRAT",
+    "BIGOLI_FOOD DRY_CRAT"
+  ],
+  "skuClassTypes": [
+    "FAST_MOVING",
+    "SLOW_MOVING",
+    "SEASONAL",
+    "PERISHABLE",
+    "NON_PERISHABLE",
+    "FRAGILE",
+    "HAZARDOUS"
+  ],
+  "skuClasses": [
+    "A_CLASS",
+    "B_CLASS", 
+    "C_CLASS",
+    "HIGH_VALUE",
+    "LOW_VALUE",
+    "BULK_ITEM",
+    "SMALL_ITEM"
+  ],
+  "uoms": [
+    "L0",
+    "L1", 
+    "L2",
+    "L3",
+    "L4"
+  ],
+  "qualityBuckets": [
+    "Good",
+    "Damaged",
+    "Quarantine",
+    "Expired"
+  ],
+  "huKinds": [
+    "PALLET",
+    "TOTE",
+    "CARTON",
+    "CASE",
+    "NONE"
+  ],
+  "channels": [
+    "Online",
+    "Retail",
+    "Wholesale",
+    "B2B",
+    "Direct"
+  ],
+  "customers": [
+    "Customer_A",
+    "Customer_B",
+    "Customer_C",
+    "Enterprise_Client",
+    "Retail_Chain"
+  ],
+  "asnTypes": [
+    "PO",
+    "Transfer",
+    "Return",
+    "Cross_Dock"
+  ],
+  "taskKinds": [
+    "INBOUND_RECEIVE",
+    "INBOUND_PUTAWAY", 
+    "OUTBOUND_REPLEN",
+    "OUTBOUND_PICK",
+    "OUTBOUND_LOAD",
+    "AUTO_REPLEN",
+    "INTERNAL_MOVEMENT"
+  ],
+  "taskSubKinds": [
+    "LOAD_UNPICK",
+    "BIN_IRA",
+    "BLIND",
+    "BY_UPLOAD",
+    "BY_UPLOAD_HU",
+    "DISCREPANCY_CLEARANCE"
+  ],
+  "strategies": [
+    "FIFO",
+    "LIFO", 
+    "FEFO",
+    "NEAREST",
+    "PICK_BY_CUSTOMER",
+    "null"
+  ],
+  "sortingStrategies": [
+    "NONE",
+    "ALPHABETICAL",
+    "VELOCITY",
+    "ZONE"
+  ],
+  "loadingStrategies": [
+    "NONE",
+    "WEIGHT_BASED",
+    "VOLUME_BASED",
+    "FRAGILITY",
+    "LOAD_BY_LM_TRIP"
+  ],
+  "groupByOptions": [
+    "SKU",
+    "BATCH", 
+    "QUALITY",
+    "EXPIRY",
+    "CUSTOMER",
+    "ORDER",
+    "uom",
+    "area",
+    "asnNo",
+    "vehicleNo"
+  ],
+  "tripTypes": [
+    "SINGLE",
+    "MULTI", 
+    "BATCH",
+    "LM",
+    "null"
+  ],
+  "huMappingModes": [
+    "AUTO",
+    "MANUAL",
+    "HYBRID",
+    "BIN"
+  ],
+  "dropSlottingModes": [
+    "NONE",
+    "BIN",
+    "ZONE",
+    "AREA"
+  ],
+  "ginAckLevels": [
+    "LINE",
+    "ORDER", 
+    "BATCH",
+    "SHIPMENT"
+  ],
+  "searchScopes": [
+    "WH",
+    "AREA",
+    "ZONE"
+  ],
+  "optimizationModes": [
+    "TOUCH",
+    "DISTANCE"
+  ],
+  "sortingModes": [
+    "DISTANCE",
+    "VOLUME",
+    "WEIGHT",
+    "QUANTITY"
+  ],
+  "batchPreferenceModes": [
+    "FIFO",
+    "LIFO",
+    "FEFO"
+  ],
+  "statePreferences": [
+    "AVAILABLE",
+    "BLOCKED",
+    "QUARANTINE",
+    "QUALITY_CHECK",
+    "ALLOCATED"
+  ],
+  "areaTypes": [
+    "RESERVE",
+    "ACTIVE", 
+    "REPLEN",
+    "BULK",
+    "CASE",
+    "INVENTORY"
+  ],
+  "areas": [
+    "AREA_A",
+    "AREA_B",
+    "AREA_C",
+    "PICK_ZONE",
+    "STORAGE_ZONE"
+  ],
+  "binTypes": [
+    "BLOCKED",
+    "DAMAGED",
+    "QUARANTINE", 
+    "MAINTENANCE"
+  ],
+  "modes": {
+    "lineSplit": [
+      "nosplit",
+      "split-by-uom",
+      "split-by-weight",
+      "mod"
+    ],
+    "binSearch": [
+      "PICK",
+      "PUTAWAY",
+      "REPLENISHMENT"
+    ]
+  },
+  "scanSourceHUKinds": [
+    "NONE",
+    "PALLET",
+    "TOTE",
+    "CARTON"
+  ]
+}

@@ -105,6 +105,7 @@ export interface WizardData {
 export interface WizardState {
   currentStep: number;
   completedSteps: number[];
+  warehouseCode: string;
   data: WizardData;
 }
 
@@ -113,4 +114,5 @@ export type WizardAction =
   | { type: 'COMPLETE_STEP'; payload: number }
   | { type: 'UPDATE_STEP_DATA'; payload: { step: string; data: any } }
   | { type: 'LOAD_WIZARD_DATA'; payload: WizardData }
+  | { type: 'SET_WAREHOUSE_CODE'; payload: string }
   | { type: 'RESET_WIZARD' };

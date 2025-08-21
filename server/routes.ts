@@ -1,7 +1,14 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertInventoryGroupSchema, insertStockAllocationStrategySchema, insertTaskPlanningConfigurationSchema, insertTaskExecutionConfigurationSchema } from "@shared/schema";
+import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertInventoryGroupSchema, insertStockAllocationStrategySchema, insertTaskPlanningConfigurationSchema, insertTaskExecutionConfigurationSchema, InsertWizardConfiguration, InsertInventoryGroup } from "@shared/schema";
+import fs from "fs/promises";
+import path from "path";
+import { fileURLToPath } from 'url';
+// Note: fetch is available globally in Node.js 18+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user for development (in production this would come from authentication)
@@ -29,13 +36,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/wizard/configurations", async (req, res) => {
     try {
-      const validatedData = insertWizardConfigurationSchema.parse({
+      const wizardData: any = {
         userId: MOCK_USER_ID,
         step: req.body.step,
         data: req.body.data || {},
-        isComplete: req.body.isComplete || false
-      });
-      const configuration = await storage.saveWizardConfiguration(validatedData);
+        isComplete: req.body.isComplete ?? false
+      };
+      const validatedData = insertWizardConfigurationSchema.parse(wizardData);
+      const configuration = await storage.saveWizardConfiguration(validatedData as InsertWizardConfiguration);
       res.json(configuration);
     } catch (error) {
       res.status(400).json({ error: "Invalid configuration data" });
@@ -105,14 +113,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/inventory-groups", async (req, res) => {
     try {
-      const validatedData = insertInventoryGroupSchema.parse({
+      const groupData: any = {
         userId: MOCK_USER_ID,
         name: req.body.name,
         storageIdentifiers: req.body.storageIdentifiers || {},
         lineIdentifiers: req.body.lineIdentifiers || {},
         description: req.body.description
-      });
-      const group = await storage.saveInventoryGroup(validatedData);
+      };
+      const validatedData = insertInventoryGroupSchema.parse(groupData);
+      const group = await storage.saveInventoryGroup(validatedData as InsertInventoryGroup);
       res.json(group);
     } catch (error) {
       res.status(400).json({ error: "Invalid inventory group data" });
@@ -487,6 +496,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Quick setup error:', error);
       res.status(500).json({ error: "Failed to apply quick setup" });
+    }
+  });
+
+  // Configuration fetching and storage routes
+  const FETCHED_CONFIGS_FILE = path.join(__dirname, 'fetchedConfigurations.json');
+
+  // Store fetched configurations
+  app.post("/api/configurations/store", async (req, res) => {
+    try {
+      const configData = req.body;
+      
+      // Read existing configurations file
+      let existingData: { configurations: any[], lastUpdated: string | null } = { configurations: [], lastUpdated: null };
+      try {
+        const fileContent = await fs.readFile(FETCHED_CONFIGS_FILE, 'utf-8');
+        existingData = JSON.parse(fileContent);
+      } catch (error) {
+        // File doesn't exist yet, use default structure
+      }
+
+      // Remove any existing configuration for the same warehouse code
+      existingData.configurations = existingData.configurations.filter(
+        (config: any) => config.warehouseCode !== configData.warehouseCode
+      );
+
+      // Add the new configuration
+      existingData.configurations.push(configData);
+      existingData.lastUpdated = new Date().toISOString();
+
+      // Write back to file
+      await fs.writeFile(FETCHED_CONFIGS_FILE, JSON.stringify(existingData, null, 2));
+
+      res.json({ success: true, message: "Configuration stored successfully" });
+    } catch (error) {
+      console.error('Error storing configuration:', error);
+      res.status(500).json({ error: "Failed to store configuration" });
+    }
+  });
+
+  // Get specific warehouse configuration
+  app.get("/api/configurations/:warehouseCode", async (req, res) => {
+    try {
+      const { warehouseCode } = req.params;
+      
+      const fileContent = await fs.readFile(FETCHED_CONFIGS_FILE, 'utf-8');
+      const data = JSON.parse(fileContent);
+      
+      const configuration = data.configurations.find(
+        (config: any) => config.warehouseCode === warehouseCode
+      );
+
+      if (configuration) {
+        res.json(configuration);
+      } else {
+        res.status(404).json({ error: "Configuration not found" });
+      }
+    } catch (error) {
+      console.error('Error retrieving configuration:', error);
+      res.status(500).json({ error: "Failed to retrieve configuration" });
+    }
+  });
+
+  // Get all stored configurations
+  app.get("/api/configurations", async (req, res) => {
+    try {
+      const fileContent = await fs.readFile(FETCHED_CONFIGS_FILE, 'utf-8');
+      const data = JSON.parse(fileContent);
+      
+      res.json(data.configurations);
+    } catch (error) {
+      console.error('Error retrieving configurations:', error);
+      res.status(500).json({ error: "Failed to retrieve configurations" });
+    }
+  });
+
+  // Proxy endpoint to fetch from external API (avoids CORS issues)
+  app.post("/api/proxy/fetch-configurations", async (req, res) => {
+    try {
+      const { warehouseCode, apiEndpoints } = req.body;
+
+      if (!warehouseCode || !apiEndpoints) {
+        return res.status(400).json({ error: "Missing warehouseCode or apiEndpoints" });
+      }
+
+      const configurations: any = {};
+      
+      // Fetch from each endpoint
+      for (const [configType, endpoint] of Object.entries(apiEndpoints)) {
+        try {
+          const url = (endpoint as string).replace('{warehouseCode}', warehouseCode);
+          console.log(`Fetching from: ${url}`);
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'Node.js/WMS-Configuration-Portal',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify({}),
+          });
+
+          console.log(`Response status for ${configType}: ${response.status} ${response.statusText}`);
+          console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
+          
+          const responseText = await response.text();
+          console.log(`Response body preview:`, responseText.substring(0, 500));
+
+          if (response.ok) {
+            try {
+              configurations[configType] = JSON.parse(responseText);
+              console.log(`Successfully fetched ${configType}:`, configurations[configType]);
+            } catch (parseError) {
+              console.error(`Failed to parse JSON for ${configType}:`, parseError);
+              console.error(`Response was:`, responseText);
+              configurations[configType] = null;
+            }
+          } else {
+            console.error(`Failed to fetch ${configType}: ${response.status} ${response.statusText}`);
+            console.error(`Error response body:`, responseText);
+            configurations[configType] = null;
+          }
+        } catch (error) {
+          console.error(`Error fetching ${configType}:`, error);
+          configurations[configType] = null;
+        }
+      }
+
+      const result = {
+        warehouseCode,
+        fetchedAt: new Date().toISOString(),
+        configurations
+      };
+
+      res.json(result);
+    } catch (error) {
+      console.error('Proxy fetch error:', error);
+      res.status(500).json({ error: "Failed to fetch configurations" });
     }
   });
 

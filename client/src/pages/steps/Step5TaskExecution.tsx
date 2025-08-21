@@ -180,6 +180,9 @@ export default function Step5TaskExecution() {
   const onSubmit = (data: TaskExecutionForm) => {
     const submitData = {
       ...data,
+      userId: 1, // Mock user ID
+      configurationName: data.configurationName || '',
+      taskPlanningConfigurationId: data.taskPlanningConfigurationId || 0,
       huKinds: data.huKinds?.length ? data.huKinds : undefined,
       loadingUnits: data.loadingUnits?.length ? data.loadingUnits : undefined,
     };
@@ -197,7 +200,7 @@ export default function Step5TaskExecution() {
     setIsFormVisible(true);
     form.reset({
       taskPlanningConfigurationId: config.taskPlanningConfigurationId,
-      configurationName: config.configurationName,
+      configurationName: config.configurationName || '',
       description: config.description || '',
       tripType: config.tripType || '',
       huKinds: config.huKinds || [],
@@ -260,6 +263,7 @@ export default function Step5TaskExecution() {
   return (
     <WizardLayout 
       currentStep={5} 
+      totalSteps={7}
       title="Task Execution Configuration"
       description="Configure task execution parameters for task planning strategies"
     >

@@ -158,6 +158,9 @@ export default function Step4TaskPlanning() {
     
     const submitData = {
       ...data,
+      userId: 1, // Mock user ID
+      inventoryGroupId: data.inventoryGroupId || 0,
+      configurationName: data.configurationName || '',
       groupBy: data.groupBy?.length ? data.groupBy : undefined,
       statePreferenceOrder: data.statePreferenceOrder?.length ? data.statePreferenceOrder : undefined,
       statePreferenceSeq: data.statePreferenceSeq?.length ? data.statePreferenceSeq : undefined,
@@ -206,7 +209,7 @@ export default function Step4TaskPlanning() {
     setIsFormVisible(true);
     form.reset({
       inventoryGroupId: config.inventoryGroupId,
-      configurationName: config.configurationName,
+      configurationName: config.configurationName || '',
       description: config.description || '',
       taskKind: config.taskKind || '',
       taskSubKind: config.taskSubKind || '',
@@ -246,6 +249,7 @@ export default function Step4TaskPlanning() {
   return (
     <WizardLayout 
       currentStep={4} 
+      totalSteps={7}
       title="Task Planning Configuration"
       description="Configure task planning strategies for inventory groups"
     >
@@ -303,7 +307,7 @@ export default function Step4TaskPlanning() {
                               <FormLabel>Inventory Group</FormLabel>
                               <Select 
                                 onValueChange={(value) => field.onChange(parseInt(value))} 
-                                value={field.value > 0 ? field.value.toString() : ""}
+                                value={field.value ? field.value.toString() : ""}
                               >
                                 <FormControl>
                                   <SelectTrigger>

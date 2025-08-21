@@ -40,14 +40,11 @@ client/src/
 ├── contexts/           # React contexts (WizardContext)
 ├── types/              # TypeScript type definitions
 └── lib/                # Utilities, mock data, query client
-    ├── configurationApi.ts      # External API integration service
-    └── configurationExtraction.ts # Fetched config processing utilities
 
 server/
 ├── index.ts            # Express server setup
 ├── routes.ts           # API route definitions
-├── storage.ts          # In-memory storage implementation
-└── fetchedConfigurations.json  # External API data storage
+└── storage.ts          # In-memory storage implementation
 
 shared/
 └── schema.ts           # TypeScript interfaces and Zod validation schemas
@@ -58,23 +55,14 @@ shared/
 ### Wizard Flow Architecture
 - **Multi-step configuration**: 6-step outbound configuration wizard
 - **Step persistence**: Each step saves data to in-memory storage
-- **Navigation state**: WizardContext manages current step, completion status, and warehouse code
+- **Navigation state**: WizardContext manages current step and completion status
 - **Data validation**: Zod schemas validate form data before submission
-- **External integration**: Step 1 can auto-populate from fetched warehouse configurations
 
 ### In-Memory Storage Design
 - **Primary data structures**: `users`, `wizard_configurations`, `task_sequence_configurations`, `inventory_groups`
 - **Configuration storage**: Separate Maps for pick strategies, HU formation, stock allocation
-- **External data persistence**: `fetchedConfigurations.json` stores warehouse configuration data from external APIs
 - **Mock user**: Development uses userId=1 for all operations
 - **Type safety**: TypeScript interfaces with Zod runtime validation
-
-### External API Integration
-- **Configuration fetching**: Top navbar allows fetching configurations from external warehouse APIs
-- **Data extraction**: Utility functions extract inventory groups from fetched `lineSplit`, `taskSequences`, and `taskStrategy` data
-- **Auto-population**: Step 1 (Inventory Groups) can automatically populate from extracted data
-- **Duplicate prevention**: System removes existing warehouse data before storing new fetched configurations
-- **Source tracking**: Extracted inventory groups maintain source information for traceability
 
 ### Component Patterns
 - **Layout components**: `WizardLayout` for wizard steps, `MainLayout` for master pages
@@ -96,31 +84,3 @@ shared/
 - **Mock data**: Extensive mock data in `lib/mockData.ts` and `lib/defaultConfigurations.ts`
 - **No authentication**: Currently uses mock user (ID: 1) for all operations
 - **In-memory first**: All configuration changes persist to volatile storage for development efficiency
-
-## External Configuration Integration
-
-### Warehouse Code Management
-- **Global state**: Warehouse code is managed in `WizardContext` and shared across components
-- **Top navbar**: Primary interface for setting warehouse code and fetching external configurations
-- **Step integration**: Warehouse code is displayed and used throughout the wizard steps
-
-### Configuration Fetching Process
-1. **Input**: User enters warehouse code in top navigation
-2. **API calls**: System makes POST requests to external warehouse APIs (`lineSplit`, `taskSequences`, `taskStrategy`)
-3. **Storage**: Fetched data is stored in `server/fetchedConfigurations.json`
-4. **Processing**: Configuration extraction utilities parse and transform the data
-5. **Integration**: Step 1 can automatically create inventory groups from extracted data
-
-### Step 1 Enhancement - Inventory Groups
-- **Dual mode**: Supports both manual group creation and automatic extraction from fetched data
-- **Load from Fetched**: Button to automatically extract and populate inventory groups
-- **Source indicators**: Visual badges show which groups came from fetched configurations vs manual creation
-- **Extraction summary**: Detailed statistics about extracted data sources and identifier types
-- **Duplicate handling**: Smart deduplication prevents duplicate storage/line identifier combinations
-
-### Key Files for External Integration
-- `client/src/lib/configurationApi.ts` - Service for external API communication
-- `client/src/lib/configurationExtraction.ts` - Utilities for processing fetched configurations
-- `server/routes.ts` - API endpoints for storing and retrieving fetched configurations (lines 502-638)
-- `server/fetchedConfigurations.json` - JSON file storing fetched warehouse data
-- `client/src/pages/steps/Step1InventoryGroups.tsx` - Enhanced with auto-population capabilities

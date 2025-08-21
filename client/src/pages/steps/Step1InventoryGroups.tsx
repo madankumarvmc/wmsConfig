@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Trash2, AlertCircle, Package, Edit } from 'lucide-react';
+import { Plus, Trash2, AlertCircle, Package, Edit, Download, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,8 @@ import WizardLayout from '@/components/WizardLayout';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { configurationApi } from '@/lib/configurationApi';
+import { extractInventoryGroups, formatInventoryGroupsForUI, getExtractionSummary } from '@/lib/configurationExtraction';
 import type { InventoryGroup, InsertInventoryGroup } from '../../../../shared/schema';
 import { 
   categories, 
@@ -57,6 +59,8 @@ export default function Step1InventoryGroups() {
   const queryClient = useQueryClient();
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingGroup, setEditingGroup] = useState<InventoryGroup | null>(null);
+  const [isLoadingFetched, setIsLoadingFetched] = useState(false);
+  const [extractionSummary, setExtractionSummary] = useState<any>(null);
 
   const { data: inventoryGroups = [], isLoading } = useQuery<InventoryGroup[]>({
     queryKey: ['/api/inventory-groups'],
@@ -172,10 +176,10 @@ export default function Step1InventoryGroups() {
 
     const payload: InsertInventoryGroup = {
       userId: 1, // Mock user ID
-      name: data.name,
+      name: data.name || '',
       storageIdentifiers: data.storageIdentifiers,
       lineIdentifiers: data.lineIdentifiers,
-      description: data.description || null
+      description: data.description
     };
 
     if (editingGroup) {
@@ -225,6 +229,99 @@ export default function Step1InventoryGroups() {
     form.reset();
   };
 
+  const loadInventoryGroupsFromFetched = async () => {
+    if (!state.warehouseCode) {
+      toast({
+        title: 'No Warehouse Code',
+        description: 'Please set a warehouse code in the top navigation first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoadingFetched(true);
+    try {
+      console.log('Loading configurations for warehouse:', state.warehouseCode);
+      
+      // Get stored configurations for the warehouse
+      const fetchedConfig = await configurationApi.getStoredConfigurations(state.warehouseCode);
+      
+      if (!fetchedConfig) {
+        toast({
+          title: 'No Configurations Found',
+          description: `No fetched configurations found for warehouse ${state.warehouseCode}. Please fetch configurations first using the top navigation.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('Found configurations:', fetchedConfig);
+
+      // Extract inventory groups from the fetched configurations
+      const extractedGroups = extractInventoryGroups(fetchedConfig);
+      console.log('Extracted groups:', extractedGroups);
+
+      if (extractedGroups.length === 0) {
+        toast({
+          title: 'No Inventory Groups Found',
+          description: 'No valid inventory group combinations were found in the fetched configurations.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Format for API consumption
+      const formattedGroups = formatInventoryGroupsForUI(extractedGroups);
+      console.log('Formatted groups for API:', formattedGroups);
+
+      // Create inventory groups in batch
+      let successCount = 0;
+      const errors: string[] = [];
+
+      for (const group of formattedGroups) {
+        try {
+          const response = await apiRequest('POST', '/api/inventory-groups', group);
+          if (response.ok) {
+            successCount++;
+          } else {
+            const errorData = await response.json();
+            errors.push(`${group.name}: ${errorData.error || 'Unknown error'}`);
+          }
+        } catch (error: any) {
+          errors.push(`${group.name}: ${error.message || 'Unknown error'}`);
+        }
+      }
+
+      // Update extraction summary
+      const summary = getExtractionSummary(extractedGroups);
+      setExtractionSummary(summary);
+
+      // Refresh the inventory groups list
+      queryClient.invalidateQueries({ queryKey: ['/api/inventory-groups'] });
+
+      if (successCount > 0) {
+        toast({
+          title: 'Inventory Groups Loaded',
+          description: `Successfully created ${successCount} inventory groups from fetched configurations.${errors.length > 0 ? ` ${errors.length} groups failed to create.` : ''}`,
+        });
+      }
+
+      if (errors.length > 0) {
+        console.error('Errors creating inventory groups:', errors);
+      }
+
+    } catch (error: any) {
+      console.error('Error loading inventory groups from fetched configurations:', error);
+      toast({
+        title: 'Load Failed',
+        description: error.message || 'Failed to load inventory groups from fetched configurations.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoadingFetched(false);
+    }
+  };
+
   const handleNext = () => {
     if (inventoryGroups.length === 0) {
       toast({ 
@@ -271,15 +368,37 @@ export default function Step1InventoryGroups() {
           <div className="flex items-center space-x-2">
             <Package className="w-5 h-5 text-black" />
             <h3 className="text-lg font-medium">Inventory Groups ({inventoryGroups.length})</h3>
+            {state.warehouseCode && (
+              <Badge variant="outline" className="ml-2">
+                Warehouse: {state.warehouseCode}
+              </Badge>
+            )}
           </div>
-          <Button 
-            onClick={handleAddNew}
-            disabled={isFormVisible}
-            className="bg-black hover:bg-gray-800 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Inventory Group
-          </Button>
+          <div className="flex space-x-2">
+            {state.warehouseCode && (
+              <Button 
+                onClick={loadInventoryGroupsFromFetched}
+                disabled={isFormVisible || isLoadingFetched}
+                variant="outline"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                {isLoadingFetched ? (
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Load from Fetched
+              </Button>
+            )}
+            <Button 
+              onClick={handleAddNew}
+              disabled={isFormVisible}
+              className="bg-black hover:bg-gray-800 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Manual Group
+            </Button>
+          </div>
         </div>
 
         {/* Information Alert */}
@@ -287,8 +406,66 @@ export default function Step1InventoryGroups() {
           <AlertCircle className="h-4 w-4 text-gray-600" />
           <AlertDescription className="text-gray-800">
             <strong>What are Inventory Groups?</strong> These define unique combinations of Storage Instructions (category, UOM, quality) and Line Instructions (channel, customer) that determine how products are stored and picked in your warehouse.
+            {state.warehouseCode && (
+              <span className="block mt-2 text-blue-700">
+                <strong>Tip:</strong> Use "Load from Fetched" to automatically extract inventory groups from your warehouse's configuration data.
+              </span>
+            )}
           </AlertDescription>
         </Alert>
+
+        {/* Extraction Summary */}
+        {extractionSummary && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="text-blue-800">Configuration Extraction Summary</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                <div>
+                  <div className="font-medium text-blue-900">Total Groups</div>
+                  <div className="text-blue-700">{extractionSummary.total}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-blue-900">From Line Split</div>
+                  <div className="text-blue-700">{extractionSummary.bySource.lineSplit}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-blue-900">From Task Sequences</div>
+                  <div className="text-blue-700">{extractionSummary.bySource.taskSequences}</div>
+                </div>
+                <div>
+                  <div className="font-medium text-blue-900">From Task Strategy</div>
+                  <div className="text-blue-700">{extractionSummary.bySource.taskStrategy}</div>
+                </div>
+              </div>
+              {extractionSummary.storageIdentifierTypes.length > 0 && (
+                <div className="mt-4">
+                  <div className="font-medium text-blue-900 mb-2">Storage Identifiers Found:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {extractionSummary.storageIdentifierTypes.map((type: string) => (
+                      <Badge key={type} variant="secondary" className="text-xs">
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {extractionSummary.lineIdentifierTypes.length > 0 && (
+                <div className="mt-3">
+                  <div className="font-medium text-blue-900 mb-2">Line Identifiers Found:</div>
+                  <div className="flex flex-wrap gap-1">
+                    {extractionSummary.lineIdentifierTypes.map((type: string) => (
+                      <Badge key={type} variant="outline" className="text-xs">
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Create/Edit Form */}
         {isFormVisible && (
@@ -602,7 +779,14 @@ export default function Step1InventoryGroups() {
                           </div>
                         </TableCell>
                         <TableCell className="text-sm text-gray-600">
-                          {group.description || '-'}
+                          <div>
+                            {group.description || '-'}
+                            {group.description?.includes('Source:') && (
+                              <Badge variant="outline" className="ml-2 text-xs">
+                                Fetched
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">

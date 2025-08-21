@@ -4,6 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WizardProvider } from "@/contexts/WizardContext";
+import { FetchedConfigurationsProvider } from "@/contexts/FetchedConfigurationsContext";
+import "@/utils/clearV05Cache"; // Make cache clearing functions available globally
 import Home from "@/pages/Home";
 import Step1InventoryGroups from "@/pages/steps/Step1InventoryGroups";
 import Step2WavePlanning from "@/pages/steps/Step2WavePlanning";
@@ -17,6 +19,12 @@ import NotFound from "@/pages/not-found";
 import ProvisioningSetup from "@/pages/master/ProvisioningSetup";
 import MasterUploads from "@/pages/master/MasterUploads";
 import OneClickTemplates from "@/pages/master/OneClickTemplates";
+
+// Outbound Configuration V0.5 Pages
+import LineSplitV05 from "@/pages/outbound-v05/LineSplitV05";
+import TaskSequenceV05 from "@/pages/outbound-v05/TaskSequenceV05";
+import TaskStrategyV05 from "@/pages/outbound-v05/TaskStrategyV05";
+import BinSearchV05 from "@/pages/outbound-v05/BinSearchV05";
 
 function Router() {
   return (
@@ -44,6 +52,12 @@ function Router() {
       <Route path="/step5" component={Step5TaskExecution} />
       <Route path="/step6" component={Step6ReviewConfirm} />
       
+      {/* Outbound Configuration V0.5 Routes */}
+      <Route path="/outbound/v0.5/line-split" component={LineSplitV05} />
+      <Route path="/outbound/v0.5/task-sequence" component={TaskSequenceV05} />
+      <Route path="/outbound/v0.5/task-strategy" component={TaskStrategyV05} />
+      <Route path="/outbound/v0.5/bin-search" component={BinSearchV05} />
+      
       <Route component={NotFound} />
     </Switch>
   );
@@ -54,8 +68,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WizardProvider>
-          <Toaster />
-          <Router />
+          <FetchedConfigurationsProvider>
+            <Toaster />
+            <Router />
+          </FetchedConfigurationsProvider>
         </WizardProvider>
       </TooltipProvider>
     </QueryClientProvider>

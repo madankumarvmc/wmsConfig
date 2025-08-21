@@ -135,12 +135,12 @@ export class MemStorage implements IStorage {
     const existing = this.wizardConfigurations.get(key);
     
     if (existing) {
-      const updated: WizardConfiguration = { ...existing, ...config, isComplete: config.isComplete ?? null };
+      const updated: WizardConfiguration = { ...existing, ...config, isComplete: config.isComplete ?? false };
       this.wizardConfigurations.set(key, updated);
       return updated;
     } else {
       const id = this.currentWizardConfigId++;
-      const newConfig: WizardConfiguration = { id, ...config, isComplete: config.isComplete ?? null };
+      const newConfig: WizardConfiguration = { id, ...config, isComplete: config.isComplete ?? false };
       this.wizardConfigurations.set(key, newConfig);
       return newConfig;
     }
@@ -163,8 +163,9 @@ export class MemStorage implements IStorage {
     const newConfig: TaskSequenceConfiguration = { 
       id, 
       ...config, 
-      taskSequences: config.taskSequences ?? null,
-      shipmentAcknowledgment: config.shipmentAcknowledgment ?? null
+      inventoryGroupId: config.inventoryGroupId || 0,
+      taskSequences: config.taskSequences || [],
+      shipmentAcknowledgment: config.shipmentAcknowledgment || ''
     };
     this.taskSequenceConfigurations.set(id, newConfig);
     return newConfig;
@@ -216,7 +217,7 @@ export class MemStorage implements IStorage {
       inventoryGroupId: group.id,
       mode: "PICK",
       priority: 100,
-      skipZoneFace: null,
+      skipZoneFace: false,
       orderByQuantUpdatedAt: false,
       searchScope: "AREA",
       preferFixed: true,
@@ -233,7 +234,7 @@ export class MemStorage implements IStorage {
       inventoryGroupId: group.id,
       mode: "PUT",
       priority: 100,
-      skipZoneFace: null,
+      skipZoneFace: false,
       orderByQuantUpdatedAt: false,
       searchScope: "AREA",
       preferFixed: true,
@@ -555,6 +556,7 @@ export class MemStorage implements IStorage {
     const newTemplate: OneClickTemplate = {
       id,
       ...template,
+      isActive: template.isActive ?? false,
       createdAt: new Date()
     };
     this.oneClickTemplates.set(id, newTemplate);
@@ -602,7 +604,6 @@ export class MemStorage implements IStorage {
           userId,
           inventoryGroupId: groupId,
           configurationName: templateData.taskPlanning.configurationName || "Template Planning Config",
-          tripType: templateData.taskPlanning.tripType
         });
 
         // Apply task execution configuration

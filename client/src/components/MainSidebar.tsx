@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { 
   Settings, 
@@ -15,7 +15,11 @@ import {
   Lock,
   ChevronLeft,
   Menu,
-  Download
+  Download,
+  Scissors,
+  GitBranch,
+  Cog,
+  Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -40,9 +44,10 @@ interface MainSidebarProps {
 
 export default function MainSidebar({ currentPath }: MainSidebarProps) {
   const [location, setLocation] = useLocation();
-  const [expandedSections, setExpandedSections] = useState<string[]>(['Master Configuration', 'Outbound Configuration']);
+  const [expandedSections, setExpandedSections] = useState<string[]>(['Master Configuration', 'Outbound Configuration', 'Outbound Configuration V0.5']);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { toast } = useToast();
+  const sidebarRef = useRef<HTMLDivElement>(null);
   
   // Use the actual location from the hook for consistency
   const activePath = location;
@@ -158,6 +163,35 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
       ]
     },
     {
+      title: 'Outbound Configuration V0.5',
+      items: [
+        {
+          icon: <Scissors className="w-4 h-4" />,
+          label: 'Line Split',
+          path: '/outbound/v0.5/line-split',
+          isActive: activePath === '/outbound/v0.5/line-split'
+        },
+        {
+          icon: <GitBranch className="w-4 h-4" />,
+          label: 'Task Sequence',
+          path: '/outbound/v0.5/task-sequence',
+          isActive: activePath === '/outbound/v0.5/task-sequence'
+        },
+        {
+          icon: <Cog className="w-4 h-4" />,
+          label: 'Task Strategy',
+          path: '/outbound/v0.5/task-strategy',
+          isActive: activePath === '/outbound/v0.5/task-strategy'
+        },
+        {
+          icon: <Search className="w-4 h-4" />,
+          label: 'Bin Search',
+          path: '/outbound/v0.5/bin-search',
+          isActive: activePath === '/outbound/v0.5/bin-search'
+        }
+      ]
+    },
+    {
       title: 'Inbound Configuration',
       items: [
         {
@@ -183,12 +217,21 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
 
   const handleItemClick = (item: SidebarItem) => {
     if (!item.disabled && item.path !== '#') {
+      // Store current scroll position before navigation
+      const currentScrollTop = sidebarRef.current?.scrollTop || 0;
       setLocation(item.path);
+      
+      // Restore scroll position after a short delay to ensure DOM updates
+      setTimeout(() => {
+        if (sidebarRef.current) {
+          sidebarRef.current.scrollTop = currentScrollTop;
+        }
+      }, 50);
     }
   };
 
   return (
-    <div className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 h-screen overflow-y-auto flex-shrink-0 transition-all duration-300`}>
+    <div ref={sidebarRef} className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 h-screen overflow-y-auto flex-shrink-0 transition-all duration-300`}>
       {/* Collapse/Expand Button */}
       <div className="flex justify-between items-center p-2 border-b border-gray-100">
         {!isCollapsed && (

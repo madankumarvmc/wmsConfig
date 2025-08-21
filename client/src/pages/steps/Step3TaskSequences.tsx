@@ -275,12 +275,13 @@ export default function Step3TaskSequences() {
                             <div key={option} className="flex items-center space-x-2">
                               <Checkbox
                                 id={option}
-                                checked={field.value.includes(option)}
+                                checked={field.value?.includes(option)}
                                 onCheckedChange={(checked) => {
+                                  const currentValue = field.value || [];
                                   if (checked) {
-                                    field.onChange([...field.value, option]);
+                                    field.onChange([...currentValue, option]);
                                   } else {
-                                    field.onChange(field.value.filter((val) => val !== option));
+                                    field.onChange(currentValue.filter((val) => val !== option));
                                   }
                                 }}
                               />

@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 
-import MainLayout from '@/components/MainLayout';
 import IdentifierFieldset from './components/IdentifierFieldset';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
@@ -238,9 +237,9 @@ export default function TaskSequenceV05() {
     return () => clearTimeout(timer);
   }, [taskSequenceConfigs]);
 
-  // Auto-populate from fetched data
+  // Auto-populate from fetched data whenever new data is fetched
   useEffect(() => {
-    if (fetchedConfigs.data.taskSequences.length > 0 && taskSequenceConfigs.length === 0) {
+    if (fetchedConfigs.data.taskSequences.length > 0) {
       setTaskSequenceConfigs(fetchedConfigs.data.taskSequences);
       toast({
         title: 'Task Sequences Auto-Loaded',
@@ -323,8 +322,7 @@ export default function TaskSequenceV05() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -660,7 +658,6 @@ export default function TaskSequenceV05() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </MainLayout>
+    </div>
   );
 }

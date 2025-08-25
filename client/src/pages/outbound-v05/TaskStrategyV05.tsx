@@ -17,7 +17,6 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
-import MainLayout from '@/components/MainLayout';
 import IdentifierFieldset from './components/IdentifierFieldset';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
@@ -280,9 +279,9 @@ export default function TaskStrategyV05() {
     return () => clearTimeout(timer);
   }, [taskStrategyConfigs]);
 
-  // Auto-populate from fetched data
+  // Auto-populate from fetched data whenever new data is fetched
   useEffect(() => {
-    if (fetchedConfigs.data.taskStrategy.length > 0 && taskStrategyConfigs.length === 0) {
+    if (fetchedConfigs.data.taskStrategy.length > 0) {
       setTaskStrategyConfigs(fetchedConfigs.data.taskStrategy);
       toast({
         title: 'Task Strategies Auto-Loaded',
@@ -291,109 +290,6 @@ export default function TaskStrategyV05() {
     }
   }, [fetchedConfigs.data.taskStrategy]);
 
-  const loadFromFetchedConfigurations = async () => {
-    if (!state.warehouseCode) {
-      toast({
-        title: 'No Warehouse Code',
-        description: 'Please set a warehouse code in the top navigation first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoadingFetched(true);
-    try {
-      const fetchedConfig = await configurationApi.getStoredConfigurations(state.warehouseCode);
-      
-      if (!fetchedConfig?.configurations?.taskStrategy) {
-        toast({
-          title: 'No Task Strategy Data',
-          description: 'No task strategy configurations found in fetched data.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const taskStrategyData = fetchedConfig.configurations.taskStrategy;
-      const convertedConfigs: TaskStrategyConfig[] = taskStrategyData.map((item: any) => ({
-        id: item.id,
-        whId: item.whId,
-        taskKind: item.taskKind || 'OUTBOUND_PICK',
-        taskSubKind: item.taskSubKind || '',
-        taskAttrs: item.taskAttrs || {},
-        storageIdentifiers: item.storageIdentifiers || {},
-        lineIdentifiers: item.lineIdentifiers || {},
-        locationIdentifiers: item.locationIdentifiers || {},
-        strat: item.strat || 'FIFO',
-        sortingStrategy: item.sortingStrategy || 'NONE',
-        loadingStrategy: item.loadingStrategy || 'NONE',
-        groupBy: item.groupBy || [],
-        sequence: item.sequence || 0,
-        taskLabel: item.taskLabel || '',
-        tripType: item.tripType || 'SINGLE',
-        huKinds: item.huKinds || ['TOTE'],
-        mapSegregationGroupsToBins: item.mapSegregationGroupsToBins || false,
-        dropHUInBin: item.dropHUInBin !== undefined ? item.dropHUInBin : true,
-        scanDestHUInDrop: item.scanDestHUInDrop || false,
-        allowHUBreakInDrop: item.allowHUBreakInDrop || false,
-        scanSourceHUKind: item.scanSourceHUKind || 'NONE',
-        pickSourceHUKind: item.pickSourceHUKind || 'NONE',
-        carrierHUKind: item.carrierHUKind || 'TOTE',
-        huMappingMode: item.huMappingMode || 'AUTO',
-        useDockdoorAssignment: item.useDockdoorAssignment || false,
-        params: item.params || {},
-        dropHUQuantThreshold: item.dropHUQuantThreshold || 0,
-        strictBatchAdherence: item.strictBatchAdherence || false,
-        allowWorkOrderSplit: item.allowWorkOrderSplit !== undefined ? item.allowWorkOrderSplit : true,
-        undoOp: item.undoOp !== undefined ? item.undoOp : true,
-        disableWorkOrder: item.disableWorkOrder || false,
-        allowUnpick: item.allowUnpick !== undefined ? item.allowUnpick : true,
-        supportPalletScan: item.supportPalletScan || false,
-        loadingUnits: item.loadingUnits || [],
-        pickMandatoryScan: item.pickMandatoryScan || false,
-        dropMandatoryScan: item.dropMandatoryScan || false,
-        dropUOM: item.dropUOM || 'L0',
-        allowComplete: item.allowComplete !== undefined ? item.allowComplete : true,
-        swapHUThreshold: item.swapHUThreshold || 0,
-        dropInnerHU: item.dropInnerHU || false,
-        allowInnerHUBreak: item.allowInnerHUBreak || false,
-        displayDropUOM: item.displayDropUOM !== undefined ? item.displayDropUOM : true,
-        autoUOMConversion: item.autoUOMConversion || false,
-        mobileSorting: item.mobileSorting || false,
-        sortingParam: item.sortingParam || '',
-        huWeightThreshold: item.huWeightThreshold || 0,
-        qcMismatchMonthThreshold: item.qcMismatchMonthThreshold || 0,
-        quantSlottingForHUsInDrop: item.quantSlottingForHUsInDrop || false,
-        allowPickingMultiBatchfromHU: item.allowPickingMultiBatchfromHU || false,
-        displayEditPickQuantity: item.displayEditPickQuantity || false,
-        pickBundles: item.pickBundles || false,
-        groupByValues: item.groupByValues || {},
-        enableEditQtyInPickOp: item.enableEditQtyInPickOp || false,
-        dropSlottingMode: item.dropSlottingMode || 'NONE',
-        enableManualDestBinSelection: item.enableManualDestBinSelection || false,
-        interimStrat: item.interimStrat || '',
-        enableLabelPrint: item.enableLabelPrint || false,
-        ignorePreferredHUKind: item.ignorePreferredHUKind || false,
-        recordExcessAsQuality: item.recordExcessAsQuality || false,
-      }));
-
-      setTaskStrategyConfigs(convertedConfigs);
-      toast({
-        title: 'Configurations Loaded',
-        description: `Successfully loaded ${convertedConfigs.length} task strategy configurations.`,
-      });
-
-    } catch (error: any) {
-      console.error('Error loading from fetched configurations:', error);
-      toast({
-        title: 'Load Failed',
-        description: error.message || 'Failed to load from fetched configurations.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoadingFetched(false);
-    }
-  };
 
   const onSubmit = (data: TaskStrategyFormData) => {
     const newConfig: TaskStrategyConfig = {
@@ -455,8 +351,7 @@ export default function TaskStrategyV05() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -466,21 +361,6 @@ export default function TaskStrategyV05() {
             )}
           </div>
           <div className="flex space-x-2">
-            {state.warehouseCode && (
-              <Button 
-                onClick={loadFromFetchedConfigurations}
-                disabled={isLoadingFetched}
-                variant="outline"
-                className="border-blue-200 text-blue-700 hover:bg-blue-50"
-              >
-                {isLoadingFetched ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4 mr-2" />
-                )}
-                Load from Fetched
-              </Button>
-            )}
             <Button onClick={handleSave} variant="outline">
               Save Configurations
             </Button>
@@ -610,7 +490,7 @@ export default function TaskStrategyV05() {
                           name="taskLabel"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Task Label *</FormLabel>
+                              <FormLabel>Task Label</FormLabel>
                               <FormControl>
                                 <Input placeholder="Enter task label" {...field} />
                               </FormControl>
@@ -841,7 +721,7 @@ export default function TaskStrategyV05() {
                         name="huKinds"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Allowed HU Kinds *</FormLabel>
+                            <FormLabel>Allowed HU Kinds</FormLabel>
                             <FormControl>
                               <MultiSelectHUKinds
                                 value={field.value}
@@ -1003,19 +883,9 @@ export default function TaskStrategyV05() {
               <div className="w-12 h-12 text-gray-400 mb-4">⚙️</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Task Strategy Configurations</h3>
               <p className="text-gray-600 mb-6 max-w-md">
-                Create your first task strategy configuration or load from fetched warehouse data.
+                Create your first task strategy configuration with auto-populated data from warehouse.
               </p>
               <div className="flex space-x-2">
-                {state.warehouseCode && (
-                  <Button 
-                    onClick={loadFromFetchedConfigurations}
-                    variant="outline"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Load from Fetched
-                  </Button>
-                )}
                 <Button 
                   onClick={() => setIsFormVisible(true)}
                   className="bg-black hover:bg-gray-800 text-white"
@@ -1027,7 +897,6 @@ export default function TaskStrategyV05() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </MainLayout>
+    </div>
   );
 }

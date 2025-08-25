@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Download, RefreshCw, Trash2, Edit, AlertCircle } from 'lucide-react';
+import { Plus, Download, Trash2, Edit, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,13 +14,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
 
-import MainLayout from '@/components/MainLayout';
 import IdentifierFieldset from './components/IdentifierFieldset';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { LineSplitFormData, LineSplitConfig } from '@/types/outbound-v05';
 import { useV05FormOptions } from '@/hooks/useV05FormOptions';
-import { clearV05LocalStorage } from '@/utils/clearV05Cache';
 import { useFetchedConfigurations } from '@/contexts/FetchedConfigurationsContext';
 import { useFieldStatus } from '@/hooks/useFieldStatus';
 import { FieldStatusIndicator, FieldStatusLegend } from '@/components/FieldStatusIndicator';
@@ -89,6 +87,7 @@ export default function LineSplitV05() {
   const [lineSplitConfigs, setLineSplitConfigs] = useState<LineSplitConfig[]>([]);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingConfig, setEditingConfig] = useState<LineSplitConfig | null>(null);
+  const [editingConfigIndex, setEditingConfigIndex] = useState<number>(-1);
   const fetchedConfigs = useFetchedConfigurations();
 
   const form = useForm<LineSplitFormData>({
@@ -102,7 +101,7 @@ export default function LineSplitV05() {
     }
   });
 
-  // Load configurations from localStorage and auto-populate from fetched data
+  // Load configurations from localStorage on mount only
   useEffect(() => {
     const savedConfigs = localStorage.getItem('outboundV05Draft.lineSplit');
     if (savedConfigs) {
@@ -112,9 +111,11 @@ export default function LineSplitV05() {
         console.error('Error loading saved line split configs:', error);
       }
     }
-    
-    // Auto-populate from fetched data if available
-    if (fetchedConfigs.data.lineSplit.length > 0 && lineSplitConfigs.length === 0) {
+  }, []);
+
+  // Auto-populate from fetched data whenever new data is fetched
+  useEffect(() => {
+    if (fetchedConfigs.data.lineSplit.length > 0) {
       setLineSplitConfigs(fetchedConfigs.data.lineSplit);
       toast({
         title: 'Configurations Auto-Loaded',
@@ -155,10 +156,13 @@ export default function LineSplitV05() {
     form.reset();
     setIsFormVisible(false);
     setEditingConfig(null);
+    setEditingConfigIndex(-1);
   };
 
   const handleEdit = (config: LineSplitConfig) => {
+    const configIndex = lineSplitConfigs.findIndex(c => c.id === config.id);
     setEditingConfig(config);
+    setEditingConfigIndex(configIndex);
     form.reset({
       storageIdentifiers: config.storageIdentifiers,
       lineIdentifiers: config.lineIdentifiers,
@@ -187,15 +191,6 @@ export default function LineSplitV05() {
     toast({ title: 'Saved', description: 'Line split configurations saved successfully' });
   };
 
-  const handleClearCache = () => {
-    clearV05LocalStorage();
-    setLineSplitConfigs([]);
-    toast({ 
-      title: 'Cache Cleared', 
-      description: 'All V0.5 cached configurations have been cleared. Please refresh the page.',
-      variant: 'destructive'
-    });
-  };
 
   const getDisplayText = (config: LineSplitConfig) => {
     const storageText = Object.entries(config.storageIdentifiers)
@@ -212,8 +207,7 @@ export default function LineSplitV05() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -226,11 +220,13 @@ export default function LineSplitV05() {
             <Button onClick={handleSave} variant="outline">
               Save Configurations
             </Button>
-            <Button onClick={handleClearCache} variant="outline" className="border-red-200 text-red-700 hover:bg-red-50">
-              Clear Cache
-            </Button>
             <Button 
-              onClick={() => setIsFormVisible(true)}
+              onClick={() => {
+                setIsFormVisible(true);
+                setEditingConfig(null);
+                setEditingConfigIndex(-1);
+                form.reset();
+              }}
               disabled={isFormVisible}
               className="bg-black hover:bg-gray-800 text-white"
             >
@@ -278,7 +274,7 @@ export default function LineSplitV05() {
                     showLocationIdentifiers={false}
                     title="Identifiers"
                     configType="lineSplit"
-                    configIndex={0}
+                    configIndex={editingConfigIndex >= 0 ? editingConfigIndex : 0}
                   />
 
                   <Separator />
@@ -295,7 +291,7 @@ export default function LineSplitV05() {
                             <FormLabel className="flex items-center space-x-2">
                               <span>Sequence</span>
                               <FieldStatusIndicator 
-                                fieldPath="lineSplit.0.sequence"
+                                fieldPath={`lineSplit.${editingConfigIndex >= 0 ? editingConfigIndex : 'new'}.sequence`}
                                 className="ml-1"
                                 currentValue={form.watch('sequence')}
                               />
@@ -321,7 +317,7 @@ export default function LineSplitV05() {
                             <FormLabel className="flex items-center space-x-2">
                               <span>Split Mode</span>
                               <FieldStatusIndicator 
-                                fieldPath="lineSplit.0.mode"
+                                fieldPath={`lineSplit.${editingConfigIndex >= 0 ? editingConfigIndex : 'new'}.mode`}
                                 className="ml-1"
                                 currentValue={form.watch('mode')}
                               />
@@ -353,7 +349,7 @@ export default function LineSplitV05() {
                             <FormLabel className="flex items-center space-x-2">
                               <span>Allowed UOMs</span>
                               <FieldStatusIndicator 
-                                fieldPath="lineSplit.0.allowedUOMs"
+                                fieldPath={`lineSplit.${editingConfigIndex >= 0 ? editingConfigIndex : 'new'}.allowedUOMs`}
                                 className="ml-1"
                                 currentValue={form.watch('allowedUOMs')}
                               />
@@ -469,7 +465,12 @@ export default function LineSplitV05() {
               </p>
               <div className="flex space-x-2">
                 <Button 
-                  onClick={() => setIsFormVisible(true)}
+                  onClick={() => {
+                    setIsFormVisible(true);
+                    setEditingConfig(null);
+                    setEditingConfigIndex(-1);
+                    form.reset();
+                  }}
                   className="bg-black hover:bg-gray-800 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
@@ -479,7 +480,6 @@ export default function LineSplitV05() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </MainLayout>
+    </div>
   );
 }

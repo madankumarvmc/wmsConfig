@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 
-import MainLayout from '@/components/MainLayout';
 import IdentifierFieldset from './components/IdentifierFieldset';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
@@ -246,9 +245,9 @@ export default function BinSearchV05() {
     return () => clearTimeout(timer);
   }, [binSearchConfigs]);
 
-  // Auto-populate from fetched data
+  // Auto-populate from fetched data whenever new data is fetched
   useEffect(() => {
-    if (fetchedConfigs.data.binSearch.length > 0 && binSearchConfigs.length === 0) {
+    if (fetchedConfigs.data.binSearch.length > 0) {
       setBinSearchConfigs(fetchedConfigs.data.binSearch);
       toast({
         title: 'Bin Search Auto-Loaded',
@@ -257,74 +256,6 @@ export default function BinSearchV05() {
     }
   }, [fetchedConfigs.data.binSearch]);
 
-  const loadFromFetchedConfigurations = async () => {
-    if (!state.warehouseCode) {
-      toast({
-        title: 'No Warehouse Code',
-        description: 'Please set a warehouse code in the top navigation first.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsLoadingFetched(true);
-    try {
-      const fetchedConfig = await configurationApi.getStoredConfigurations(state.warehouseCode);
-      
-      // Note: Bin search might not exist in fetched data as it's a new configuration
-      if (!fetchedConfig?.configurations?.binSearch) {
-        toast({
-          title: 'No Bin Search Data',
-          description: 'No bin search configurations found in fetched data. This is a new configuration type.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const binSearchData = fetchedConfig.configurations.binSearch;
-      const convertedConfigs: BinSearchConfig[] = binSearchData.map((item: any) => ({
-        id: item.id,
-        whId: item.whId,
-        storageIdentifiers: item.storageIdentifiers || {},
-        lineIdentifiers: item.lineIdentifiers || {},
-        taskType: item.taskType || 'OUTBOUND_PICK',
-        taskSubKind: item.taskSubKind || '',
-        taskAttrs: item.taskAttrs || {},
-        mode: item.mode || 'PICK',
-        priority: item.priority || 1,
-        skipZoneFace: item.skipZoneFace || '',
-        orderByQuantUpdatedAt: item.orderByQuantUpdatedAt || false,
-        searchScope: item.searchScope || 'WH',
-        preferFixed: item.preferFixed || false,
-        preferNonFixed: item.preferNonFixed || false,
-        statePreferenceSeq: item.statePreferenceSeq || ['AVAILABLE'],
-        batchPreferenceMode: item.batchPreferenceMode || 'FIFO',
-        areaTypes: item.areaTypes || [],
-        areas: item.areas || [],
-        orderByPickingPosition: item.orderByPickingPosition !== undefined ? item.orderByPickingPosition : true,
-        useInventorySnapshotForPickSlotting: item.useInventorySnapshotForPickSlotting || false,
-        optimizationMode: item.optimizationMode || 'TOUCH',
-        disallowedBinTypes: item.disallowedBinTypes || [],
-        sortingMode: item.sortingMode || 'DISTANCE',
-      }));
-
-      setBinSearchConfigs(convertedConfigs);
-      toast({
-        title: 'Configurations Loaded',
-        description: `Successfully loaded ${convertedConfigs.length} bin search configurations.`,
-      });
-
-    } catch (error: any) {
-      console.error('Error loading from fetched configurations:', error);
-      toast({
-        title: 'Load Failed',
-        description: error.message || 'Failed to load from fetched configurations.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoadingFetched(false);
-    }
-  };
 
   const onSubmit = (data: BinSearchFormData) => {
     const newConfig: BinSearchConfig = {
@@ -390,8 +321,7 @@ export default function BinSearchV05() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
+    <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -401,21 +331,6 @@ export default function BinSearchV05() {
             )}
           </div>
           <div className="flex space-x-2">
-            {state.warehouseCode && (
-              <Button 
-                onClick={loadFromFetchedConfigurations}
-                disabled={isLoadingFetched}
-                variant="outline"
-                className="border-blue-200 text-blue-700 hover:bg-blue-50"
-              >
-                {isLoadingFetched ? (
-                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Download className="w-4 h-4 mr-2" />
-                )}
-                Load from Fetched
-              </Button>
-            )}
             <Button onClick={handleSave} variant="outline">
               Save Configurations
             </Button>
@@ -482,7 +397,7 @@ export default function BinSearchV05() {
                         name="taskType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Task Type *</FormLabel>
+                            <FormLabel>Task Type</FormLabel>
                             <FormControl>
                               <Input placeholder="Enter task type" {...field} />
                             </FormControl>
@@ -913,19 +828,9 @@ export default function BinSearchV05() {
               <div className="w-12 h-12 text-gray-400 mb-4">🔍</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Bin Search Configurations</h3>
               <p className="text-gray-600 mb-6 max-w-md">
-                Create your first bin search configuration or load from fetched warehouse data.
+                Create your first bin search configuration with auto-populated data from warehouse.
               </p>
               <div className="flex space-x-2">
-                {state.warehouseCode && (
-                  <Button 
-                    onClick={loadFromFetchedConfigurations}
-                    variant="outline"
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Load from Fetched
-                  </Button>
-                )}
                 <Button 
                   onClick={() => setIsFormVisible(true)}
                   className="bg-black hover:bg-gray-800 text-white"
@@ -937,7 +842,6 @@ export default function BinSearchV05() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </MainLayout>
+    </div>
   );
 }

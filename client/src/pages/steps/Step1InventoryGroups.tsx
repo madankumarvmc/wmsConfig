@@ -15,7 +15,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import WizardLayout from '@/components/WizardLayout';
+import WizardContent from '@/components/WizardContent';
 
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
@@ -351,7 +351,7 @@ export default function Step1InventoryGroups() {
   };
 
   return (
-    <WizardLayout
+    <WizardContent
       title="Inventory Groups"
       description="Define Storage Instruction (SI) and Location Instruction (LI) combinations that will be used throughout your warehouse configuration."
       currentStep={1}
@@ -836,6 +836,6 @@ export default function Step1InventoryGroups() {
           </Card>
         )}
       </div>
-    </WizardLayout>
+    </WizardContent>
   );
 }

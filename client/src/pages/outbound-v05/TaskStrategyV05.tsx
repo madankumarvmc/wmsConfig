@@ -21,6 +21,7 @@ import IdentifierFieldset from './components/IdentifierFieldset';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { useFetchedConfigurations } from '@/contexts/FetchedConfigurationsContext';
+import { useConfiguration } from '@/contexts/ConfigurationContext';
 import { FieldStatusIndicator, FieldStatusLegend } from '@/components/FieldStatusIndicator';
 import { TaskStrategyFormData, TaskStrategyConfig } from '@/types/outbound-v05';
 import { useV05FormOptions } from '@/hooks/useV05FormOptions';
@@ -185,6 +186,7 @@ export default function TaskStrategyV05() {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingConfig, setEditingConfig] = useState<TaskStrategyConfig | null>(null);
   const fetchedConfigs = useFetchedConfigurations();
+  const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
   const [expandedSections, setExpandedSections] = useState<string[]>(['planning', 'execution']);
 
   const form = useForm<TaskStrategyFormData>({
@@ -258,37 +260,12 @@ export default function TaskStrategyV05() {
     );
   };
 
-  // Load configurations from localStorage on mount
+  // Load configurations from central store and sync changes
   useEffect(() => {
-    const savedConfigs = localStorage.getItem('outboundV05Draft.taskStrategy');
-    if (savedConfigs) {
-      try {
-        setTaskStrategyConfigs(JSON.parse(savedConfigs));
-      } catch (error) {
-        console.error('Error loading saved task strategy configs:', error);
-      }
-    }
-  }, []);
+    setTaskStrategyConfigs(configuration.taskStrategy);
+  }, [configuration.taskStrategy]);
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem('outboundV05Draft.taskStrategy', JSON.stringify(taskStrategyConfigs));
-    }, 3000);
 
-    return () => clearTimeout(timer);
-  }, [taskStrategyConfigs]);
-
-  // Auto-populate from fetched data whenever new data is fetched
-  useEffect(() => {
-    if (fetchedConfigs.data.taskStrategy.length > 0) {
-      setTaskStrategyConfigs(fetchedConfigs.data.taskStrategy);
-      toast({
-        title: 'Task Strategies Auto-Loaded',
-        description: `Automatically loaded ${fetchedConfigs.data.taskStrategy.length} task strategy configurations from fetched data.`,
-      });
-    }
-  }, [fetchedConfigs.data.taskStrategy]);
 
 
   const onSubmit = (data: TaskStrategyFormData) => {
@@ -298,15 +275,20 @@ export default function TaskStrategyV05() {
       ...data,
     };
 
+    let updatedConfigs;
     if (editingConfig) {
-      setTaskStrategyConfigs(prev => prev.map(config => 
+      updatedConfigs = taskStrategyConfigs.map(config => 
         config.id === editingConfig.id ? newConfig : config
-      ));
+      );
       toast({ title: 'Success', description: 'Task strategy configuration updated successfully' });
     } else {
-      setTaskStrategyConfigs(prev => [...prev, newConfig]);
+      updatedConfigs = [...taskStrategyConfigs, newConfig];
       toast({ title: 'Success', description: 'Task strategy configuration created successfully' });
     }
+
+    // Update local state AND central store immediately
+    setTaskStrategyConfigs(updatedConfigs);
+    saveFormChanges('taskStrategy', updatedConfigs);
 
     form.reset();
     setIsFormVisible(false);
@@ -320,7 +302,10 @@ export default function TaskStrategyV05() {
   };
 
   const handleDelete = (id: string) => {
-    setTaskStrategyConfigs(prev => prev.filter(config => config.id !== id));
+    const updatedConfigs = taskStrategyConfigs.filter(config => config.id !== id);
+    // Update local state AND central store immediately
+    setTaskStrategyConfigs(updatedConfigs);
+    saveFormChanges('taskStrategy', updatedConfigs);
     toast({ title: 'Success', description: 'Task strategy configuration deleted successfully' });
   };
 
@@ -330,10 +315,12 @@ export default function TaskStrategyV05() {
     form.reset();
   };
 
-  const handleSave = () => {
-    localStorage.setItem('outboundV05.taskStrategy', JSON.stringify(taskStrategyConfigs));
-    console.log('Task Strategy Configurations Saved:', JSON.stringify(taskStrategyConfigs, null, 2));
-    toast({ title: 'Saved', description: 'Task strategy configurations saved successfully' });
+  const handleSaveFormChanges = () => {
+    saveFormChanges('taskStrategy', taskStrategyConfigs);
+    toast({ 
+      title: 'Form Changes Saved', 
+      description: `${taskStrategyConfigs.length} task strategy configurations saved to central store.`,
+    });
   };
 
   const getDisplayText = (config: TaskStrategyConfig) => {
@@ -361,8 +348,12 @@ export default function TaskStrategyV05() {
             )}
           </div>
           <div className="flex space-x-2">
-            <Button onClick={handleSave} variant="outline">
-              Save Configurations
+            <Button 
+              onClick={handleSaveFormChanges} 
+              variant={hasUnsavedChanges ? "default" : "outline"}
+              className={hasUnsavedChanges ? "bg-orange-600 hover:bg-orange-700 text-white" : ""}
+            >
+              {hasUnsavedChanges ? 'Save Form Changes' : 'Form Changes Saved'}
             </Button>
             <Button 
               onClick={() => setIsFormVisible(true)}

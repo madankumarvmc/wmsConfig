@@ -17,7 +17,6 @@ import {
   FileDown
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import MainLayout from '@/components/MainLayout';
 
 interface UploadJob {
   id: string;
@@ -129,8 +128,7 @@ export default function MasterUploads() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center space-x-3 mb-6">
           <Upload className="w-8 h-8 text-black" />
@@ -280,7 +278,6 @@ export default function MasterUploads() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </MainLayout>
+    </div>
   );
 }

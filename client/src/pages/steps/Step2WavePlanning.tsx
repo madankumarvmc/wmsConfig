@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
-import WizardLayout from '@/components/WizardLayout';
+import WizardContent from '@/components/WizardContent';
 
 const wavePlanningSchema = z.object({
   waveStrategy: z.string().min(1, 'Wave strategy is required'),
@@ -163,7 +163,7 @@ export default function Step2WavePlanning() {
   };
 
   return (
-    <WizardLayout
+    <WizardContent
       title="Wave Planning - Wave release Planning of orders"
       description="Configure wave release strategies, order batching rules, and line-split strategies for optimal picking efficiency"
       currentStep={2}
@@ -529,6 +529,6 @@ export default function Step2WavePlanning() {
           </TabsContent>
         </Tabs>
       </div>
-    </WizardLayout>
+    </WizardContent>
   );
 }

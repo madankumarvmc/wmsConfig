@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { 
   Settings, 
@@ -19,10 +19,12 @@ import {
   Scissors,
   GitBranch,
   Cog,
-  Search
+  Search,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface SidebarSection {
   title: string;
@@ -40,17 +42,50 @@ interface SidebarItem {
 
 interface MainSidebarProps {
   currentPath?: string;
+  isMobileOpen?: boolean;
+  onMobileClose?: () => void;
 }
 
-export default function MainSidebar({ currentPath }: MainSidebarProps) {
+export default function MainSidebar({ currentPath, isMobileOpen = false, onMobileClose }: MainSidebarProps) {
   const [location, setLocation] = useLocation();
   const [expandedSections, setExpandedSections] = useState<string[]>(['Master Configuration', 'Outbound Configuration', 'Outbound Configuration V0.5']);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
   const sidebarRef = useRef<HTMLDivElement>(null);
   
   // Use the actual location from the hook for consistency
   const activePath = location;
+
+  // Check for mobile viewport
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  // Handle escape key for mobile
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileOpen && onMobileClose) {
+        onMobileClose();
+      }
+    };
+
+    if (isMobileOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isMobileOpen, onMobileClose]);
 
   const toggleSection = (sectionTitle: string) => {
     setExpandedSections(prev => 
@@ -215,11 +250,40 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
     }
   ];
 
+  // Preload component on hover
+  const handleItemHover = (path: string) => {
+    const preloadMap: Record<string, () => Promise<any>> = {
+      '/step/1': () => import('@/pages/steps/Step1InventoryGroups'),
+      '/step/2': () => import('@/pages/steps/Step2WavePlanning'),
+      '/step/3': () => import('@/pages/steps/Step3TaskSequences'),
+      '/step/4': () => import('@/pages/steps/Step4TaskPlanning'),
+      '/step/5': () => import('@/pages/steps/Step5TaskExecution'),
+      '/step/6': () => import('@/pages/steps/Step6ReviewConfirm'),
+      '/master/provisioning': () => import('@/pages/master/ProvisioningSetup'),
+      '/master/uploads': () => import('@/pages/master/MasterUploads'),
+      '/master/templates': () => import('@/pages/master/OneClickTemplates'),
+      '/outbound/v0.5/line-split': () => import('@/pages/outbound-v05/LineSplitV05'),
+      '/outbound/v0.5/task-sequence': () => import('@/pages/outbound-v05/TaskSequenceV05'),
+      '/outbound/v0.5/task-strategy': () => import('@/pages/outbound-v05/TaskStrategyV05'),
+      '/outbound/v0.5/bin-search': () => import('@/pages/outbound-v05/BinSearchV05'),
+    };
+
+    const preloader = preloadMap[path];
+    if (preloader) {
+      preloader().catch(() => {}); // Silently handle preload errors
+    }
+  };
+
   const handleItemClick = (item: SidebarItem) => {
     if (!item.disabled && item.path !== '#') {
       // Store current scroll position before navigation
       const currentScrollTop = sidebarRef.current?.scrollTop || 0;
       setLocation(item.path);
+      
+      // Close mobile sidebar after navigation
+      if (isMobile && onMobileClose) {
+        onMobileClose();
+      }
       
       // Restore scroll position after a short delay to ensure DOM updates
       setTimeout(() => {
@@ -230,22 +294,68 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
     }
   };
 
+  // On mobile, only render if opened or if we're on desktop
+  if (isMobile && !isMobileOpen) {
+    return null;
+  }
+
   return (
-    <div ref={sidebarRef} className={`${isCollapsed ? 'w-16' : 'w-80'} bg-white border-r border-gray-200 h-screen overflow-y-auto flex-shrink-0 transition-all duration-300`}>
-      {/* Collapse/Expand Button */}
-      <div className="flex justify-between items-center p-2 border-b border-gray-100">
-        {!isCollapsed && (
-          <span className="text-sm font-medium text-gray-600 uppercase tracking-wide">Modules</span>
+    <>
+      {/* Mobile Overlay */}
+      {isMobile && isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div 
+        ref={sidebarRef} 
+        className={cn(
+          "bg-white border-r border-gray-200 h-screen overflow-y-auto",
+          // Mobile styles
+          isMobile && "fixed top-0 left-0 z-50 w-80",
+          // Desktop styles  
+          !isMobile && `${isCollapsed ? 'w-16' : 'w-80'} flex-shrink-0 transition-all duration-300`
         )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-8 h-8 p-0 hover:bg-gray-100"
-        >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-        </Button>
-      </div>
+        role="navigation"
+        aria-label="Main navigation"
+      >
+        {/* Header with close button for mobile */}
+        <div className="flex justify-between items-center p-2 border-b border-gray-100">
+          {!isCollapsed && (
+            <span className="text-sm font-medium text-gray-600 uppercase tracking-wide">Modules</span>
+          )}
+          
+          {/* Mobile close button */}
+          {isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onMobileClose}
+              className="w-8 h-8 p-0 hover:bg-gray-100 md:hidden"
+              aria-label="Close navigation menu"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+          
+          {/* Desktop collapse button */}
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-8 h-8 p-0 hover:bg-gray-100"
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-expanded={!isCollapsed}
+            >
+              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            </Button>
+          )}
+        </div>
       
       <div className="p-4">
         {sections.map((section) => {
@@ -259,6 +369,9 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
                 onClick={() => toggleSection(section.title)}
                 className="w-full flex items-center justify-between text-left p-2 hover:bg-gray-50 rounded-lg transition-colors"
                 disabled={isComingSoon}
+                aria-expanded={isExpanded}
+                aria-controls={`section-${section.title.replace(/\s+/g, '-').toLowerCase()}`}
+                aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${section.title} section`}
               >
                 <h3 className={`text-sm font-medium uppercase tracking-wide ${
                   isComingSoon ? 'text-gray-400' : 'text-gray-600'
@@ -266,27 +379,35 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
                   {section.title}
                 </h3>
                 {isCollapsed && (
-                  <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
+                  <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center" aria-hidden="true">
                     <div className="w-2 h-2 bg-gray-600 rounded"></div>
                   </div>
                 )}
                 {!isComingSoon && (
                   isExpanded ? 
-                    <ChevronDown className="w-4 h-4 text-gray-400" /> : 
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
+                    <ChevronDown className="w-4 h-4 text-gray-400" aria-hidden="true" /> : 
+                    <ChevronRight className="w-4 h-4 text-gray-400" aria-hidden="true" />
                 )}
               </button>
 
               {/* Section Items */}
               {(isExpanded || isCollapsed) && (
-                <div className="mt-2 space-y-1">
+                <div 
+                  className="mt-2 space-y-1"
+                  id={`section-${section.title.replace(/\s+/g, '-').toLowerCase()}`}
+                  role="group"
+                  aria-labelledby={`section-header-${section.title.replace(/\s+/g, '-').toLowerCase()}`}
+                >
                   {section.items.map((item, index) => (
                     <button
                       key={index}
                       onClick={() => handleItemClick(item)}
+                      onMouseEnter={() => handleItemHover(item.path)}
                       disabled={item.disabled}
                       title={isCollapsed ? item.label : undefined}
-                      className={`w-full flex items-center ${isCollapsed ? 'justify-center relative' : 'justify-between'} p-3 rounded-lg text-left transition-colors ${
+                      aria-label={item.label}
+                      aria-current={item.isActive ? 'page' : undefined}
+                      className={`w-full flex items-center ${isCollapsed ? 'justify-center relative' : 'justify-between'} p-3 rounded-lg text-left transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                         item.isActive
                           ? 'bg-black text-white'
                           : item.disabled
@@ -331,6 +452,7 @@ export default function MainSidebar({ currentPath }: MainSidebarProps) {
           );
         })}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

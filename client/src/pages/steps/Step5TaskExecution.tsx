@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, X, Edit, Trash2, Info, CheckCircle, AlertTriangle, Play, Settings, Zap } from 'lucide-react';
 
-import WizardLayout from '@/components/WizardLayout';
+import WizardContent from '@/components/WizardContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -261,7 +261,7 @@ export default function Step5TaskExecution() {
   };
 
   return (
-    <WizardLayout 
+    <WizardContent 
       currentStep={5} 
       totalSteps={7}
       title="Task Execution Configuration"
@@ -979,6 +979,6 @@ export default function Step5TaskExecution() {
           </Button>
         </div>
       </div>
-    </WizardLayout>
+    </WizardContent>
   );
 }

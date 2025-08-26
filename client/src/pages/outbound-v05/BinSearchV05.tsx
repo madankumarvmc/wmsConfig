@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BinSearchFormData, BinSearchConfig } from '@/types/outbound-v05';
 import { useV05FormOptions } from '@/hooks/useV05FormOptions';
 import { useFetchedConfigurations } from '@/contexts/FetchedConfigurationsContext';
+import { useConfiguration } from '@/contexts/ConfigurationContext';
 import { FieldStatusIndicator, FieldStatusLegend } from '@/components/FieldStatusIndicator';
 
 // Multi-select component for state preferences
@@ -196,6 +197,7 @@ export default function BinSearchV05() {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingConfig, setEditingConfig] = useState<BinSearchConfig | null>(null);
   const fetchedConfigs = useFetchedConfigurations();
+  const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
 
   const form = useForm<BinSearchFormData>({
     resolver: zodResolver(binSearchSchema),
@@ -224,37 +226,12 @@ export default function BinSearchV05() {
     }
   });
 
-  // Load configurations from localStorage on mount
+  // Load configurations from central store and sync changes
   useEffect(() => {
-    const savedConfigs = localStorage.getItem('outboundV05Draft.binSearch');
-    if (savedConfigs) {
-      try {
-        setBinSearchConfigs(JSON.parse(savedConfigs));
-      } catch (error) {
-        console.error('Error loading saved bin search configs:', error);
-      }
-    }
-  }, []);
+    setBinSearchConfigs(configuration.binSearch);
+  }, [configuration.binSearch]);
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem('outboundV05Draft.binSearch', JSON.stringify(binSearchConfigs));
-    }, 3000);
 
-    return () => clearTimeout(timer);
-  }, [binSearchConfigs]);
-
-  // Auto-populate from fetched data whenever new data is fetched
-  useEffect(() => {
-    if (fetchedConfigs.data.binSearch.length > 0) {
-      setBinSearchConfigs(fetchedConfigs.data.binSearch);
-      toast({
-        title: 'Bin Search Auto-Loaded',
-        description: `Automatically loaded ${fetchedConfigs.data.binSearch.length} bin search configurations from fetched data.`,
-      });
-    }
-  }, [fetchedConfigs.data.binSearch]);
 
 
   const onSubmit = (data: BinSearchFormData) => {
@@ -267,15 +244,20 @@ export default function BinSearchV05() {
       optimizationMode: data.optimizationMode as 'TOUCH' | 'DISTANCE',
     };
 
+    let updatedConfigs;
     if (editingConfig) {
-      setBinSearchConfigs(prev => prev.map(config => 
+      updatedConfigs = binSearchConfigs.map(config => 
         config.id === editingConfig.id ? newConfig : config
-      ));
+      );
       toast({ title: 'Success', description: 'Bin search configuration updated successfully' });
     } else {
-      setBinSearchConfigs(prev => [...prev, newConfig]);
+      updatedConfigs = [...binSearchConfigs, newConfig];
       toast({ title: 'Success', description: 'Bin search configuration created successfully' });
     }
+
+    // Update local state AND central store immediately
+    setBinSearchConfigs(updatedConfigs);
+    saveFormChanges('binSearch', updatedConfigs);
 
     form.reset();
     setIsFormVisible(false);
@@ -289,7 +271,10 @@ export default function BinSearchV05() {
   };
 
   const handleDelete = (id: string) => {
-    setBinSearchConfigs(prev => prev.filter(config => config.id !== id));
+    const updatedConfigs = binSearchConfigs.filter(config => config.id !== id);
+    // Update local state AND central store immediately
+    setBinSearchConfigs(updatedConfigs);
+    saveFormChanges('binSearch', updatedConfigs);
     toast({ title: 'Success', description: 'Bin search configuration deleted successfully' });
   };
 
@@ -299,10 +284,12 @@ export default function BinSearchV05() {
     form.reset();
   };
 
-  const handleSave = () => {
-    localStorage.setItem('outboundV05.binSearch', JSON.stringify(binSearchConfigs));
-    console.log('Bin Search Configurations Saved:', JSON.stringify(binSearchConfigs, null, 2));
-    toast({ title: 'Saved', description: 'Bin search configurations saved successfully' });
+  const handleSaveFormChanges = () => {
+    saveFormChanges('binSearch', binSearchConfigs);
+    toast({ 
+      title: 'Form Changes Saved', 
+      description: `${binSearchConfigs.length} bin search configurations saved to central store.`,
+    });
   };
 
   const getDisplayText = (config: BinSearchConfig) => {
@@ -331,8 +318,12 @@ export default function BinSearchV05() {
             )}
           </div>
           <div className="flex space-x-2">
-            <Button onClick={handleSave} variant="outline">
-              Save Configurations
+            <Button 
+              onClick={handleSaveFormChanges} 
+              variant={hasUnsavedChanges ? "default" : "outline"}
+              className={hasUnsavedChanges ? "bg-orange-600 hover:bg-orange-700 text-white" : ""}
+            >
+              {hasUnsavedChanges ? 'Save Form Changes' : 'Form Changes Saved'}
             </Button>
             <Button 
               onClick={() => setIsFormVisible(true)}

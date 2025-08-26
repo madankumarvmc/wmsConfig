@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, X, Edit, Trash2, Info, CheckCircle, AlertTriangle, Target, Brain } from 'lucide-react';
 
-import WizardLayout from '@/components/WizardLayout';
+import WizardContent from '@/components/WizardContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -247,7 +247,7 @@ export default function Step4TaskPlanning() {
   };
 
   return (
-    <WizardLayout 
+    <WizardContent 
       currentStep={4} 
       totalSteps={7}
       title="Task Planning Configuration"
@@ -735,6 +735,6 @@ export default function Step4TaskPlanning() {
           </Button>
         </div>
       </div>
-    </WizardLayout>
+    </WizardContent>
   );
 }

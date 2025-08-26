@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { TaskSequenceFormData, TaskSequenceConfig } from '@/types/outbound-v05';
 import { useV05FormOptions } from '@/hooks/useV05FormOptions';
 import { useFetchedConfigurations } from '@/contexts/FetchedConfigurationsContext';
+import { useConfiguration } from '@/contexts/ConfigurationContext';
 import { FieldStatusIndicator, FieldStatusLegend } from '@/components/FieldStatusIndicator';
 
 // Task pill component for drag-and-drop
@@ -202,6 +203,7 @@ export default function TaskSequenceV05() {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingConfig, setEditingConfig] = useState<TaskSequenceConfig | null>(null);
   const fetchedConfigs = useFetchedConfigurations();
+  const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
 
   const form = useForm<TaskSequenceFormData>({
     resolver: zodResolver(taskSequenceSchema),
@@ -216,37 +218,12 @@ export default function TaskSequenceV05() {
     }
   });
 
-  // Load configurations from localStorage on mount
+  // Load configurations from central store and sync changes
   useEffect(() => {
-    const savedConfigs = localStorage.getItem('outboundV05Draft.taskSequence');
-    if (savedConfigs) {
-      try {
-        setTaskSequenceConfigs(JSON.parse(savedConfigs));
-      } catch (error) {
-        console.error('Error loading saved task sequence configs:', error);
-      }
-    }
-  }, []);
+    setTaskSequenceConfigs(configuration.taskSequences);
+  }, [configuration.taskSequences]);
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem('outboundV05Draft.taskSequence', JSON.stringify(taskSequenceConfigs));
-    }, 3000);
 
-    return () => clearTimeout(timer);
-  }, [taskSequenceConfigs]);
-
-  // Auto-populate from fetched data whenever new data is fetched
-  useEffect(() => {
-    if (fetchedConfigs.data.taskSequences.length > 0) {
-      setTaskSequenceConfigs(fetchedConfigs.data.taskSequences);
-      toast({
-        title: 'Task Sequences Auto-Loaded',
-        description: `Automatically loaded ${fetchedConfigs.data.taskSequences.length} task sequence configurations from fetched data.`,
-      });
-    }
-  }, [fetchedConfigs.data.taskSequences]);
 
   // Function removed - auto-population handles this now
 
@@ -257,15 +234,20 @@ export default function TaskSequenceV05() {
       ...data,
     };
 
+    let updatedConfigs;
     if (editingConfig) {
-      setTaskSequenceConfigs(prev => prev.map(config => 
+      updatedConfigs = taskSequenceConfigs.map(config => 
         config.id === editingConfig.id ? newConfig : config
-      ));
+      );
       toast({ title: 'Success', description: 'Task sequence configuration updated successfully' });
     } else {
-      setTaskSequenceConfigs(prev => [...prev, newConfig]);
+      updatedConfigs = [...taskSequenceConfigs, newConfig];
       toast({ title: 'Success', description: 'Task sequence configuration created successfully' });
     }
+
+    // Update local state AND central store immediately
+    setTaskSequenceConfigs(updatedConfigs);
+    saveFormChanges('taskSequences', updatedConfigs);
 
     form.reset();
     setIsFormVisible(false);
@@ -287,7 +269,10 @@ export default function TaskSequenceV05() {
   };
 
   const handleDelete = (id: string) => {
-    setTaskSequenceConfigs(prev => prev.filter(config => config.id !== id));
+    const updatedConfigs = taskSequenceConfigs.filter(config => config.id !== id);
+    // Update local state AND central store immediately
+    setTaskSequenceConfigs(updatedConfigs);
+    saveFormChanges('taskSequences', updatedConfigs);
     toast({ title: 'Success', description: 'Task sequence configuration deleted successfully' });
   };
 
@@ -297,10 +282,12 @@ export default function TaskSequenceV05() {
     form.reset();
   };
 
-  const handleSave = () => {
-    localStorage.setItem('outboundV05.taskSequence', JSON.stringify(taskSequenceConfigs));
-    console.log('Task Sequence Configurations Saved:', JSON.stringify(taskSequenceConfigs, null, 2));
-    toast({ title: 'Saved', description: 'Task sequence configurations saved successfully' });
+  const handleSaveFormChanges = () => {
+    saveFormChanges('taskSequences', taskSequenceConfigs);
+    toast({ 
+      title: 'Form Changes Saved', 
+      description: `${taskSequenceConfigs.length} task sequence configurations saved to central store.`,
+    });
   };
 
   const getDisplayText = (config: TaskSequenceConfig) => {
@@ -332,8 +319,12 @@ export default function TaskSequenceV05() {
             )}
           </div>
           <div className="flex space-x-2">
-            <Button onClick={handleSave} variant="outline">
-              Save Configurations
+            <Button 
+              onClick={handleSaveFormChanges} 
+              variant={hasUnsavedChanges ? "default" : "outline"}
+              className={hasUnsavedChanges ? "bg-orange-600 hover:bg-orange-700 text-white" : ""}
+            >
+              {hasUnsavedChanges ? 'Save Form Changes' : 'Form Changes Saved'}
             </Button>
             <Button 
               onClick={() => setIsFormVisible(true)}

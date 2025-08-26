@@ -12,7 +12,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Settings, Database, Building, Users, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import MainLayout from '@/components/MainLayout';
 
 const provisioningSchema = z.object({
   warehouseName: z.string().min(1, 'Warehouse name is required'),
@@ -100,9 +99,8 @@ export default function ProvisioningSetup() {
   ];
 
   return (
-    <MainLayout>
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
-        {/* Header */}
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Header */}
         <div className="flex items-center space-x-3 mb-6">
           <Settings className="w-8 h-8 text-black" />
           <div>
@@ -326,8 +324,7 @@ export default function ProvisioningSetup() {
               </AlertDescription>
             </Alert>
           </div>
-        </div>
       </div>
-    </MainLayout>
+    </div>
   );
 }

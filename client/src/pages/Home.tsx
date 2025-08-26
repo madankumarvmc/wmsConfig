@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowRight, Settings, Database, Package, Users, Zap, CheckCircle, Sparkles, Clock, AlertCircle, BookOpen, Home as HomeIcon, Radio, Target } from 'lucide-react';
+import { ArrowRight, Settings, Database, Package, Users, Zap, CheckCircle, Sparkles, Clock, AlertCircle, BookOpen, Radio, Target } from 'lucide-react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useWizard } from '@/contexts/WizardContext';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import TopNavbar from '@/components/TopNavbar';
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -119,24 +118,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopNavbar 
-        leftButtons={[
-          {
-            icon: <HomeIcon className="w-4 h-4" />,
-            label: "Home",
-            onClick: () => setLocation('/'),
-            active: true
-          }
-        ]}
-        rightButtons={[
-          {
-            icon: <BookOpen className="w-4 h-4" />,
-            label: "Documentation",
-            onClick: () => window.open('/docs', '_blank')
-          }
-        ]}
-      />
-      
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">

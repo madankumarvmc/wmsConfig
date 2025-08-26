@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, X, Edit, Trash2, Info, CheckCircle, AlertTriangle, Package, ExternalLink } from 'lucide-react';
 
-import WizardLayout from '@/components/WizardLayout';
+import WizardContent from '@/components/WizardContent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -159,7 +159,7 @@ export default function Step3TaskSequences() {
   };
 
   return (
-    <WizardLayout
+    <WizardContent
       title="Task Sequences"
       description="Configure task sequences for your inventory groups. Task sequences define the order of operations (REPLEN → PICK → LOAD) for warehouse tasks."
       currentStep={2}
@@ -455,6 +455,6 @@ export default function Step3TaskSequences() {
           </Card>
         ) : null}
       </div>
-    </WizardLayout>
+    </WizardContent>
   );
 }

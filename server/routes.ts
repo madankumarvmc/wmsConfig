@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { logger } from "./logger";
 import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertInventoryGroupSchema, insertStockAllocationStrategySchema, insertTaskPlanningConfigurationSchema, insertTaskExecutionConfigurationSchema, InsertWizardConfiguration, InsertInventoryGroup } from "@shared/schema";
 import fs from "fs/promises";
 import path from "path";
@@ -13,6 +14,42 @@ const __dirname = path.dirname(__filename);
 export async function registerRoutes(app: Express): Promise<Server> {
   // Mock user for development (in production this would come from authentication)
   const MOCK_USER_ID = 1;
+
+  // Health check endpoints
+  app.get("/api/health", async (req, res) => {
+    try {
+      const healthChecks = {
+        storage: true, // In-memory storage is always available
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+      };
+
+      logger.logHealthCheck('healthy', healthChecks);
+      res.json({ status: 'healthy', checks: healthChecks });
+    } catch (error) {
+      logger.logHealthCheck('unhealthy', { storage: false });
+      res.status(503).json({ status: 'unhealthy', error: 'Health check failed' });
+    }
+  });
+
+  app.get("/api/health/ready", async (req, res) => {
+    // Readiness check - verify all dependencies are ready
+    try {
+      // Test storage operations
+      await storage.getAllWizardConfigurations(MOCK_USER_ID);
+      
+      res.json({ status: 'ready', timestamp: new Date().toISOString() });
+    } catch (error) {
+      logger.error('Readiness check failed', {}, error as Error);
+      res.status(503).json({ status: 'not ready', error: 'System not ready' });
+    }
+  });
+
+  app.get("/api/health/live", async (req, res) => {
+    // Liveness check - basic health indicator
+    res.json({ status: 'alive', timestamp: new Date().toISOString() });
+  });
 
   // Wizard configuration routes
   app.get("/api/wizard/configurations", async (req, res) => {
@@ -629,6 +666,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fetchedAt: new Date().toISOString(),
         configurations
       };
+
+      // 🚀 LOG COMPLETE FETCHED CONFIGURATION PAYLOAD
+      console.log('\n' + '='.repeat(80));
+      console.log('📋 COMPLETE FETCHED CONFIGURATION PAYLOAD');
+      console.log('='.repeat(80));
+      console.log('📍 Warehouse Code:', warehouseCode);
+      console.log('⏰ Fetched At:', result.fetchedAt);
+      console.log('📊 Total Configurations:', Object.keys(configurations).length);
+      
+      // Log each configuration type with counts
+      Object.entries(configurations).forEach(([type, data]) => {
+        if (Array.isArray(data)) {
+          console.log(`   • ${type}: ${data.length} items`);
+        } else if (data === null) {
+          console.log(`   • ${type}: NULL (fetch failed)`);
+        } else {
+          console.log(`   • ${type}: ${typeof data} (${data ? 'data present' : 'no data'})`);
+        }
+      });
+      
+      console.log('\n📄 FULL PAYLOAD (JSON):');
+      console.log(JSON.stringify(result, null, 2));
+      console.log('='.repeat(80) + '\n');
 
       res.json(result);
     } catch (error) {

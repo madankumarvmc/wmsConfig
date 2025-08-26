@@ -1,5 +1,5 @@
 import { useLocation } from 'wouter';
-import WizardLayout from '@/components/WizardLayout';
+import WizardContent from '@/components/WizardContent';
 import { useWizard } from '@/contexts/WizardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ export default function Step6ReviewConfirm() {
   };
 
   return (
-    <WizardLayout
+    <WizardContent
       title="Review & Confirm"
       description="Review all your configurations and confirm the setup."
       currentStep={6}
@@ -91,6 +91,6 @@ export default function Step6ReviewConfirm() {
           </CardContent>
         </Card>
       </div>
-    </WizardLayout>
+    </WizardContent>
   );
 }

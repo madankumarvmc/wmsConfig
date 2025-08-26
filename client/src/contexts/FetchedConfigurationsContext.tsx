@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { LineSplitConfig, TaskSequenceConfig, TaskStrategyConfig, BinSearchConfig } from '@/types/outbound-v05';
 
 export interface FetchedConfigurationsData {
@@ -19,7 +19,7 @@ export interface FetchedConfigurationsContextType {
   fetchedAt: string | null;
   warehouseCode: string | null;
   fieldSources: Record<string, FieldSource>;
-  fetchConfigurations: (warehouseCode: string, apiEndpoints: Record<string, string>) => Promise<void>;
+  fetchConfigurations: (warehouseCode: string, apiEndpoints: Record<string, string>, onDataFetched?: (warehouseCode: string, data: FetchedConfigurationsData) => void) => Promise<void>;
   clearFetchedData: () => void;
   updateFieldSource: (fieldPath: string, source: FieldSource) => void;
   getFieldSource: (fieldPath: string) => FieldSource;
@@ -27,8 +27,6 @@ export interface FetchedConfigurationsContextType {
 }
 
 const FetchedConfigurationsContext = createContext<FetchedConfigurationsContextType | undefined>(undefined);
-
-const STORAGE_KEY = 'fetchedConfigurations';
 
 export function FetchedConfigurationsProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<FetchedConfigurationsData>({
@@ -43,38 +41,9 @@ export function FetchedConfigurationsProvider({ children }: { children: ReactNod
   const [warehouseCode, setWarehouseCode] = useState<string | null>(null);
   const [fieldSources, setFieldSources] = useState<Record<string, FieldSource>>({});
 
-  // Load from sessionStorage on mount
-  useEffect(() => {
-    try {
-      const stored = sessionStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setData(parsed.data || { lineSplit: [], taskSequences: [], taskStrategy: [], binSearch: [] });
-        setFetchedAt(parsed.fetchedAt || null);
-        setWarehouseCode(parsed.warehouseCode || null);
-        setFieldSources(parsed.fieldSources || {});
-      }
-    } catch (error) {
-      console.error('Error loading fetched configurations from sessionStorage:', error);
-    }
-  }, []);
+  // No sessionStorage persistence - memory only for temporary fetching
 
-  // Save to sessionStorage when data changes
-  useEffect(() => {
-    try {
-      const dataToStore = {
-        data,
-        fetchedAt,
-        warehouseCode,
-        fieldSources
-      };
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(dataToStore));
-    } catch (error) {
-      console.error('Error saving fetched configurations to sessionStorage:', error);
-    }
-  }, [data, fetchedAt, warehouseCode, fieldSources]);
-
-  const fetchConfigurations = async (whCode: string, apiEndpoints: Record<string, string>) => {
+  const fetchConfigurations = async (whCode: string, apiEndpoints: Record<string, string>, onDataFetched?: (warehouseCode: string, data: FetchedConfigurationsData) => void) => {
     setIsLoading(true);
     try {
       // Use proxy to avoid CORS issues
@@ -95,6 +64,17 @@ export function FetchedConfigurationsProvider({ children }: { children: ReactNod
 
       const fetchedConfig = await response.json();
       
+      // 🚀 LOG RECEIVED PAYLOAD IN CLIENT
+      console.log('\n' + '='.repeat(80));
+      console.log('📥 RECEIVED CONFIGURATION PAYLOAD (CLIENT)');
+      console.log('='.repeat(80));
+      console.log('📍 Warehouse Code:', fetchedConfig.warehouseCode);
+      console.log('⏰ Fetched At:', fetchedConfig.fetchedAt);
+      console.log('📊 Raw Configurations:', fetchedConfig.configurations);
+      console.log('\n📄 FULL RECEIVED PAYLOAD:');
+      console.log(JSON.stringify(fetchedConfig, null, 2));
+      console.log('='.repeat(80));
+      
       // Transform the raw API data into our typed structures
       const transformedData: FetchedConfigurationsData = {
         lineSplit: transformLineSplitData(fetchedConfig.configurations.lineSplit || []),
@@ -103,6 +83,18 @@ export function FetchedConfigurationsProvider({ children }: { children: ReactNod
         binSearch: transformBinSearchData(fetchedConfig.configurations.binSearch || [])
       };
 
+      // 🔄 LOG TRANSFORMED DATA
+      console.log('\n' + '🔄'.repeat(40));
+      console.log('📊 TRANSFORMED DATA (CLIENT)');
+      console.log('🔄'.repeat(40));
+      console.log(`   • Line Split: ${transformedData.lineSplit.length} items`);
+      console.log(`   • Task Sequences: ${transformedData.taskSequences.length} items`);
+      console.log(`   • Task Strategy: ${transformedData.taskStrategy.length} items`);
+      console.log(`   • Bin Search: ${transformedData.binSearch.length} items`);
+      console.log('\n📄 TRANSFORMED DATA (FULL):');
+      console.log(JSON.stringify(transformedData, null, 2));
+      console.log('🔄'.repeat(40) + '\n');
+
       // Create field sources mapping for all fetched fields
       const newFieldSources = createFieldSourcesMapping(transformedData);
 
@@ -110,6 +102,11 @@ export function FetchedConfigurationsProvider({ children }: { children: ReactNod
       setFetchedAt(fetchedConfig.fetchedAt);
       setWarehouseCode(whCode);
       setFieldSources(newFieldSources);
+      
+      // Call the callback to populate central store
+      if (onDataFetched) {
+        onDataFetched(whCode, transformedData);
+      }
 
     } catch (error) {
       console.error('Error fetching configurations:', error);
@@ -129,7 +126,7 @@ export function FetchedConfigurationsProvider({ children }: { children: ReactNod
     setFetchedAt(null);
     setWarehouseCode(null);
     setFieldSources({});
-    sessionStorage.removeItem(STORAGE_KEY);
+    // No sessionStorage to clear anymore
   };
 
   const updateFieldSource = (fieldPath: string, source: FieldSource) => {

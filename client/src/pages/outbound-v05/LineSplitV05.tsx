@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LineSplitFormData, LineSplitConfig } from '@/types/outbound-v05';
 import { useV05FormOptions } from '@/hooks/useV05FormOptions';
 import { useFetchedConfigurations } from '@/contexts/FetchedConfigurationsContext';
+import { useConfiguration } from '@/contexts/ConfigurationContext';
 import { useFieldStatus } from '@/hooks/useFieldStatus';
 import { FieldStatusIndicator, FieldStatusLegend } from '@/components/FieldStatusIndicator';
 
@@ -89,6 +90,7 @@ export default function LineSplitV05() {
   const [editingConfig, setEditingConfig] = useState<LineSplitConfig | null>(null);
   const [editingConfigIndex, setEditingConfigIndex] = useState<number>(-1);
   const fetchedConfigs = useFetchedConfigurations();
+  const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
 
   const form = useForm<LineSplitFormData>({
     resolver: zodResolver(lineSplitSchema),
@@ -101,37 +103,13 @@ export default function LineSplitV05() {
     }
   });
 
-  // Load configurations from localStorage on mount only
+  // Load configurations from central store on mount and sync changes
   useEffect(() => {
-    const savedConfigs = localStorage.getItem('outboundV05Draft.lineSplit');
-    if (savedConfigs) {
-      try {
-        setLineSplitConfigs(JSON.parse(savedConfigs));
-      } catch (error) {
-        console.error('Error loading saved line split configs:', error);
-      }
-    }
-  }, []);
+    // Always sync with central store, even if empty
+    setLineSplitConfigs(configuration.lineSplit);
+  }, [configuration.lineSplit]);
 
-  // Auto-populate from fetched data whenever new data is fetched
-  useEffect(() => {
-    if (fetchedConfigs.data.lineSplit.length > 0) {
-      setLineSplitConfigs(fetchedConfigs.data.lineSplit);
-      toast({
-        title: 'Configurations Auto-Loaded',
-        description: `Automatically loaded ${fetchedConfigs.data.lineSplit.length} line split configurations from fetched data.`,
-      });
-    }
-  }, [fetchedConfigs.data.lineSplit]);
 
-  // Auto-save to localStorage
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem('outboundV05Draft.lineSplit', JSON.stringify(lineSplitConfigs));
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [lineSplitConfigs]);
 
   // Function removed - auto-population handles this now
 
@@ -143,15 +121,20 @@ export default function LineSplitV05() {
       mode: data.mode as 'nosplit' | 'split-by-uom' | 'split-by-weight' | 'mod',
     };
 
+    let updatedConfigs;
     if (editingConfig) {
-      setLineSplitConfigs(prev => prev.map(config => 
+      updatedConfigs = lineSplitConfigs.map(config => 
         config.id === editingConfig.id ? newConfig : config
-      ));
+      );
       toast({ title: 'Success', description: 'Line split configuration updated successfully' });
     } else {
-      setLineSplitConfigs(prev => [...prev, newConfig]);
+      updatedConfigs = [...lineSplitConfigs, newConfig];
       toast({ title: 'Success', description: 'Line split configuration created successfully' });
     }
+
+    // Update local state AND central store immediately
+    setLineSplitConfigs(updatedConfigs);
+    saveFormChanges('lineSplit', updatedConfigs);
 
     form.reset();
     setIsFormVisible(false);
@@ -174,7 +157,10 @@ export default function LineSplitV05() {
   };
 
   const handleDelete = (id: string) => {
-    setLineSplitConfigs(prev => prev.filter(config => config.id !== id));
+    const updatedConfigs = lineSplitConfigs.filter(config => config.id !== id);
+    // Update local state AND central store immediately
+    setLineSplitConfigs(updatedConfigs);
+    saveFormChanges('lineSplit', updatedConfigs);
     toast({ title: 'Success', description: 'Line split configuration deleted successfully' });
   };
 
@@ -184,11 +170,12 @@ export default function LineSplitV05() {
     form.reset();
   };
 
-  const handleSave = () => {
-    // Save to global store - for now just localStorage with different key
-    localStorage.setItem('outboundV05.lineSplit', JSON.stringify(lineSplitConfigs));
-    console.log('Line Split Configurations Saved:', JSON.stringify(lineSplitConfigs, null, 2));
-    toast({ title: 'Saved', description: 'Line split configurations saved successfully' });
+  const handleSaveFormChanges = () => {
+    saveFormChanges('lineSplit', lineSplitConfigs);
+    toast({ 
+      title: 'Form Changes Saved', 
+      description: `${lineSplitConfigs.length} line split configurations saved to central store.`,
+    });
   };
 
 
@@ -217,8 +204,12 @@ export default function LineSplitV05() {
             )}
           </div>
           <div className="flex space-x-2">
-            <Button onClick={handleSave} variant="outline">
-              Save Configurations
+            <Button 
+              onClick={handleSaveFormChanges} 
+              variant={hasUnsavedChanges ? "default" : "outline"}
+              className={hasUnsavedChanges ? "bg-orange-600 hover:bg-orange-700 text-white" : ""}
+            >
+              {hasUnsavedChanges ? 'Save Form Changes' : 'Form Changes Saved'}
             </Button>
             <Button 
               onClick={() => {

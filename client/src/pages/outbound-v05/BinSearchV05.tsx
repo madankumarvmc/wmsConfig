@@ -199,37 +199,78 @@ export default function BinSearchV05() {
   const fetchedConfigs = useFetchedConfigurations();
   const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
 
-  const form = useForm<BinSearchFormData>({
-    resolver: zodResolver(binSearchSchema),
-    defaultValues: {
+  // Create dynamic default values from central store (fetched data)
+  const getDynamicDefaults = (): BinSearchFormData => {
+    // If we have configurations in central store, use the first one as template
+    if (configuration.binSearch.length > 0) {
+      const firstConfig = configuration.binSearch[0];
+      return {
+        storageIdentifiers: firstConfig.storageIdentifiers || {},
+        lineIdentifiers: firstConfig.lineIdentifiers || {},
+        taskType: firstConfig.taskType || '',
+        taskSubKind: firstConfig.taskSubKind || '',
+        taskAttrs: firstConfig.taskAttrs || {},
+        mode: firstConfig.mode || '',
+        priority: firstConfig.priority || 0,
+        skipZoneFace: firstConfig.skipZoneFace || '',
+        orderByQuantUpdatedAt: firstConfig.orderByQuantUpdatedAt ?? false,
+        searchScope: firstConfig.searchScope || '',
+        preferFixed: firstConfig.preferFixed ?? false,
+        preferNonFixed: firstConfig.preferNonFixed ?? false,
+        statePreferenceSeq: firstConfig.statePreferenceSeq || [],
+        batchPreferenceMode: firstConfig.batchPreferenceMode || '',
+        areaTypes: firstConfig.areaTypes || [],
+        areas: firstConfig.areas || [],
+        orderByPickingPosition: firstConfig.orderByPickingPosition ?? false,
+        useInventorySnapshotForPickSlotting: firstConfig.useInventorySnapshotForPickSlotting ?? false,
+        optimizationMode: firstConfig.optimizationMode || '',
+        disallowedBinTypes: firstConfig.disallowedBinTypes || [],
+        sortingMode: firstConfig.sortingMode || '',
+      };
+    }
+    
+    // Empty defaults when no central store data exists
+    return {
       storageIdentifiers: {},
       lineIdentifiers: {},
-      taskType: 'OUTBOUND_PICK',
+      taskType: '',
       taskSubKind: '',
       taskAttrs: {},
-      mode: 'PICK',
-      priority: 1,
+      mode: '',
+      priority: 0,
       skipZoneFace: '',
       orderByQuantUpdatedAt: false,
-      searchScope: 'WH',
+      searchScope: '',
       preferFixed: false,
       preferNonFixed: false,
-      statePreferenceSeq: ['AVAILABLE'],
-      batchPreferenceMode: 'FIFO',
+      statePreferenceSeq: [],
+      batchPreferenceMode: '',
       areaTypes: [],
       areas: [],
-      orderByPickingPosition: true,
+      orderByPickingPosition: false,
       useInventorySnapshotForPickSlotting: false,
-      optimizationMode: 'TOUCH',
+      optimizationMode: '',
       disallowedBinTypes: [],
-      sortingMode: 'DISTANCE',
-    }
+      sortingMode: '',
+    };
+  };
+
+  const form = useForm<BinSearchFormData>({
+    resolver: zodResolver(binSearchSchema),
+    defaultValues: getDynamicDefaults()
   });
 
   // Load configurations from central store and sync changes
   useEffect(() => {
     setBinSearchConfigs(configuration.binSearch);
   }, [configuration.binSearch]);
+
+  // Reinitialize form when central store data changes (from fetched configs)
+  useEffect(() => {
+    if (!editingConfig) {
+      form.reset(getDynamicDefaults());
+    }
+  }, [configuration.binSearch, editingConfig]);
 
 
 

@@ -9,6 +9,8 @@ import { useFetchedConfigurations } from '@/contexts/FetchedConfigurationsContex
 import { useConfiguration } from '@/contexts/ConfigurationContext';
 import FetchConfigurationDialog from '@/components/dialogs/FetchConfigurationDialog';
 import CopyConfigurationDialog from '@/components/dialogs/CopyConfigurationDialog';
+import { type Environment, warehouseEnvironmentManager } from '@/lib/environmentUtils';
+import { copyConfigurationService } from '@/lib/copyConfigurationService';
 import sbxLogo from '@assets/sbx_logo.png';
 
 interface TopNavbarButton {
@@ -34,16 +36,22 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [], onMenuC
   // Dialog states
   const [fetchDialogOpen, setFetchDialogOpen] = useState(false);
   const [copyDialogOpen, setCopyDialogOpen] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
 
-  const handleFetchConfiguration = async (warehouseCode: string) => {
+  const handleFetchConfiguration = async (warehouseCode: string, environment: Environment) => {
     try {
-      // Example API endpoints
-      const apiEndpoints = {
-        lineSplit: 'http://cincout.sbx-sea-uat.api.staging.stackbox.internal/strategy/outbound/line-split/query?whId={warehouseCode}',
-        taskSequences: 'http://cincout.sbx-sea-uat.api.staging.stackbox.internal/strategy/outbound/task-sequence/query?whId={warehouseCode}',
-        taskStrategy: 'http://cincout.sbx-sea-uat.api.staging.stackbox.internal/task_strategy/query?whId={warehouseCode}',
-        binSearch: 'http://cincout.sbx-sea-uat.api.staging.stackbox.internal/task-strategy/bin-search/query?whId={warehouseCode}',
-      };
+      // Get dynamic API endpoints based on selected environment - extract query endpoints only for fetch
+      const endpointsStructure = warehouseEnvironmentManager.getApiEndpoints(environment);
+      const apiEndpoints = endpointsStructure?.query;
+      
+      if (!apiEndpoints) {
+        toast({
+          title: 'Configuration Error',
+          description: 'Unable to build API endpoints. Please select a valid environment.',
+          variant: 'destructive',
+        });
+        return;
+      }
 
       console.log('\n🚀 STARTING CONFIGURATION FETCH');
       console.log('📍 Warehouse Code:', warehouseCode);
@@ -74,29 +82,95 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [], onMenuC
     }
   };
 
-  const handleCopyConfiguration = async (targetWarehouseCode: string) => {
+  const handleCopyConfiguration = async (targetWarehouseCode: string, environment: Environment) => {
     try {
-      // TODO: Implement copy configuration API call
+      // Get current configuration from central store
+      const sourceConfig = configuration;
+      
+      if (!sourceConfig.warehouseCode) {
+        toast({
+          title: 'No Source Configuration',
+          description: 'Please fetch a configuration first before copying.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Show loading state
+      setIsCopying(true);
+
       console.log('🔄 COPYING CONFIGURATION');
-      console.log('📍 From Warehouse:', configuration.warehouseCode);
+      console.log('📍 From Warehouse:', sourceConfig.warehouseCode);
       console.log('📍 To Warehouse:', targetWarehouseCode);
-      
-      // Placeholder for copy logic
-      toast({
-        title: 'Copy Configuration',
-        description: `Configuration copy from ${configuration.warehouseCode} to ${targetWarehouseCode} - Feature coming soon!`,
+      console.log('📍 Environment:', environment);
+      console.log('🔍 DEBUG - Source Config Analysis:', {
+        warehouseCode: sourceConfig.warehouseCode,
+        fetchedAt: sourceConfig.fetchedAt,
+        lineSplitCount: sourceConfig.lineSplit?.length || 0,
+        lineSplitSample: sourceConfig.lineSplit?.[0],
+        configKeys: Object.keys(sourceConfig)
       });
-      
-      // Close dialog
+
+      // Perform the copy operation
+      const results = await copyConfigurationService.copyConfiguration(
+        sourceConfig,
+        targetWarehouseCode,
+        environment
+      );
+
+      // Show results with improved user messaging
+      if (results.totalFailed === 0) {
+        toast({
+          title: 'Copy Successful',
+          description: `Successfully copied ${results.totalSuccess} configurations to warehouse ${targetWarehouseCode}`,
+        });
+      } else if (results.totalSuccess > 0) {
+        // Partial success
+        toast({
+          title: 'Copy Partially Successful',
+          description: `${results.totalSuccess} of ${results.totalItems} configurations copied successfully. ${results.totalFailed} failed - see console for details.`,
+          variant: 'destructive',
+        });
+        
+        console.group('🔍 Copy Configuration Detailed Errors');
+        console.log(`📊 Summary: ${results.totalSuccess} succeeded, ${results.totalFailed} failed out of ${results.totalItems} total`);
+        console.log('📋 Errors by type:');
+        if (results.lineSplit.errors.length > 0) console.log('  LineSplit errors:', results.lineSplit.errors);
+        if (results.taskSequences.errors.length > 0) console.log('  TaskSequences errors:', results.taskSequences.errors);
+        if (results.taskStrategy.errors.length > 0) console.log('  TaskStrategy errors:', results.taskStrategy.errors);
+        if (results.binSearch.errors.length > 0) console.log('  BinSearch errors:', results.binSearch.errors);
+        console.groupEnd();
+      } else {
+        // Complete failure
+        toast({
+          title: 'Copy Failed',
+          description: `All ${results.totalItems} configuration items failed to copy. This may indicate API connectivity or authentication issues.`,
+          variant: 'destructive',
+        });
+        
+        console.error('🚨 Complete copy failure - all items failed:', {
+          totalItems: results.totalItems,
+          errors: {
+            lineSplit: results.lineSplit.errors,
+            taskSequences: results.taskSequences.errors,
+            taskStrategy: results.taskStrategy.errors,
+            binSearch: results.binSearch.errors
+          }
+        });
+      }
+
+      // Close dialog on completion
       setCopyDialogOpen(false);
 
     } catch (error) {
-      console.error('Error copying configurations:', error);
+      console.error('Error copying configuration:', error);
       toast({
         title: 'Copy Failed',
-        description: 'Failed to copy configurations. Please try again.',
+        description: 'Failed to copy configuration. Please try again.',
         variant: 'destructive',
       });
+    } finally {
+      setIsCopying(false);
     }
   };
 
@@ -204,11 +278,11 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [], onMenuC
                 <DropdownMenuItem 
                   id="copy-configurations-item"
                   onClick={() => setCopyDialogOpen(true)}
-                  disabled={isLoading || !configuration.warehouseCode}
+                  disabled={isLoading || isCopying || !configuration.warehouseCode}
                   className="text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:bg-slate-700 focus:text-white"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  Copy Configuration
+                  {isCopying ? 'Copying...' : 'Copy Configuration'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -273,11 +347,11 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [], onMenuC
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => setCopyDialogOpen(true)}
-                  disabled={isLoading || !configuration.warehouseCode}
+                  disabled={isLoading || isCopying || !configuration.warehouseCode}
                   className="text-slate-300 hover:bg-slate-700 hover:text-white cursor-pointer disabled:opacity-50"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  Copy Configuration
+                  {isCopying ? 'Copying...' : 'Copy Configuration'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -351,7 +425,7 @@ export default function TopNavbar({ leftButtons = [], rightButtons = [], onMenuC
       onOpenChange={setCopyDialogOpen}
       onCopy={handleCopyConfiguration}
       sourceWarehouseCode={configuration.warehouseCode}
-      isLoading={false}
+      isLoading={isCopying}
     />
     </>
   );

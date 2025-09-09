@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { logger } from "./logger";
 import { insertWizardConfigurationSchema, insertTaskSequenceConfigurationSchema, insertInventoryGroupSchema, insertStockAllocationStrategySchema, insertTaskPlanningConfigurationSchema, insertTaskExecutionConfigurationSchema, InsertWizardConfiguration, InsertInventoryGroup } from "@shared/schema";
+import { warehouseEnvironmentManager, type Environment, type ConfigurationType } from "../client/src/lib/environmentUtils.js";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -25,7 +26,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memory: process.memoryUsage(),
       };
 
-      logger.logHealthCheck('healthy', healthChecks);
+      logger.logHealthCheck('healthy', { storage: healthChecks.storage });
       res.json({ status: 'healthy', checks: healthChecks });
     } catch (error) {
       logger.logHealthCheck('unhealthy', { storage: false });
@@ -605,6 +606,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error retrieving configurations:', error);
       res.status(500).json({ error: "Failed to retrieve configurations" });
+    }
+  });
+
+  // Proxy endpoint for copy operations (avoids CORS issues)
+  app.post("/api/proxy/copy-configuration", async (req, res) => {
+    try {
+      const { warehouseCode, environment, configType, configData } = req.body;
+
+      if (!warehouseCode || !environment || !configType || !configData) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+
+      // Get the correct create endpoint from centralized management
+      const endpoint = warehouseEnvironmentManager.getCreateEndpoint(environment as Environment, configType as ConfigurationType);
+      
+      if (!endpoint) {
+        return res.status(400).json({ error: `Unable to build endpoint for configType: ${configType}, environment: ${environment}` });
+      }
+      
+      // Replace template with actual warehouse code
+      const finalEndpoint = endpoint.replace('{warehouseCode}', warehouseCode);
+
+      console.log(`📤 Copying ${configType} to: ${finalEndpoint}`);
+      
+      const response = await fetch(finalEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Node.js/WMS-Configuration-Portal',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(configData),
+      });
+
+      console.log(`📥 Copy response for ${configType}: ${response.status} ${response.statusText}`);
+      console.log(`📄 Response headers:`, Object.fromEntries(response.headers.entries()));
+      
+      const responseText = await response.text();
+      console.log(`📄 Response body preview:`, responseText.substring(0, 200));
+      
+      // Always return JSON responses to client
+      if (response.ok) {
+        try {
+          const responseData = JSON.parse(responseText);
+          console.log(`✅ Successfully parsed JSON response for ${configType}`);
+          res.json({
+            success: true,
+            data: responseData,
+            configType,
+            warehouseCode
+          });
+        } catch (parseError) {
+          console.error(`⚠️  JSON parse failed for ${configType}:`, parseError);
+          console.error(`📄 Raw response was:`, responseText);
+          // Still return success if HTTP status was OK, but note the parsing issue
+          res.json({
+            success: true,
+            data: null,
+            configType,
+            warehouseCode,
+            warning: 'Response was not JSON but HTTP request succeeded',
+            rawResponse: responseText.substring(0, 500) // Include partial response for debugging
+          });
+        }
+      } else {
+        console.error(`❌ Copy failed for ${configType}: ${response.status} ${response.statusText}`);
+        console.error(`📄 Error response body:`, responseText);
+        
+        // Always return JSON, even for errors - don't use response status code
+        res.json({
+          success: false,
+          error: `HTTP ${response.status}: ${response.statusText}`,
+          details: responseText,
+          configType,
+          warehouseCode,
+          httpStatus: response.status
+        });
+      }
+    } catch (error) {
+      console.error('Proxy copy error:', error);
+      res.json({ 
+        success: false,
+        error: "Failed to copy configuration",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

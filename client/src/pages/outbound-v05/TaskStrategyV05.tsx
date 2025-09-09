@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnhancedSelect } from '@/components/ui/enhanced-select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -189,49 +190,114 @@ export default function TaskStrategyV05() {
   const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
   const [expandedSections, setExpandedSections] = useState<string[]>(['planning', 'execution']);
 
-  const form = useForm<TaskStrategyFormData>({
-    resolver: zodResolver(taskStrategySchema),
-    defaultValues: {
+  // Create dynamic default values from central store (fetched data)
+  const getDynamicDefaults = (): TaskStrategyFormData => {
+    // If we have configurations in central store, use the first one as template
+    if (configuration.taskStrategy.length > 0) {
+      const firstConfig = configuration.taskStrategy[0];
+      return {
+        storageIdentifiers: firstConfig.storageIdentifiers || {},
+        lineIdentifiers: firstConfig.lineIdentifiers || {},
+        locationIdentifiers: firstConfig.locationIdentifiers || {},
+        taskKind: firstConfig.taskKind || '',
+        taskSubKind: firstConfig.taskSubKind || '',
+        taskAttrs: firstConfig.taskAttrs || {},
+        strat: firstConfig.strat || '',
+        sortingStrategy: firstConfig.sortingStrategy || '',
+        loadingStrategy: firstConfig.loadingStrategy || '',
+        groupBy: firstConfig.groupBy || [],
+        sequence: firstConfig.sequence || 0,
+        taskLabel: firstConfig.taskLabel || '',
+        tripType: firstConfig.tripType || '',
+        huKinds: firstConfig.huKinds || [],
+        mapSegregationGroupsToBins: firstConfig.mapSegregationGroupsToBins ?? false,
+        dropHUInBin: firstConfig.dropHUInBin ?? false,
+        scanDestHUInDrop: firstConfig.scanDestHUInDrop ?? false,
+        allowHUBreakInDrop: firstConfig.allowHUBreakInDrop ?? false,
+        scanSourceHUKind: firstConfig.scanSourceHUKind || '',
+        pickSourceHUKind: firstConfig.pickSourceHUKind || '',
+        carrierHUKind: firstConfig.carrierHUKind || '',
+        huMappingMode: firstConfig.huMappingMode || '',
+        useDockdoorAssignment: firstConfig.useDockdoorAssignment ?? false,
+        params: firstConfig.params || {},
+        dropHUQuantThreshold: firstConfig.dropHUQuantThreshold || 0,
+        strictBatchAdherence: firstConfig.strictBatchAdherence ?? false,
+        allowWorkOrderSplit: firstConfig.allowWorkOrderSplit ?? false,
+        undoOp: firstConfig.undoOp ?? false,
+        disableWorkOrder: firstConfig.disableWorkOrder ?? false,
+        allowUnpick: firstConfig.allowUnpick ?? false,
+        supportPalletScan: firstConfig.supportPalletScan ?? false,
+        loadingUnits: firstConfig.loadingUnits || [],
+        pickMandatoryScan: firstConfig.pickMandatoryScan ?? false,
+        dropMandatoryScan: firstConfig.dropMandatoryScan ?? false,
+        dropUOM: firstConfig.dropUOM || '',
+        allowComplete: firstConfig.allowComplete ?? false,
+        swapHUThreshold: firstConfig.swapHUThreshold || 0,
+        dropInnerHU: firstConfig.dropInnerHU ?? false,
+        allowInnerHUBreak: firstConfig.allowInnerHUBreak ?? false,
+        displayDropUOM: firstConfig.displayDropUOM ?? false,
+        autoUOMConversion: firstConfig.autoUOMConversion ?? false,
+        mobileSorting: firstConfig.mobileSorting ?? false,
+        sortingParam: firstConfig.sortingParam || '',
+        huWeightThreshold: firstConfig.huWeightThreshold || 0,
+        qcMismatchMonthThreshold: firstConfig.qcMismatchMonthThreshold || 0,
+        quantSlottingForHUsInDrop: firstConfig.quantSlottingForHUsInDrop ?? false,
+        allowPickingMultiBatchfromHU: firstConfig.allowPickingMultiBatchfromHU ?? false,
+        displayEditPickQuantity: firstConfig.displayEditPickQuantity ?? false,
+        pickBundles: firstConfig.pickBundles ?? false,
+        groupByValues: firstConfig.groupByValues || {},
+        enableEditQtyInPickOp: firstConfig.enableEditQtyInPickOp ?? false,
+        dropSlottingMode: firstConfig.dropSlottingMode || '',
+        enableManualDestBinSelection: firstConfig.enableManualDestBinSelection ?? false,
+        interimStrat: firstConfig.interimStrat || '',
+        enableLabelPrint: firstConfig.enableLabelPrint ?? false,
+        ignorePreferredHUKind: firstConfig.ignorePreferredHUKind ?? false,
+        recordExcessAsQuality: firstConfig.recordExcessAsQuality ?? false,
+      };
+    }
+    
+    // Empty defaults when no central store data exists
+    return {
       storageIdentifiers: {},
       lineIdentifiers: {},
       locationIdentifiers: {},
-      taskKind: 'OUTBOUND_PICK',
+      taskKind: '',
       taskSubKind: '',
       taskAttrs: {},
-      strat: 'FIFO',
-      sortingStrategy: 'NONE',
-      loadingStrategy: 'NONE',
+      strat: '',
+      sortingStrategy: '',
+      loadingStrategy: '',
       groupBy: [],
       sequence: 0,
       taskLabel: '',
-      tripType: 'SINGLE',
-      huKinds: ['TOTE'],
+      tripType: '',
+      huKinds: [],
       mapSegregationGroupsToBins: false,
-      dropHUInBin: true,
+      dropHUInBin: false,
       scanDestHUInDrop: false,
       allowHUBreakInDrop: false,
-      scanSourceHUKind: 'NONE',
-      pickSourceHUKind: 'NONE',
-      carrierHUKind: 'TOTE',
-      huMappingMode: 'AUTO',
+      scanSourceHUKind: '',
+      pickSourceHUKind: '',
+      carrierHUKind: '',
+      huMappingMode: '',
       useDockdoorAssignment: false,
       params: {},
       dropHUQuantThreshold: 0,
       strictBatchAdherence: false,
-      allowWorkOrderSplit: true,
-      undoOp: true,
+      allowWorkOrderSplit: false,
+      undoOp: false,
       disableWorkOrder: false,
-      allowUnpick: true,
+      allowUnpick: false,
       supportPalletScan: false,
       loadingUnits: [],
       pickMandatoryScan: false,
       dropMandatoryScan: false,
-      dropUOM: 'L0',
-      allowComplete: true,
+      dropUOM: '',
+      allowComplete: false,
       swapHUThreshold: 0,
       dropInnerHU: false,
       allowInnerHUBreak: false,
-      displayDropUOM: true,
+      displayDropUOM: false,
       autoUOMConversion: false,
       mobileSorting: false,
       sortingParam: '',
@@ -243,13 +309,18 @@ export default function TaskStrategyV05() {
       pickBundles: false,
       groupByValues: {},
       enableEditQtyInPickOp: false,
-      dropSlottingMode: 'NONE',
+      dropSlottingMode: '',
       enableManualDestBinSelection: false,
       interimStrat: '',
       enableLabelPrint: false,
       ignorePreferredHUKind: false,
       recordExcessAsQuality: false,
-    }
+    };
+  };
+
+  const form = useForm<TaskStrategyFormData>({
+    resolver: zodResolver(taskStrategySchema),
+    defaultValues: getDynamicDefaults()
   });
 
   const toggleSection = (section: string) => {
@@ -264,6 +335,13 @@ export default function TaskStrategyV05() {
   useEffect(() => {
     setTaskStrategyConfigs(configuration.taskStrategy);
   }, [configuration.taskStrategy]);
+
+  // Reinitialize form when central store data changes (from fetched configs)
+  useEffect(() => {
+    if (!editingConfig) {
+      form.reset(getDynamicDefaults());
+    }
+  }, [configuration.taskStrategy, editingConfig]);
 
 
 
@@ -502,19 +580,14 @@ export default function TaskStrategyV05() {
                                   className="ml-1"
                                 />
                               </FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select strategy" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent className="z-[9999] relative">
-                                  <SelectItem value="FIFO">FIFO</SelectItem>
-                                  <SelectItem value="LIFO">LIFO</SelectItem>
-                                  <SelectItem value="FEFO">FEFO</SelectItem>
-                                  <SelectItem value="NEAREST">NEAREST</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <FormControl>
+                                <EnhancedSelect
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                  options={["FIFO", "LIFO", "FEFO", "NEAREST"]}
+                                  placeholder="Select strategy"
+                                />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -532,19 +605,14 @@ export default function TaskStrategyV05() {
                                   className="ml-1"
                                 />
                               </FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select sorting" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent className="z-[9999] relative">
-                                  <SelectItem value="NONE">NONE</SelectItem>
-                                  <SelectItem value="ALPHABETICAL">ALPHABETICAL</SelectItem>
-                                  <SelectItem value="VELOCITY">VELOCITY</SelectItem>
-                                  <SelectItem value="ZONE">ZONE</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <FormControl>
+                                <EnhancedSelect
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                  options={["NONE", "ALPHABETICAL", "VELOCITY", "ZONE"]}
+                                  placeholder="Select sorting"
+                                />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
@@ -562,19 +630,14 @@ export default function TaskStrategyV05() {
                                   className="ml-1"
                                 />
                               </FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select loading" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent className="z-[9999] relative">
-                                  <SelectItem value="NONE">NONE</SelectItem>
-                                  <SelectItem value="WEIGHT_BASED">WEIGHT_BASED</SelectItem>
-                                  <SelectItem value="VOLUME_BASED">VOLUME_BASED</SelectItem>
-                                  <SelectItem value="FRAGILITY">FRAGILITY</SelectItem>
-                                </SelectContent>
-                              </Select>
+                              <FormControl>
+                                <EnhancedSelect
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                  options={["NONE", "WEIGHT_BASED", "VOLUME_BASED", "FRAGILITY"]}
+                                  placeholder="Select loading"
+                                />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}

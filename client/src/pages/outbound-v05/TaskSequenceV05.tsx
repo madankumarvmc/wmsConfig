@@ -205,23 +205,50 @@ export default function TaskSequenceV05() {
   const fetchedConfigs = useFetchedConfigurations();
   const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
 
-  const form = useForm<TaskSequenceFormData>({
-    resolver: zodResolver(taskSequenceSchema),
-    defaultValues: {
+  // Create dynamic default values from central store (fetched data)
+  const getDynamicDefaults = (): TaskSequenceFormData => {
+    // If we have configurations in central store, use the first one as template
+    if (configuration.taskSequences.length > 0) {
+      const firstConfig = configuration.taskSequences[0];
+      return {
+        storageIdentifiers: firstConfig.storageIdentifiers || {},
+        lineIdentifiers: firstConfig.lineIdentifiers || {},
+        sequence: firstConfig.sequence || 0,
+        taskSequence: firstConfig.taskSequence || [],
+        ginAckByApi: firstConfig.ginAckByApi ?? false,
+        ginAckLevel: firstConfig.ginAckLevel || '',
+        grnTriggerTask: firstConfig.grnTriggerTask || '',
+      };
+    }
+    
+    // Empty defaults when no central store data exists
+    return {
       storageIdentifiers: {},
       lineIdentifiers: {},
       sequence: 0,
       taskSequence: [],
       ginAckByApi: false,
-      ginAckLevel: 'LINE',
-      grnTriggerTask: 'OUTBOUND_PICK',
-    }
+      ginAckLevel: '',
+      grnTriggerTask: '',
+    };
+  };
+
+  const form = useForm<TaskSequenceFormData>({
+    resolver: zodResolver(taskSequenceSchema),
+    defaultValues: getDynamicDefaults()
   });
 
   // Load configurations from central store and sync changes
   useEffect(() => {
     setTaskSequenceConfigs(configuration.taskSequences);
   }, [configuration.taskSequences]);
+
+  // Reinitialize form when central store data changes (from fetched configs)
+  useEffect(() => {
+    if (!editingConfig) {
+      form.reset(getDynamicDefaults());
+    }
+  }, [configuration.taskSequences, editingConfig]);
 
 
 

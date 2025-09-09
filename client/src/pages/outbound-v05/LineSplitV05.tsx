@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EnhancedSelect } from '@/components/ui/enhanced-select';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -85,29 +86,51 @@ export default function LineSplitV05() {
   const { state } = useWizard();
   const { toast } = useToast();
   const formOptions = useV05FormOptions();
-  const [lineSplitConfigs, setLineSplitConfigs] = useState<LineSplitConfig[]>([]);
+  // Removed: using central store directly instead of local state
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingConfig, setEditingConfig] = useState<LineSplitConfig | null>(null);
   const [editingConfigIndex, setEditingConfigIndex] = useState<number>(-1);
   const fetchedConfigs = useFetchedConfigurations();
   const { configuration, saveFormChanges, hasUnsavedChanges } = useConfiguration();
+  
+  // Use central store directly instead of local state
+  const lineSplitConfigs = configuration.lineSplit;
 
-  const form = useForm<LineSplitFormData>({
-    resolver: zodResolver(lineSplitSchema),
-    defaultValues: {
+  // Create dynamic default values from central store (fetched data)
+  const getDynamicDefaults = (): LineSplitFormData => {
+    // If we have configurations in central store, use the first one as template
+    if (configuration.lineSplit.length > 0) {
+      const firstConfig = configuration.lineSplit[0];
+      return {
+        storageIdentifiers: firstConfig.storageIdentifiers || {},
+        lineIdentifiers: firstConfig.lineIdentifiers || {},
+        sequence: firstConfig.sequence || 0,
+        mode: firstConfig.mode || '',
+        allowedUOMs: firstConfig.allowedUOMs || [],
+      };
+    }
+    
+    // Empty defaults when no central store data exists
+    return {
       storageIdentifiers: {},
       lineIdentifiers: {},
       sequence: 0,
-      mode: 'nosplit',
-      allowedUOMs: ['L0'],
-    }
+      mode: '',
+      allowedUOMs: [],
+    };
+  };
+
+  const form = useForm<LineSplitFormData>({
+    resolver: zodResolver(lineSplitSchema),
+    defaultValues: getDynamicDefaults()
   });
 
-  // Load configurations from central store on mount and sync changes
+  // Reinitialize form when central store data changes (from fetched configs)
   useEffect(() => {
-    // Always sync with central store, even if empty
-    setLineSplitConfigs(configuration.lineSplit);
-  }, [configuration.lineSplit]);
+    if (!editingConfig) {
+      form.reset(getDynamicDefaults());
+    }
+  }, [configuration.lineSplit, editingConfig]);
 
 
 
@@ -132,8 +155,7 @@ export default function LineSplitV05() {
       toast({ title: 'Success', description: 'Line split configuration created successfully' });
     }
 
-    // Update local state AND central store immediately
-    setLineSplitConfigs(updatedConfigs);
+    // Update central store (this will trigger re-render with new data)
     saveFormChanges('lineSplit', updatedConfigs);
 
     form.reset();
@@ -158,8 +180,7 @@ export default function LineSplitV05() {
 
   const handleDelete = (id: string) => {
     const updatedConfigs = lineSplitConfigs.filter(config => config.id !== id);
-    // Update local state AND central store immediately
-    setLineSplitConfigs(updatedConfigs);
+    // Update central store (this will trigger re-render with new data)
     saveFormChanges('lineSplit', updatedConfigs);
     toast({ title: 'Success', description: 'Line split configuration deleted successfully' });
   };
@@ -313,20 +334,17 @@ export default function LineSplitV05() {
                                 currentValue={form.watch('mode')}
                               />
                             </FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select mode" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent className="z-[9999] relative">
-                                {formOptions.modes.lineSplit.map((mode) => (
-                                  <SelectItem key={mode} value={mode}>
-                                    {mode.replace('-', ' ').toUpperCase()}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                            <FormControl>
+                              <EnhancedSelect
+                                value={field.value}
+                                onValueChange={field.onChange}
+                                options={formOptions.modes.lineSplit.map(mode => ({
+                                  value: mode,
+                                  label: mode.replace('-', ' ').toUpperCase()
+                                }))}
+                                placeholder="Select mode"
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -412,7 +430,7 @@ export default function LineSplitV05() {
                           </TableCell>
                           <TableCell>
                             <div className="flex flex-wrap gap-1">
-                              {config.allowedUOMs.map(uom => (
+                              {config.allowedUOMs.map((uom: string) => (
                                 <Badge key={uom} variant="outline" className="text-xs">
                                   {uom}
                                 </Badge>

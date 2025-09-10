@@ -251,7 +251,7 @@ export default function Step4TaskPlanning() {
       currentStep={4} 
       totalSteps={7}
       title="Task Planning Configuration"
-      description="Configure task planning strategies for inventory groups"
+      description="Configure task planning strategies for material groups"
     >
       <div className="space-y-6">
         {/* Header and Add Button */}
@@ -262,6 +262,7 @@ export default function Step4TaskPlanning() {
           </div>
           <Button
             onClick={() => setIsFormVisible(true)}
+            disabled={inventoryGroups.length === 0}
             className="flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -269,11 +270,28 @@ export default function Step4TaskPlanning() {
           </Button>
         </div>
 
+        {/* No Material Groups Warning */}
+        {inventoryGroups.length === 0 && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>No Material Groups Found:</strong> You need to create material groups first before configuring task planning strategies.
+              <Button 
+                variant="link" 
+                className="ml-2 p-0 h-auto text-orange-800 underline"
+                onClick={() => setLocation('/step/1')}
+              >
+                Create Material Groups
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Info Alert */}
         <Alert>
           <Info className="w-4 h-4" />
           <AlertDescription>
-            Task planning configurations define how tasks are organized and prioritized for each inventory group. 
+            Task planning configurations define how tasks are organized and prioritized for each material group. 
             All fields are optional and can be configured based on your warehouse requirements.
           </AlertDescription>
         </Alert>
@@ -304,14 +322,14 @@ export default function Step4TaskPlanning() {
                           name="inventoryGroupId"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Inventory Group</FormLabel>
+                              <FormLabel>Material Group</FormLabel>
                               <Select 
                                 onValueChange={(value) => field.onChange(parseInt(value))} 
                                 value={field.value ? field.value.toString() : ""}
                               >
                                 <FormControl>
                                   <SelectTrigger>
-                                    <SelectValue placeholder="Select inventory group" />
+                                    <SelectValue placeholder="Select material group" />
                                   </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
@@ -671,7 +689,7 @@ export default function Step4TaskPlanning() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Configuration Name</TableHead>
-                    <TableHead>Inventory Group</TableHead>
+                    <TableHead>Material Group</TableHead>
                     <TableHead>Task Kind</TableHead>
                     <TableHead>Strategy</TableHead>
                     <TableHead>Priority</TableHead>

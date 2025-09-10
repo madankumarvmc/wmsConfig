@@ -43,7 +43,7 @@ export default function Step6ReviewConfirm() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium text-blue-900">Inventory Groups</h4>
+                  <h4 className="font-medium text-blue-900">Material Groups</h4>
                   <p className="text-sm text-blue-700 mt-1">Storage and line identifier combinations</p>
                 </div>
                 <div className="bg-indigo-50 p-4 rounded-lg">

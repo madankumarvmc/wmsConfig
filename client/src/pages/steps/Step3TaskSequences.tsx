@@ -161,13 +161,13 @@ export default function Step3TaskSequences() {
   return (
     <WizardContent
       title="Task Sequences"
-      description="Configure task sequences for your inventory groups. Task sequences define the order of operations (REPLEN → PICK → LOAD) for warehouse tasks."
+      description="Configure task sequences for your material groups. Task sequences define the order of operations (REPLEN → PICK → LOAD) for warehouse tasks."
       currentStep={2}
       totalSteps={7}
       onNext={handleNext}
       onPrevious={handlePrevious}
       nextLabel="Continue to Pick Strategies"
-      previousLabel="Back to Inventory Groups"
+      previousLabel="Back to Material Groups"
       isNextDisabled={configurations.length === 0}
     >
       <div className="space-y-6">
@@ -192,14 +192,14 @@ export default function Step3TaskSequences() {
           <Alert className="border-orange-200 bg-orange-50">
             <AlertTriangle className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800">
-              <strong>No Inventory Groups Found:</strong> You need to create inventory groups first before configuring task sequences.
+              <strong>No Material Groups Found:</strong> You need to create material groups first before configuring task sequences.
               <Button 
                 variant="link" 
                 className="ml-2 p-0 h-auto text-orange-800 underline"
                 onClick={handleCreateInventoryGroup}
               >
                 <ExternalLink className="w-3 h-3 mr-1" />
-                Create Inventory Groups
+                Create Material Groups
               </Button>
             </AlertDescription>
           </Alert>
@@ -209,7 +209,7 @@ export default function Step3TaskSequences() {
         <Alert className="border-gray-200 bg-gray-50">
           <Info className="h-4 w-4 text-gray-600" />
           <AlertDescription className="text-gray-800">
-            <strong>Task Sequences:</strong> Define the workflow for each inventory group. Common sequences include OUTBOUND_REPLEN (move stock to pick locations), OUTBOUND_PICK (pick items), and OUTBOUND_LOAD (prepare for shipping).
+            <strong>Task Sequences:</strong> Define the workflow for each material group. Common sequences include OUTBOUND_REPLEN (move stock to pick locations), OUTBOUND_PICK (pick items), and OUTBOUND_LOAD (prepare for shipping).
           </AlertDescription>
         </Alert>
 
@@ -228,14 +228,14 @@ export default function Step3TaskSequences() {
                     name="inventoryGroupId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Inventory Group *</FormLabel>
+                        <FormLabel>Material Group *</FormLabel>
                         <Select 
                           onValueChange={(value) => field.onChange(parseInt(value))} 
                           value={field.value ? field.value.toString() : ''}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select an inventory group" />
+                              <SelectValue placeholder="Select a material group" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -365,7 +365,7 @@ export default function Step3TaskSequences() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Inventory Group</TableHead>
+                    <TableHead>Material Group</TableHead>
                     <TableHead>SI / LI</TableHead>
                     <TableHead>Task Sequences</TableHead>
                     <TableHead>Shipment Acknowledgment</TableHead>
@@ -442,7 +442,7 @@ export default function Step3TaskSequences() {
               <Package className="w-12 h-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Task Sequence Configurations</h3>
               <p className="text-gray-600 mb-6 max-w-md">
-                Create your first task sequence configuration by selecting an inventory group and defining the workflow steps.
+                Create your first task sequence configuration by selecting a material group and defining the workflow steps.
               </p>
               <Button 
                 onClick={() => setIsAddingConfig(true)}

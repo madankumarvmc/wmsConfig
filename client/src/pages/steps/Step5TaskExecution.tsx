@@ -293,6 +293,22 @@ export default function Step5TaskExecution() {
           </AlertDescription>
         </Alert>
 
+        {taskPlanningConfigs.length === 0 && (
+          <Alert className="border-orange-200 bg-orange-50">
+            <AlertTriangle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <strong>No Task Planning Configurations Found:</strong> You need to create task planning configurations first before defining execution strategies.
+              <Button 
+                variant="link" 
+                className="ml-2 p-0 h-auto text-orange-800 underline"
+                onClick={() => setLocation('/step/4')}
+              >
+                Create Task Planning Configs
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {getAvailableTaskPlanningConfigs().length === 0 && taskPlanningConfigs.length > 0 && (
           <Alert>
             <AlertTriangle className="w-4 h-4" />

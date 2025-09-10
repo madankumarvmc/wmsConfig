@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import {
   Package, 
   Truck, 
   AlertCircle, 
+  AlertTriangle,
   Plus, 
   Trash2,
   Edit,
@@ -29,6 +31,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useLocation } from 'wouter';
 import WizardContent from '@/components/WizardContent';
+import type { InventoryGroup } from '../../../../shared/schema';
 
 const wavePlanningSchema = z.object({
   waveStrategy: z.string().min(1, 'Wave strategy is required'),
@@ -58,6 +61,11 @@ export default function Step2WavePlanning() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<string>('');
   const { toast } = useToast();
+
+  // Query for inventory groups (Material Groups)
+  const { data: inventoryGroups = [] } = useQuery<InventoryGroup[]>({
+    queryKey: ['/api/inventory-groups'],
+  });
 
   const form = useForm<WavePlanningFormData>({
     resolver: zodResolver(wavePlanningSchema),
@@ -352,17 +360,36 @@ export default function Step2WavePlanning() {
                     <Target className="w-5 h-5 mr-2" />
                     Line-Split Strategies Configuration
                   </div>
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button 
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={inventoryGroups.length === 0}
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Strategy
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                {inventoryGroups.length === 0 && (
+                  <Alert className="border-orange-200 bg-orange-50">
+                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <AlertDescription className="text-orange-800">
+                      <strong>No Material Groups Found:</strong> You need to create material groups first before configuring line-split strategies.
+                      <Button 
+                        variant="link" 
+                        className="ml-2 p-0 h-auto text-orange-800 underline"
+                        onClick={() => setLocation('/step/1')}
+                      >
+                        Create Material Groups
+                      </Button>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Configure line-split strategies for each inventory group. Select an inventory group and define the split strategy parameters.
+                    Configure line-split strategies for each material group. Select a material group and define the split strategy parameters.
                   </AlertDescription>
                 </Alert>
 
@@ -380,17 +407,37 @@ export default function Step2WavePlanning() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Inventory Group Selection */}
+                        {/* Material Group Selection */}
                         <div>
-                          <Label htmlFor="inventoryGroup">Inventory Group *</Label>
+                          <Label htmlFor="materialGroup">Material Group *</Label>
                           <Select>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select inventory group" />
+                              <SelectValue placeholder="Select material group" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="group1">Fast Moving Items</SelectItem>
-                              <SelectItem value="group2">Slow Moving Items</SelectItem>
-                              <SelectItem value="group3">Fragile Items</SelectItem>
+                              {inventoryGroups.length > 0 ? (
+                                inventoryGroups.map((group) => {
+                                  const storageIds = group.storageIdentifiers as any;
+                                  const lineIds = group.lineIdentifiers as any;
+                                  return (
+                                    <SelectItem key={group.id} value={group.id.toString()}>
+                                      <div className="flex items-center space-x-2">
+                                        <span>{group.name}</span>
+                                        <Badge variant="secondary" className="text-xs">
+                                          {storageIds?.category || 'N/A'} | {storageIds?.uom || 'N/A'}
+                                        </Badge>
+                                        <Badge variant="outline" className="text-xs">
+                                          {lineIds?.channel || 'N/A'} | {lineIds?.customer || 'N/A'}
+                                        </Badge>
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })
+                              ) : (
+                                <SelectItem value="no-groups" disabled>
+                                  No material groups available - create them in Step 1
+                                </SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         </div>
@@ -470,7 +517,7 @@ export default function Step2WavePlanning() {
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <h5 className="text-title-14 text-blue-900 mb-2">How it Works</h5>
                   <p className="text-sm text-blue-800">
-                    Select an inventory group and define the line-split strategy parameters. The <strong>Storage Identifiers</strong> and <strong>Line Identifiers</strong> will be automatically inherited from the selected inventory group, following the same SI/LI principle used throughout the system.
+                    Select a material group and define the line-split strategy parameters. The <strong>Storage Identifiers</strong> and <strong>Line Identifiers</strong> will be automatically inherited from the selected material group, following the same SI/LI principle used throughout the system.
                   </p>
                 </div>
 

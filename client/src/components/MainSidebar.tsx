@@ -155,7 +155,7 @@ export default function MainSidebar({ currentPath, isMobileOpen = false, onMobil
       items: [
         {
           icon: <Package className="w-4 h-4" />,
-          label: 'Inventory Groups',
+          label: 'Material Groups',
           path: '/step/1',
           badge: '1',
           isActive: activePath === '/step/1'
